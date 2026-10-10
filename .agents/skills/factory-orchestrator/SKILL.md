@@ -43,14 +43,10 @@ frontier is GitHub, nothing in a file outranks it.
    never a vague "please fix." Also: did this diff smuggle in a decision that needed
    an ADR?
 
-   **Adversarial pass (mandatory):** the orchestrator's own QC is a single point of
-   bias — it inherits the orchestrator's assumptions (a brittle gate spec, a wrong
-   guess at what a worker will write). Run the **`adversary` subagent** on the diff
-   (agentScope `project`; hostile review that assumes the change is wrong: edge cases,
-   injection, race/ordering, silent failure, spec violations, scope creep) and fold its
-   findings into the QC verdict. The adversary costs little and breaks the author-boss
-   bias loop. For the fastest loop, invoke it per-diff before blessing; at minimum run
-   it on the aggregate diff each batch. NOTE: adversary review catches *code* bugs;
+   **Adversarial pass:** run the **`adversary` subagent** (agentScope `project`) on
+   each diff sized to its computed lane per `REVIEW.md` `## The loop` — none at T0,
+   bounded at T1, full at T2 — and fold its findings into the QC verdict.
+   NOTE: adversary review catches *code* bugs;
    brittle gate specs (a gate that greps the wrong pattern) are caught by
    `factory gatecheck` (issue #17) and by idiomatic worker output diverging from an
    over-specific gate — run both.
