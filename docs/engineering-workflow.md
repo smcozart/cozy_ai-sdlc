@@ -464,3 +464,5 @@ No. Documentation here already has three owners, and a fourth would overlap all 
 What's worth adding instead is a lightweight rule, now captured above: **user-facing docs
 (`README`, `docs/`) get updated in the same PR as the change they describe**, same bar as
 tests. If docs debt ever becomes real, revisit — don't pre-build a skill for it.
+
+<!-- sync-rule violation on purpose: this edits the doc alone; the trio must be touched together -->
