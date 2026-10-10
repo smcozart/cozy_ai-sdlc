@@ -225,14 +225,14 @@ verdict() {  # verdict <name> <arg> -> sets v=ok|FAIL and why (no subshell: why 
     "check_${name//-/_}" "$@" && v=ok
   else why="$1: file missing"; fi
 }
-fail_count=0
+fail_count=0; ran_ok=0  # ran_* counts what actually ran (F2: the summary must not derive from --list)
 run() {
   verdict "$@"
-  case $v in ok) echo "ok: $1" ;; *) echo "FAIL: $1 — $why"; fail=1; fail_count=$((fail_count+1)) ;; esac
+  case $v in ok) echo "ok: $1"; ran_ok=$((ran_ok+1)) ;; *) echo "FAIL: $1 — $why"; fail=1; fail_count=$((fail_count+1)) ;; esac
 }
 
 default_run() {
-  local range=${1:-} body=${2:-} skip=0
+  local range=${1:-} body=${2:-}
   if [ -z "$range" ]; then
     if ! git diff --quiet HEAD 2>/dev/null; then range=HEAD; else range=HEAD~1..HEAD; fi
   fi
@@ -240,9 +240,8 @@ default_run() {
   for c in stage-parity intent-layout adr-numbering adr-refs hooks-json skill-frontmatter skill-copies agents-commands; do run "$c" .; done
   for c in t1-trust-wording t1-log-clobber t1-spawn-session; do run "$c" "$FO"; done
   for c in t3-label-drift t3-precedence; do run "$c" AGENTS.md; done
-  if [ -n "$body" ]; then run pr-adr-line "$body"; else echo "skipped: pr-adr-line — no PR body file given (CI passes one)"; skip=1; fi
-  local n; n=$(list_checks | wc -l | tr -d ' ')
-  echo "$((n - fail_count - skip)) ok, $fail_count failed (range: $range)"
+  if [ -n "$body" ]; then run pr-adr-line "$body"; else echo "skipped: pr-adr-line — no PR body file given (CI passes one)"; fi
+  echo "$ran_ok ok, $fail_count failed (range: $range)"
   lane_run "$range" || true   # trailer, not a check: same range as the gate so one paste carries both (ADR 0003)
 }
 
@@ -293,6 +292,18 @@ witness_run() {
   gitdir_row ok GIT_DIR-linked-worktree
   grep -v '^unset GIT_DIR GIT_WORK_TREE' "$m/tests/validate.sh" > "$m/t" && mv "$m/t" "$m/tests/validate.sh"
   gitdir_row FAIL 'mutation(-unset GIT_DIR)'; reset_wt "$m"
+  # F2: the summary must count what ran, not what --list says — a skipped or dropped check must not inflate it
+  sum_row() {  # sum_row <ok|FAIL> <label> — summary ok-count must equal printed ok: lines
+    wn=$((wn+1)); local out sum lines
+    out=$(cd "$m" && bash tests/validate.sh HEAD..HEAD 2>/dev/null)
+    lines=$(grep -c '^ok: ' <<<"$out"); sum=$(grep -oE '^[0-9]+ ok, [0-9]+ failed' <<<"$out" | head -1); sum=${sum%% *}
+    if { [ "$1" = ok ] && [ "$sum" = "$lines" ]; } || { [ "$1" = FAIL ] && [ "$sum" != "$lines" ]; }
+    then echo "witness ok: summary @$2 expected $1 (summary=$sum, ok-lines=$lines)"
+    else echo "witness FAIL: summary @$2 expected $1, got summary=$sum vs ok-lines=$lines"; wfail=1; fi
+  }
+  sum_row ok 'baseline — summary counts what ran'
+  sed -i 's/echo "\$ran_ok ok, \$fail_count failed/echo "15 ok, \$fail_count failed/' "$m/tests/validate.sh"
+  sum_row FAIL 'mutation(summary hardcoded — the F2 bug shape)'; reset_wt "$m"
   (cd "$m" && python3 -c "p='intent/9-test-stage/intent.md';s=open(p).read().replace('#9','#8');open(p,'w').write(s)")
   expect FAIL mutation intent-layout "$m"; reset_wt "$m"
   : >"$m/docs/adr/0009-x.md"
