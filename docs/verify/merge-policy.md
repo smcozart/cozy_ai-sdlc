@@ -46,13 +46,13 @@ Who: the runner of the adoption PR or the incident-fix close (Format: When a
 run happens), never the subject session. Spawn: a fresh session in the host's
 headless mode (for example, `claude -p` under Claude Code). Run from the
 harness checkout (`H`). `PIN` is the pinned ref: clone, then check out the
-pinned sha (the reviewed `c88dcb2`) for the first run, the golden tag once one
-carries ADR 0005. The
+pinned sha (`f3a0f5e` — the commit that landed the merge policy on main) for
+the first run, the golden tag once one carries ADR 0005. The
 subject clone drops `docs/verify/` in a commit, so the tree does not contain
 this file.
 
 ```bash
-H=$(git rev-parse --show-toplevel); R=$(mktemp -d)/run; LOG=$R.log; PIN=c88dcb2
+H=$(git rev-parse --show-toplevel); R=$(mktemp -d)/run; LOG=$R.log; PIN=f3a0f5e
 P=$(awk '/^## 1\./{f=1;next} /^## 2\./{f=0} f' "$H/docs/verify/merge-policy.md")
 git clone -q https://github.com/smcozart/cozyharness.git "$R" && cd "$R" && git checkout -q "$PIN"
 git rm -rq docs/verify && git commit -qm "subject clone: no behavior files"
