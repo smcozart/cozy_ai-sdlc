@@ -302,7 +302,7 @@ witness_run() {
     else echo "witness FAIL: summary @$2 expected $1, got summary=$sum vs ok-lines=$lines"; wfail=1; fi
   }
   sum_row ok 'baseline — summary counts what ran'
-  sed -i 's/echo "\$ran_ok ok, \$fail_count failed/echo "15 ok, \$fail_count failed/' "$m/tests/validate.sh"
+  sed -i.bak 's/echo "\$ran_ok ok, \$fail_count failed/echo "15 ok, \$fail_count failed/' "$m/tests/validate.sh" && rm -f "$m/tests/validate.sh.bak"
   sum_row FAIL 'mutation(summary hardcoded — the F2 bug shape)'; reset_wt "$m"
   (cd "$m" && python3 -c "p='intent/9-test-stage/intent.md';s=open(p).read().replace('#9','#8');open(p,'w').write(s)")
   expect FAIL mutation intent-layout "$m"; reset_wt "$m"
