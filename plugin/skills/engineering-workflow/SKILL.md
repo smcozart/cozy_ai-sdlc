@@ -187,10 +187,9 @@ land on green; a human reviews it after merge (`cmu` lists it as "review
 owed"; a board-only `STATUS.md` commit acknowledges review of everything
 merged before it; the behavior files in `docs/verify/` verify the agent side).
 Branch protection is verified, not assumed: auto-merge holds only while the
-CI `gate` check is required on `main`. Today it is advisory, so the pre-merge
-human checkoff stays the enforcement until the operator makes it required
-(#33) — a 401 is not evidence of absence, authenticate first. Hooks/CI/release
-gates and irreversible ops are always human-authorized.
+CI `gate` check is required on `main` (#33) — a 401 is not evidence of
+absence, authenticate first. Hooks/CI/release gates and irreversible ops are
+always human-authorized.
 
 ## Maintain — the intake point
 

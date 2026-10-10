@@ -325,9 +325,9 @@ seam: this repo's ticket close, or a consumer's PR.
    review thread (closing comment or PR) is the audit record.
 2. **The merge gate.** A close pastes, beside the Test gate's evidence:
    (a) review findings resolved or carried with an owner; (b) the pasted
-   `tests/validate.sh [<range>]` run (Test §1); (c) the `--lane` and
-   `flagged:` lines and the adversary verdict the lane owes (T0 pastes the
-   lane line and `adversary: n/a — T0`); (d) the merge hold: at `flagged: yes`
+   `tests/validate.sh [<range>]` run (Test §1); (c) the `lane:` and
+   `flagged:` lines of the gate run's trailer and the adversary verdict the
+   lane owes (T0 pastes the lane line and `adversary: n/a — T0`); (d) the merge hold: at `flagged: yes`
    a named human checkoff recorded in the thread (or a recorded operator
    delegation) before merge; at `flagged: no` the agent may land on green
    (table below; ADR 0005);
@@ -336,17 +336,16 @@ seam: this repo's ticket close, or a consumer's PR.
    (f) branch-protection proof for tickets touching the merge path, others
    mark "n/a — not a merge-path ticket"; (g) an `ADR:` line in the PR body
    (`ADR: none` when there is no decision), checked by `pr-adr-line` in CI.
-   Merge-path = any diff touching `tests/validate.sh`, `.github/**`, the
-   synced trio, or AGENTS.md — the surfaces that enforce the gate itself;
+   Merge-path = a diff at `flagged: yes` (the hold list, ADR 0005);
    everything else marks n/a.
 3. **Branch protection is verified, not assumed.** Any merge-path close runs
    `gh api repos/{owner}/{repo}/branches/main/protection` and
    `gh api repos/{owner}/{repo}/rules/branches/main` and pastes both
    results: the protection fields and rules, or the recorded absence.
    Today: `main` is protected (pull request required, no force-push, no
-   deletion), but no status check is required — the `gate` check is
-   advisory, so the pre-merge human checkoff stays the enforcement until the
-   operator makes `gate` required (#33; ADR 0005 fails closed). An
+   deletion). The `gate` check is required; the merge hold list (ADR 0005)
+   is the only pre-merge human gate; everything else lands on green with
+   post-hoc review (#33; ADR 0005 fails closed). An
    authentication failure (401) is not evidence of absence — authenticate
    first. No online
    check joins `tests/validate.sh` (Test §5); this proof stays manual.

@@ -111,8 +111,8 @@ whole), CI gate (the `gate` check runs the suite on PRs — one item
 of the merge gate, not the whole)
 
 **merge-path**:
-A diff touching `tests/validate.sh`, `.github/**`, the synced trio, or
-AGENTS.md — the surfaces that enforce the merge gate itself. Only these owe
+A diff at `flagged: yes` — the hold list (ADR 0005), the files that enforce
+the merge gate itself. Only these owe
 the gate's branch-protection proof; every other close marks it "n/a — not a
 merge-path ticket".
 _Avoid_: merge diff (any diff), gate surface (the file, not the change)
