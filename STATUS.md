@@ -41,8 +41,10 @@ tests/validate.sh                     # the gate is the floor
 ```
 
 When you read this file, fetch the open issues — STATUS.md is a snapshot, the
-> tracker is the truth. All gates are human (the paste checkoff, and the
-merge-gate pasted proof); never let a hook replace that with an auto-yes.
+> tracker is the truth. The hold list stays human: a diff with `flagged: yes`
+merges only on a named human checkoff (ADR 0005); never let a hook replace
+that with an auto-yes. Everything else lands on green and is reviewed after
+merge.
 
 ## Maintain this file
 

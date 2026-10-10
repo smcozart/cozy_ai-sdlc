@@ -63,6 +63,13 @@ frontier is GitHub, nothing in a file outranks it.
    QC result, what's next. Operator releases the next ticket. Trivial tickets may be
    batch-approved; big ones get a real look.
 
+**Merge hold (ADR 0005):** never merge a PR whose `tests/validate.sh --lane`
+prints `flagged: yes` — it touches `tests/validate.sh`, `.github/workflows/**` or
+`.githooks/**` — without a named human checkoff recorded in the thread, or a
+recorded operator delegation. Label it `flagged-risk` and report it as merge
+held. One GitHub identity merges, so GitHub cannot enforce this; you do.
+Everything else may land on a green gate and is reviewed after merge.
+
 **ADRs during the build:** a decision that is hard to reverse, surprising without
 context, and a real trade-off gets a one-paragraph record as the next numbered file
 in `docs/adr/` (format examples: `docs/adr/0001-*.md`). Commit and PUSH it — an

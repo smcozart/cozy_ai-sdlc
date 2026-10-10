@@ -3,6 +3,7 @@
 # Spec: intent/9-test-stage/spec.md (check tables are the requirement, verbatim).
 #
 #   tests/validate.sh [<range>]   run every check (sync-rule over <range>, else dirty tree, else HEAD~1..HEAD)
+#   tests/validate.sh <range> <pr-body-file>  also run pr-adr-line on the PR body (CI passes it; skipped without it)
 #   tests/validate.sh --list      print check names, one per line
 #   tests/validate.sh --witness   run every fail-first witness (needs full history)
 #   tests/validate.sh --lane [<range>]  classify the diff's review lane (T0/T1/T2) and merge hold from what git sees (ADR 0003)
@@ -18,7 +19,7 @@ cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)" || exit 2
 FO=plugin/skills/factory-orchestrator/SKILL.md
 DOC=docs/engineering-workflow.md
 SK=plugin/skills/engineering-workflow/SKILL.md
-CHECKS="sync-rule stage-parity intent-layout adr-numbering adr-refs hooks-json skill-frontmatter skill-copies agents-commands t1-trust-wording t1-log-clobber t1-spawn-session t3-label-drift t3-precedence"
+CHECKS="sync-rule stage-parity intent-layout adr-numbering adr-refs hooks-json skill-frontmatter skill-copies agents-commands t1-trust-wording t1-log-clobber t1-spawn-session t3-label-drift t3-precedence pr-adr-line"
 
 fail=0; why=""
 list_checks() { printf '%s\n' $CHECKS; }
@@ -32,7 +33,7 @@ list_checks() { printf '%s\n' $CHECKS; }
 # (a symlink is never followed — its target may sit outside the repo). The agent still
 # confirms "earns no ADR" and "not speculative", and may only ESCALATE the printed lane.
 # Consumers extend LANE_LIGHT (safe by omission) and LANE_FLOOR_T1 (light files a session acts on).
-# LANE_HOLD is the merge hold list (#39): the files that enforce the gate. `flagged: yes` = a human merges.
+# LANE_HOLD is the merge hold list (ADR 0005): the files that enforce the gate. `flagged: yes` = a human merges.
 LANE_LIGHT='^(handoffs/|docs/training/|STATUS\.md$|LICENSE$)'
 LANE_FLOOR_T1='^(STATUS\.md$|docs/training/|handoffs/pickup-handoff\.md$)'   # README.md anywhere is LANE_NEVER (T2), never a floor entry
 LANE_NEVER='(^|/)(CLAUDE|AGENTS|GEMINI|COPILOT|README)\.md$|(^|/)\.(cursorrules|mcp\.json|gitmodules)$'
@@ -212,6 +213,11 @@ check_t3_precedence() {
   grep -qF 'Overrides to the vendored skill:' "$1" || { why="$1: missing 'Overrides to the vendored skill:'"; return 1; }
 }
 
+# pr-adr-line  PR body file (ADR 0005: every PR body carries an ADR: line; presence only)  witness: three mutation rows
+check_pr_adr_line() {  # a fenced line is quoted text, not the PR's own ADR line
+  awk '/^[[:space:]]*(```|~~~)/{f=!f; next} !f' "$1" | grep -qE '^ADR:[[:space:]]*[^[:space:]]' || { why="$1: no 'ADR:' line (write 'ADR: none' when the PR records no decision)"; return 1; }
+}
+
 # ---------- runner ----------
 verdict() {  # verdict <name> <arg> -> sets v=ok|FAIL and why (no subshell: why must survive)
   local name=$1; shift; why=""; v=FAIL
@@ -226,7 +232,7 @@ run() {
 }
 
 default_run() {
-  local range=${1:-}
+  local range=${1:-} body=${2:-} skip=0
   if [ -z "$range" ]; then
     if ! git diff --quiet HEAD 2>/dev/null; then range=HEAD; else range=HEAD~1..HEAD; fi
   fi
@@ -234,8 +240,9 @@ default_run() {
   for c in stage-parity intent-layout adr-numbering adr-refs hooks-json skill-frontmatter skill-copies agents-commands; do run "$c" .; done
   for c in t1-trust-wording t1-log-clobber t1-spawn-session; do run "$c" "$FO"; done
   for c in t3-label-drift t3-precedence; do run "$c" AGENTS.md; done
+  if [ -n "$body" ]; then run pr-adr-line "$body"; else echo "skipped: pr-adr-line — no PR body file given (CI passes one)"; skip=1; fi
   local n; n=$(list_checks | wc -l | tr -d ' ')
-  echo "$((n - fail_count)) ok, $fail_count failed (range: $range)"
+  echo "$((n - fail_count - skip)) ok, $fail_count failed (range: $range)"
   lane_run "$range" || true   # trailer, not a check: same range as the gate so one paste carries both (ADR 0003)
 }
 
@@ -334,6 +341,9 @@ witness_run() {
   showfile 4e9b547 $FO; sed -i.bak 's/trust dialog is SKIPPED/trust dialog is shown/' "$T"; expect FAIL 'mutation(SKIPPED→shown)' t1-trust-wording "$T"
   showfile 92e6a25 AGENTS.md; echo 'never auto-apply labels' >>"$T";                  expect FAIL 'mutation(+never auto-apply labels)' t3-label-drift "$T"
   showfile 92e6a25 AGENTS.md; sed -i.bak 's/does NOT apply/does not apply/' "$T";     expect FAIL 'mutation(NOT→not)' t3-label-drift "$T"
+  printf 'Summary\n\nNo decision line.\n' >"$BASE/body";                              expect FAIL 'mutation(PR body, no ADR: line)' pr-adr-line "$BASE/body"
+  printf 'Summary\n\nADR: none\n' >"$BASE/body";                                      expect ok 'PR body, ADR: none' pr-adr-line "$BASE/body"
+  printf 'Summary\n\n```\nADR: none\n```\n' >"$BASE/body";                            expect FAIL 'mutation(PR body, ADR: line only fenced)' pr-adr-line "$BASE/body"
 
   # lane classifier (ADR 0003) — one row per decision branch plus every known evasion;
   # a wrong lane is a wrong review budget. Historic ranges first, then mutations on the HEAD worktree.
@@ -387,8 +397,8 @@ case ${1:-} in
   --list) list_checks; exit 0 ;;
   --witness) witness_run ;;
   --lane) lane_run "${2:-}"; exit $? ;;
-  --*) echo "usage: $0 [<range>|--list|--witness|--lane [<range>]]" >&2; exit 2 ;;
+  --*) echo "usage: $0 [<range> [<pr-body-file>]|--list|--witness|--lane [<range>]]" >&2; exit 2 ;;
 esac
 
-default_run "${1:-}"
+default_run "${1:-}" "${2:-}"
 exit $fail

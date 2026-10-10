@@ -1,6 +1,6 @@
 # Review effort follows a computed lane, and the lane is computed by the gate
 
-**Issue:** #40 · **Status:** accepted (approved in #39) · **Intent:** the arti-agent-platform retro `.factory/retro-scaffold-speed.md` (2026-09-15); first landed on branch `claude-harness`.
+**Issue:** #40 · **Status:** accepted (approved on #39, the ADR 0005 package) · **Intent:** the arti-agent-platform retro `.factory/retro-scaffold-speed.md` (2026-09-15); first landed on branch `claude-harness`.
 
 The adversary pass was mandatory on every agent-produced diff, and the light
 lane (#24) was a nine-clause predicate an agent evaluated by hand. Together
@@ -30,7 +30,7 @@ direction**: an agent may raise a computed lane, never lower it. Consumers
 extend the light set with the paths they will review on a bounded budget; a
 verbatim copy is safe. A repo without `--lane`, or a PARTIAL range, is T2.
 The same run prints a second line, `flagged: yes|no`: yes when the range
-touches the **merge hold list** approved in #39 — `tests/validate.sh`,
+touches the **merge hold list** of ADR 0005 — `tests/validate.sh`,
 `.github/workflows/**`, `.githooks/**`, the files that enforce the gate — so
 a human merges it. That line is the one machine-readable source for the hold;
 the broader flagged-risk set in Deploy §4 stays review guidance, not the hold.

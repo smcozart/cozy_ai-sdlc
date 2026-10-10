@@ -4,8 +4,10 @@ name: gate
 on:
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, edited]  # edited: a fixed PR body re-runs pr-adr-line
 permissions:
   contents: read
+  pull-requests: read
 concurrency:
   group: gate-${{ github.event.pull_request.number }}
   cancel-in-progress: true
@@ -17,4 +19,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # full history: sync-rule diffs the PR range
-      - run: bash tests/validate.sh "origin/${{ github.base_ref }}..HEAD"
+      - run: gh pr view ${{ github.event.pull_request.number }} -R ${{ github.repository }} --json body -q .body > "$GITHUB_WORKSPACE/pr-body.md"
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - run: bash tests/validate.sh "origin/${{ github.base_ref }}..HEAD" "$GITHUB_WORKSPACE/pr-body.md"

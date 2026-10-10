@@ -28,7 +28,7 @@ Design ──► spec.md beside the intent; ADRs over the bar; vertical-slice
           a settled decision is a record in the same turn (ADR, spec
           section, or ticket body); settling approves the decision;
           settling is not a merge approval — the record merges only under
-          the repo's merge policy
+          the repo's merge policy (ADR 0005)
 Build ───► one ticket per agent session; workers cite ADRs, write ADRs
           (optional plan.md sequences tickets for multi-ticket builds — not
           the agent's per-session plan-before-code)
@@ -36,29 +36,30 @@ Test ────► tests/validate.sh exits 0 (fail-first; checks and the conte
           they guard protected) — run + acceptance output (+ pair for fixes)
           pasted at close; CI runs it on every PR (check `gate`)
 Deploy ──► review loop per REVIEW.md; merge gate pasted (review resolution,
-          validate.sh run, adversary verdict, human checkoff for flagged
-          risk — suite-checked surfaces, .github/**, CONTRIBUTING.md,
-          docs/agents/, security/trust boundaries, irreversible ops —, preview proof for
-          UI, branch-protection proof for merge path — `gate` check advisory
-          today, human checkoff is the gate; a 401 is not evidence of absence —
-          authenticate first)
+          validate.sh run, adversary verdict, preview proof for UI,
+          branch-protection proof for merge path, `ADR:` line in the PR
+          body); merge policy (ADR 0005): the hold list (validate.sh,
+          .github/workflows/**, .githooks/**; `flagged: yes`) merges on a
+          named human checkoff, everything else lands on green with review
+          after merge — while `gate` is advisory, the human checkoff is the
+          gate; a 401 is not evidence of absence — authenticate first
 Maintain ─► intake: retros/incidents feed back through Plan; fixed incident classes → eval ledger (#8)
 ```
 
 **Light lane, computed.** `tests/validate.sh --lane <range>` classifies a
 diff from what git sees, as an allow-list — **T0** (≤2 docs files, all in the
-light set: gate run + human checkoff, no adversary pass), **T1** (small and in
+light set: gate run + human review after merge, no adversary pass), **T1** (small and in
 the light set, or the board / runbook floor: one bounded adversary pass),
 **T2** (anything else — unknown paths, instruction files, deletes, symlinks, >2 files
 or >60 lines: the full review loop). T0/T1 take a thinner front end — a short `intent.md`,
 **no** `spec.md`/`plan.md` — and a smaller review budget, and close through
-the *same* gate: `ready-for-agent`, pasted `tests/validate.sh`, human
-checkoff. The agent confirms two clauses the classifier cannot see (earns no
+the *same* gate: `ready-for-agent`, pasted `tests/validate.sh`, the same
+merge policy. The agent confirms two clauses the classifier cannot see (earns no
 ADR, not speculative) and may only escalate. A defined lane, not a loophole;
 nothing about the close gate relaxes. Detail: `docs/engineering-workflow.md`,
 ADR 0003. The same run prints `flagged: yes|no` — `yes` when the range touches
 the merge hold list (`tests/validate.sh`, `.github/workflows/**`,
-`.githooks/**`; #39), so a human merges.
+`.githooks/**`; ADR 0005), so a human merges.
 
 ## Quick start
 

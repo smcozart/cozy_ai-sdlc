@@ -13,3 +13,11 @@ The skills speak in terms of five canonical triage roles. This file maps those r
 When a skill mentions a role (e.g. "apply the AFK-ready triage label"), use the corresponding label string from this table.
 
 Edit the right-hand column to match whatever vocabulary you actually use.
+
+## Merge hold label
+
+| Label          | Meaning                                         |
+| -------------- | ----------------------------------------------- |
+| `flagged-risk` | Merge held: a named human checkoff is required  |
+
+Apply it to a PR, and its issue, when `tests/validate.sh --lane` prints `flagged: yes` (ADR 0005). It is not a triage role.

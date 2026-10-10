@@ -56,7 +56,7 @@ events.
 | Protection-scope hole | Test §4 | Folded into contract text (4ea8957). Reviewer behavior; write a file if it recurs. |
 | Holistic workflow review (five priorities) | #1, #33 | Planning input, not corpus items. |
 | Deploy: carried notes owned by a non-author, never resolved by silence | left on #8 | Behavior. Write `review-loop.md` at the next carried-finding incident (#18 is the live case). |
-| Deploy: merge-gate honesty (401 vs absence); flagged-risk checkoff | `merge-policy.md` (not yet written) | Behavior. #39 (ADR 0005) replaces this contract; write the file at that PR. |
+| Deploy: merge-gate honesty (401 vs absence); merge hold (ADR 0005) | [`merge-policy.md`](merge-policy.md) | Behavior. Written at the ADR 0005 adoption PR (#39). |
 | Maintain: eval-on-incident; prose parity | this file; sync-content row | The trigger above is the eval-on-incident rule. |
 | Close without proof (Test §1) | [`close-without-proof.md`](close-without-proof.md) | Contract on main today. This is the proof-of-concept file. |
 | Dispatch hold (never merge a held PR) | `dispatch-hold.md` (not yet written) | The `dispatch` skill is not on main. Write at the #42 adoption PR. |

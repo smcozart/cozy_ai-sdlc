@@ -146,10 +146,11 @@ that moves work toward `ready-for-agent`.
    design detail becomes an edit to the spec's matching section; a detail
    scoped to one ticket becomes an edit to that issue's body. Settling
    approves the decision. Settling is not a merge approval — the record
-   merges only under the repo's merge policy. No separate sign-off on the
-   decision is owed beyond item 6's high-risk carve-out. Reply in one line
-   naming the record. "Captured in this conversation only" and "finish
-   mapping first, then update once" are not moves; batch only when asked.
+   merges only under the repo's merge policy (ADR 0005). No separate
+   sign-off on the decision is owed beyond item 6's high-risk carve-out.
+   Reply in one line naming the record. "Captured in this conversation
+   only" and "finish mapping first, then update once" are not moves; batch
+   only when asked.
 
 ## Light lane — thin front end, same tail
 
@@ -157,7 +158,7 @@ Formalized in issue [#24](https://github.com/smcozart/cozyharness/issues/24).
 The full front end (issue → intent → spec → grilling → tickets) is
 proportionate for a multi-ticket, protected-surface build; it is dead weight
 for a one-file doc tweak. The light lane is a **defined** thinner front end for
-small, low-risk work — the *same* tail (proof + human gate), a tapered head.
+small, low-risk work — the *same* tail (proof + merge policy), a tapered head.
 
 **The lane is computed, then confirmed** (ADR 0003). Most of what decides a
 lane is visible to git — how many files, which paths, how many lines — so
@@ -167,7 +168,7 @@ lane is visible to git — how many files, which paths, how many lines — so
 
 | Lane | Computed trigger | Review owed |
 |---|---|---|
-| **T0 trivial** | ≤2 files, all `*.md`, ≤60 lines, every file in the **light set** and none on the T1 floor | the gate run + the human checkoff. No adversary pass. (On this repo only the archival `handoffs/*.md` qualify.) |
+| **T0 trivial** | ≤2 files, all `*.md`, ≤60 lines, every file in the **light set** and none on the T1 floor | the gate run + the human review (after merge unless held; ADR 0005). No adversary pass. (On this repo only the archival `handoffs/*.md` qualify.) |
 | **T1 light** | ≤2 files, ≤60 changed lines, every file in the light set — or any file on the **T1 floor**: the board `STATUS.md`, `docs/training/` (a human runs it), `handoffs/pickup-handoff.md` (a session's entrance ramp) | the gate run + one **bounded** adversary pass: correctness of the diff's claims only, findings MED and above, no scope sweep |
 | **T2 heavy** | **everything else** — any file outside the light set (the light set here is `handoffs/`, `docs/training/`, `STATUS.md`, `LICENSE`; every other path, including ones the repo has not grown yet, is heavy), any instruction file wherever it sits, in any case (`CLAUDE.md`, `AGENTS.md`, `README.md`, `.mcp.json`, `.cursorrules`, `.gitmodules`), any delete, any binary, any symlink (never followed), >2 files, or >60 lines | the full review loop: `REVIEW.md` axes + the unbounded adversary pass |
 
@@ -191,8 +192,8 @@ lane and never lower it. Consumers extend the light set in their own
 safe, because everything it does not name is heavy.
 
 The same run prints **`flagged: yes|no`** — the one machine-readable source
-for the **merge hold**: `yes` when the range touches the hold list approved in
-#39 (`tests/validate.sh`, `.github/workflows/**`, `.githooks/**`, the files
+for the **merge hold**: `yes` when the range touches the hold list of ADR 0005
+(`tests/validate.sh`, `.github/workflows/**`, `.githooks/**`, the files
 that enforce the gate), so a human merges. It reports the hold list only; the
 broader flagged-risk set in Deploy §4 stays review guidance.
 
@@ -206,20 +207,21 @@ The light lane below is **T0 and T1**; the heavy lane is **T2**.
    ticket earns `ready-for-agent` on the same contract (blockers resolved +
    acceptance criteria defined), and the close pastes the green
    `tests/validate.sh [<range>]` run beside the acceptance output, then the
-   Deploy merge-gate items including the human checkoff.
+   Deploy merge-gate items.
 
 **It is a lane, not a loophole.** Nothing about the close gate relaxes.
-`ready-for-agent`, pasted proof, and the human gate are identical on both
-lanes — *only the front artifact and the review budget taper*. There is no
-auto-approval; the only agent judgement in play is the two stated clauses,
+`ready-for-agent`, pasted proof, and the merge policy are identical on both
+lanes — *only the front artifact and the review budget taper*. The lane never
+decides who merges: the merge hold does (`flagged:`; ADR 0005), and the hold
+list stays human. The only agent judgement in play is the two stated clauses,
 and it can only escalate. No rule says a change "must always" carry a
 `plan.md`. The heavy lane stays mandatory for anything touching a protected
 surface or a multi-ticket effort, and the classifier makes that mechanical.
 
 **Light vs heavy, worked.** Fixing a typo in an archival
 `handoffs/design-stage-handoff.md` is **T0**: one file, docs-only, in the
-light set — `--lane` says so, a two-line `intent.md`, the gate run, the human
-checkoff, close; no adversary pass. Fixing a typo in
+light set — `--lane` says so, a two-line `intent.md`, the gate run, land on
+green, human review after merge; no adversary pass. Fixing a typo in
 `docs/training/onboarding-runbook.md` is **T1**: the runbook's fenced blocks
 are what a new human runs verbatim, so it floors at T1 and owes one bounded
 pass even at one line; refreshing the board is T1 for the same reason —
@@ -297,7 +299,8 @@ command is the contract, not any harness hook.
    stdlib. Findings with no textual footprint stay in the eval ledger (#8);
    the eval harness waits on #1. CI runs the same command over the PR
    range on every PR into `main` (`.github/workflows/gate.yml`, check
-   `gate`, #33).
+   `gate`, #33) and hands it the PR body as a file for `pr-adr-line`; run
+   locally with no body file, that check prints `skipped:`.
 
 The check list lives in the `## Commands` block of `AGENTS.md`; the
 `agents-commands` check verifies the token set against `--list` (prose and
@@ -324,33 +327,47 @@ seam: this repo's ticket close, or a consumer's PR.
    (a) review findings resolved or carried with an owner; (b) the pasted
    `tests/validate.sh [<range>]` run (Test §1); (c) the `--lane` and
    `flagged:` lines and the adversary verdict the lane owes (T0 pastes the
-   lane line and `adversary: n/a — T0`); (d) a human checkoff for flagged-risk classes (table below);
+   lane line and `adversary: n/a — T0`); (d) the merge hold: at `flagged: yes`
+   a named human checkoff recorded in the thread (or a recorded operator
+   delegation) before merge; at `flagged: no` the agent may land on green
+   (table below; ADR 0005);
    (e) UI tickets only: preview proof pasted — screenshot, recording, or
    standing link (consumer obligation; this repo has no UI surface);
    (f) branch-protection proof for tickets touching the merge path, others
-   mark "n/a — not a merge-path ticket". Merge-path = any diff touching
-   `tests/validate.sh`, `.github/**`, the synced trio, or AGENTS.md — the
-   surfaces that enforce the gate itself; everything else marks n/a.
+   mark "n/a — not a merge-path ticket"; (g) an `ADR:` line in the PR body
+   (`ADR: none` when there is no decision), checked by `pr-adr-line` in CI.
+   Merge-path = any diff touching `tests/validate.sh`, `.github/**`, the
+   synced trio, or AGENTS.md — the surfaces that enforce the gate itself;
+   everything else marks n/a.
 3. **Branch protection is verified, not assumed.** Any merge-path close runs
    `gh api repos/{owner}/{repo}/branches/main/protection` and
    `gh api repos/{owner}/{repo}/rules/branches/main` and pastes both
    results: the protection fields and rules, or the recorded absence.
    Today: `main` is protected (pull request required, no force-push, no
    deletion), but no status check is required — the `gate` check is
-   advisory, so the human checkoff stays the enforcement until the operator
-   makes `gate` required (#33). An authentication failure (401) is not
-   evidence of absence — authenticate first. No online
+   advisory, so the pre-merge human checkoff stays the enforcement until the
+   operator makes `gate` required (#33; ADR 0005 fails closed). An
+   authentication failure (401) is not evidence of absence — authenticate
+   first. No online
    check joins `tests/validate.sh` (Test §5); this proof stays manual.
 4. **Autonomy boundaries.**
 
    | Change class | Who merges |
    |---|---|
-   | Flagged risk: any surface a suite check asserts on (`tests/`, the synced trio, AGENTS.md, CONTRIBUTING.md, `intent/**`, `docs/adr/**`, `plugin/**`, `.agents/skills/**`, CONTEXT.md), plus `.github/**`, `docs/agents/`, security/trust boundaries, and irreversible ops | Human checkoff, recorded in the thread, after a green gate |
-   | Everything else (prose, approved intents/specs, internal refactors) | Agent may land; the gate's pasted evidence is the record |
+   | Hold list — `flagged: yes` from `tests/validate.sh --lane`: `tests/validate.sh`, `.github/workflows/**`, `.githooks/**` (the files that check other files) | A named human checkoff, recorded in the thread, after a green gate — or a recorded operator delegation. The PR carries the `flagged-risk` label |
+   | Everything else, including AGENTS.md, the synced trio, ADRs, CONTEXT.md and the skills | Agent may land on green; the gate's pasted evidence is the record; post-hoc review follows |
 
-   Hooks/CI/release gates are always human-authorized. The `flagged:` line
-   from `tests/validate.sh --lane` reports the merge hold list only (Light
-   lane; #39); it is not this table.
+   **Post-hoc review** (ADR 0005): a human reviews every diff that landed on
+   green after merge, against `REVIEW.md`. `cmu` lists it as "review owed";
+   a board-only `STATUS.md` commit acknowledges review of everything merged
+   before it. The behavior files in `docs/verify/` verify the agent side.
+   The former flagged-risk set (suite-checked surfaces, `docs/agents/`,
+   security/trust boundaries) is review guidance, not a hold. Auto-merge
+   holds only while `gate` is a required check on `main`; otherwise every
+   merge takes the pre-merge checkoff (§3). Hooks/CI/release gates and
+   irreversible ops are always human-authorized. Only an operator decision,
+   recorded as an ADR 0005 amendment, adds a pre-merge checkoff or drops the
+   post-hoc review or the `ADR:` line.
 
 ## Maintain — closing the loop
 

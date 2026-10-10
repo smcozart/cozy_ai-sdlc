@@ -18,9 +18,8 @@ or authority rule becomes a new ADR in `docs/adr/NNNN-slug.md`; a requirement
 or design detail becomes an edit to the spec's matching section; a detail
 scoped to one ticket becomes an edit to that issue's body. **Settling approves
 the decision. It is NOT a merge approval — the record merges only under the
-repo's merge policy** (issue #39; that PR assigns the ADR number and repoints
-this citation). No separate sign-off on the decision is owed beyond the
-Design approval gate's high-risk carve-out. Paired with this: intake never
+repo's merge policy** (ADR 0005). No separate sign-off on the decision is
+owed beyond the Design approval gate's high-risk carve-out. Paired with this: intake never
 waits — filing a new request is never gated by running workers, an open
 blocker, or a foundation ticket in flight; a dependent request is filed as
 its own issue with a blocking edge to the one ahead of it (mechanics:
@@ -37,4 +36,4 @@ synced trio (`docs/engineering-workflow.md`,
 `plugin/skills/engineering-workflow/SKILL.md`, `README.md`) changed together
 per the sync rule.
 
-Forward reference: exactly one, to issue #39.
+Forward reference: none; the merge policy is ADR 0005.
