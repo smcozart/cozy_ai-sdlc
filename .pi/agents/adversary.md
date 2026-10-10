@@ -20,6 +20,7 @@ Your job is to break this change. Hunt for:
 - Race conditions and ordering assumptions
 - Silent failure modes (swallowed errors, ignored return values)
 - Spec violations and scope creep
+- Citations: every cited issue, ADR, sha, path and line exists, says what is claimed, is not stale, and predates the record that cites it.
 - Security issues (authz bypasses, leaks, unsafe defaults)
 - Loosened checks: any change that removes, narrows, or reorders a check away from the path it guards, or removes/narrows content a negative (absence) check guards — in `tests/` or anywhere — without citing the issue retiring that rule; especially when the same diff fixes the surface that check measures
 
