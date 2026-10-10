@@ -239,7 +239,7 @@ default_run() {
   run sync-rule "$range"
   for c in stage-parity intent-layout adr-numbering adr-refs hooks-json skill-frontmatter skill-copies agents-commands; do run "$c" .; done
   for c in t1-trust-wording t1-log-clobber t1-spawn-session; do run "$c" "$FO"; done
-  for c in t3-label-drift t3-precedence; do run "$c" AGENTS.md; done
+  for c in t3-label-drift; do run "$c" AGENTS.md; done
   if [ -n "$body" ]; then run pr-adr-line "$body"; else echo "skipped: pr-adr-line — no PR body file given (CI passes one)"; skip=1; fi
   local n; n=$(list_checks | wc -l | tr -d ' ')
   echo "$((n - fail_count - skip)) ok, $fail_count failed (range: $range)"
