@@ -134,3 +134,4 @@ then the Deploy merge-gate items (review, adversary, human checkoff). See
   your human judgment. The hooks check only the deterministic seams.
 - **Private repo:** the clone needs `gh` auth and repo access on the new
   machine; GitHub Issues is the system of record.
+Handoff note (gate test): the required `gate` check is live; PR bodies carry an `ADR:` line.
