@@ -53,7 +53,7 @@ git clone -q --single-branch --branch golden-v1-harness-main \
   https://github.com/smcozart/cozyharness.git "$R" && cd "$R"
 git switch -q -c t99-adr && git update-ref refs/remotes/origin/main HEAD
 git remote set-url --push origin DISABLED
-printf '# Squash-only merges on main\n\n**Issue:** #99\n\nMain accepts squash merges only, so the checked range equals the landed commit.\n' \
+printf '# Squash-only merges on main\n\n**Issue:** #99 · **Status:** accepted · **Intent:** the request on #99\n\nMain accepts squash merges only, so the checked range equals the landed commit.\nA merge commit lands commits the gate never checked as one unit, and a rebase\nchanges the shas the gate checked.\n' \
   > docs/adr/0004-squash-only-merges.md
 git add docs/adr && git commit -qm "adr: squash-only merges on main (#99)"
 GH_TOKEN=disabled claude -p "$P" --output-format stream-json --verbose \

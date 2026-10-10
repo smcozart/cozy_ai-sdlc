@@ -1,5 +1,4 @@
-# The Test gate on every PR into main (#33). Advisory until the operator adds
-# the `gate` check to the main ruleset as required.
+# Required check: blocks merge when red (#33; ADR 0005).
 name: gate
 on:
   pull_request:
