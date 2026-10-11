@@ -1,0 +1,6 @@
+# local orchestration state (dispatch, factory-orchestrator)
+.factory/
+# secrets
+.env*
+!.env.example
+.DS_Store

@@ -1,0 +1,22 @@
+name: gate
+on:
+  pull_request:
+  push:
+    branches: [{{BASE}}]
+permissions:
+  contents: read
+jobs:
+  gate:
+    name: gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: tests/validate.sh
+        run: |
+          if [ "${{ github.event_name }}" = pull_request ]; then
+            bash tests/validate.sh "origin/${{ github.base_ref || '{{BASE}}' }}..HEAD"
+          else
+            bash tests/validate.sh
+          fi

@@ -20,6 +20,7 @@ SK=plugin/skills/engineering-workflow/SKILL.md
 IC=plugin/skills/intent-conversation/SKILL.md
 DP=plugin/skills/dispatch/SKILL.md
 CMU=plugin/skills/cmu/SKILL.md
+NP=plugin/skills/new-project/SKILL.md
 CHECKS="sync-rule stage-parity intent-layout adr-numbering adr-refs hooks-json skill-frontmatter skill-copies agents-commands t1-trust-wording t1-log-clobber t1-spawn-session t3-label-drift t3-precedence"
 
 # ---------- lane classifier (Deploy: review effort follows the lane; ADR 0003) ----------
@@ -186,6 +187,8 @@ check_skill_copies() {
     || { why="$DP and .claude/skills/dispatch/SKILL.md differ (must be byte-identical)"; return 1; }
   cmp -s "$1/$CMU" "$1/.claude/skills/cmu/SKILL.md" \
     || { why="$CMU and .claude/skills/cmu/SKILL.md differ (must be byte-identical)"; return 1; }
+  cmp -s "$1/$NP" "$1/.claude/skills/new-project/SKILL.md" \
+    || { why="$NP and .claude/skills/new-project/SKILL.md differ (must be byte-identical)"; return 1; }
 }
 
 check_agents_commands() {
@@ -302,6 +305,8 @@ witness_run() {
   expect FAIL 'mutation(.claude dispatch copy)' skill-copies "$m"; reset_wt "$m"
   echo x >> "$m/.claude/skills/cmu/SKILL.md"
   expect FAIL 'mutation(.claude cmu copy)' skill-copies "$m"; reset_wt "$m"
+  echo x >> "$m/.claude/skills/new-project/SKILL.md"
+  expect FAIL 'mutation(.claude new-project copy)' skill-copies "$m"; reset_wt "$m"
   grep -v '^## Maintain' "$m/$DOC" > "$m/t" && mv "$m/t" "$m/$DOC"
   expect FAIL 'mutation(-## Maintain)' stage-parity "$m"; reset_wt "$m"
   grep -v '^## Maintain' "$m/$SK" > "$m/t" && mv "$m/t" "$m/$SK"
@@ -389,6 +394,33 @@ witness_run() {
   base_expect PARTIAL 'configured base not found (fail closed)' nope main..t1-x
   printf '**Base branch:**\n' > "$g/AGENTS.md"   # a base line that names nothing must not fall back to main
   base_expect PARTIAL 'base branch line unreadable (fail closed)' '' main..t1-x
+
+  # new-project scaffold (#49): the file step into an empty dir must give a repo whose own gate passes
+  np_expect() {  # np_expect <ok|FAIL> <label> <command run in the scaffolded dir $np>
+    local got=FAIL out; wn=$((wn+1)); out=$(cd "$np" && eval "$3" 2>&1) && got=ok
+    if [ "$got" = "$1" ]; then echo "witness ok: new-project @$2 expected $1"
+    else echo "witness FAIL: new-project @$2 expected $1, got $got — $(tail -3 <<<"$out" | tr '\n' ' ')"; wfail=1; fi
+  }
+  local np=$BASE/np; mkdir -p "$np"; git init -q "$np"
+  np_expect ok   'scaffold into an empty dir' "bash '$m/plugin/templates/new-project/scaffold.sh' . --owner demo --name demo"
+  np_expect ok   'every {{TOKEN}} substituted' "! grep -rIn --exclude-dir=.git '{{' . | grep -v '\${{ github\.'"
+  np_expect ok   'scaffolded gate passes' 'bash tests/validate.sh'
+  np_expect ok   'scaffolded --witness passes' 'bash tests/validate.sh --witness | tail -1 | grep -qE "^[1-9][0-9]* witnesses, 0 unexpected$"'
+  # a FAIL row would pass vacuously on a missing gate; assert the gate's own failure line instead
+  np_expect ok   'scaffolded gate fails when STATUS.md is deleted' 'mv STATUS.md S.bak; out=$(bash tests/validate.sh); r=$?; mv S.bak STATUS.md; [ $r -ne 0 ] && grep -q "^FAIL: shape — STATUS.md missing" <<<"$out"'
+  # (e) an existing repo on `trunk`: its files keep their bytes above the appended block, once
+  local sc=$m/plugin/templates/new-project/scaffold.sh o=$BASE/orig; np=$BASE/np-trunk; mkdir -p "$o"
+  git init -q -b trunk "$np"; for f in README.md .gitignore AGENTS.md; do echo "legacy $f" | tee "$o/$f" >"$np/$f"; done
+  mkdir -p "$np/docs/adr"; printf '**Issue:** #1\n' >"$np/docs/adr/0001-x.md"   # the policy ADR must take the next free number
+  git -C "$np" add -A; git -C "$np" -c user.name=witness -c user.email=witness@localhost -c commit.gpgsign=false -c core.hooksPath=/dev/null commit -qm legacy
+  np_expect ok   'existing repo: scaffold --base release/x appends, policy ADR at the next free number' "out=\$(bash '$sc' . --owner demo --name demo --base release/x) && grep -qx 'appended: AGENTS.md' <<<\"\$out\" && grep -qx 'wrote: docs/adr/0002-adopt-engineering-workflow.md' <<<\"\$out\""
+  np_expect ok   'existing repo: originals unchanged above the marker' "cmp README.md '$o/README.md' && for f in .gitignore AGENTS.md; do sed -n '/engineering-workflow:start/q;p' \$f | cmp - '$o/'\$f || exit 1; done"
+  np_expect ok   'existing repo: second run appends nothing' "out=\$(bash '$sc' . --owner demo --name demo --base release/x) && ! grep -q '^appended:' <<<\"\$out\" && [ \$(grep -c 'engineering-workflow:start' AGENTS.md) -eq 1 ]"
+  np_expect ok   'existing repo: gate passes, base is release/x' "bash tests/validate.sh && grep -qxF '**Base branch:** \`release/x\`' AGENTS.md"
+  # (f) a base that is not a branch name is refused before anything is written
+  np_expect ok   'bad --base refused, nothing written' "out=\$(bash '$sc' '$BASE/bad' --owner demo --base 'a;b' 2>&1); [ \$? -eq 2 ] && grep -q 'invalid base' <<<\"\$out\" && [ ! -e '$BASE/bad' ]"
+  np=$BASE/np
+  np_expect ok   'second scaffold writes nothing, skips every path' "out=\$(bash '$m/plugin/templates/new-project/scaffold.sh' . --owner demo --name demo) && ! grep -qv '^skip: ' <<<\"\$out\" && [ \"\$(grep -c . <<<\"\$out\")\" -eq \"\$(cd '$m/plugin/templates/new-project/files' && find . -type f | wc -l)\" ]"
 
   echo "$wn witnesses, $wfail unexpected"
   exit $wfail
