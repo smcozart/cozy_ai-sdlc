@@ -21,6 +21,14 @@ orchestration can work in, then hands to `intent-conversation` for the
 system intent. It is released as 1.5.0 from `cozyharness_full_workflow` and
 proven on `fit_cozy`.
 
+## Status
+
+**Operator decision (2026-10-05):** this branch stops after #49. #50, #51
+and #52 are closed as not planned and move to `main` (after the #35
+catch-up). #49 covers a brand-new folder and an existing repo (by PR);
+the survey of an existing repo into first issues is a later main ticket.
+No 1.5.0 release from this branch.
+
 ## Scope
 
 - One base-branch setting read by the gate, `dispatch` and

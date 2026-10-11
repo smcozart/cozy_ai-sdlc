@@ -58,10 +58,20 @@ branch is `main`.
   Until #47 merges, close with `origin/main..HEAD`; after it, with
   `origin/cozyharness_full_workflow..HEAD`.
 - **`new-project` skill (#49).** A separate skill, not a move inside
-  `intent-conversation`. It never fires in a repo that has `AGENTS.md` and
-  `STATUS.md`. Moves: ground (read-only), ask (at most two questions; owner
-  defaults from `gh api user`, asked only when `gh api user/orgs` is not
-  empty), scaffold, GitHub, verify and hand off.
+  `intent-conversation`. Moves: ground (read-only), ask (at most two
+  questions; owner defaults from `gh api user`, asked only when
+  `gh api user/orgs` is not empty), scaffold, GitHub, verify and hand off.
+  One route for a brand-new folder and an existing repo (operator direction
+  on #46, 2026-10-06): HEAD without commits → commit to `main`,
+  `gh repo create`, labels and a ruleset; HEAD with commits → commit to
+  branch `adopt-engineering-workflow` and open a PR into the default branch,
+  never writing to that branch or its protection. The scaffold never
+  overwrites: it appends one marked block to an existing `AGENTS.md`,
+  `CLAUDE.md` and `.gitignore`, and skips every other existing file, so a
+  re-run writes only what is missing. One-line stops: inside another repo,
+  tracked changes, an unborn HEAD with other refs, a checked-out branch that
+  is not the origin's default. With an `origin` and nothing left to write:
+  the one-line `cmu` offer.
 - **Scaffold.** Templates live in the plugin (pinned with the tag) and are
   found relative to the skill's own `SKILL.md`, not a host variable. Files:
   `AGENTS.md` (commands, `**Base branch:** main`, tracker, labels, read
