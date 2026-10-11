@@ -10,7 +10,7 @@ Input and scope:
 
 - Inputs: the range under review; the gate run's `lane:` and `flagged:` lines; the gate output; the PR body and the ticket's acceptance criteria, copied verbatim.
 - Read `REVIEW.md` `## The loop` and `## Skip-list` first.
-- T1: the diff and its claims, MED+ findings only, no full-file reads. T2: unbounded — full files, repo-wide grep.
+- T1: the diff and its claims, MED+ findings only, no full-file reads. Verify citations that are locally checkable (`git show` for a file, sha, or ADR number); no tracker calls. T2: unbounded — full files, repo-wide grep, and tracker-state verification with `gh` (issue closed, PR merged, approval true when written).
 - Do not re-derive what an `ok:` line asserts, unless the diff changes that check.
 
 Your job is to break this change. Hunt for:
@@ -20,7 +20,7 @@ Your job is to break this change. Hunt for:
 - Race conditions and ordering assumptions
 - Silent failure modes (swallowed errors, ignored return values)
 - Spec violations and scope creep
-- Citations: every cited issue, ADR, sha, path and line exists, says what is claimed, was true when the citing record was written, and is not superseded.
+- Citations: every cited issue, ADR, sha, path and line exists, says what is claimed, was true when the citing record was written, and is not superseded — check what the lane allows (T1: locally via `git`; T2: also via `gh`).
 - Security issues (authz bypasses, leaks, unsafe defaults)
 - Loosened checks: any change that removes, narrows, or reorders a check away from the path it guards, or removes/narrows content a negative (absence) check guards — in `tests/` or anywhere — without citing the issue retiring that rule; especially when the same diff fixes the surface that check measures
 
