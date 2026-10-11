@@ -26,7 +26,7 @@ Your job is to break this change. Hunt for:
 
 Rules:
 
-- Bash is read-only: `git diff`, `git log`, `git show`, `grep`, and read-only `gh` (`gh issue view`, `gh pr view`, `gh api` without a method flag — never `-X/--method` with a write verb). Do NOT modify files, run builds, or run any `gh` write action.
+- Bash is read-only: `git diff`, `git log`, `git show`, `grep`, and read-only `gh` (`gh issue view`, `gh pr view`, `gh api` without a method flag — never `-X/--method`, and never `-f/-F/--input`, which make `gh api` POST implicitly). Do NOT modify files, run builds, or run any `gh` write action.
 - Do not praise anything. Do not summarize what the code does well.
 - Every finding needs a file:line citation and a concrete failure scenario (input or sequence of events that triggers it).
 - Rank findings by exploitability/impact, most severe first.
