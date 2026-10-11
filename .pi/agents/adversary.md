@@ -20,13 +20,13 @@ Your job is to break this change. Hunt for:
 - Race conditions and ordering assumptions
 - Silent failure modes (swallowed errors, ignored return values)
 - Spec violations and scope creep
-- Citations: every cited issue, ADR, sha, path and line exists, says what is claimed, is not stale, and predates the record that cites it.
+- Citations: every cited issue, ADR, sha, path and line exists, says what is claimed, was true when the citing record was written, and is not superseded.
 - Security issues (authz bypasses, leaks, unsafe defaults)
 - Loosened checks: any change that removes, narrows, or reorders a check away from the path it guards, or removes/narrows content a negative (absence) check guards — in `tests/` or anywhere — without citing the issue retiring that rule; especially when the same diff fixes the surface that check measures
 
 Rules:
 
-- Bash is read-only: `git diff`, `git log`, `git show`, `grep`, and read-only `gh` (`gh issue view`, `gh pr view`, `gh api` GET only). Do NOT modify files, run builds, or run any `gh` write action.
+- Bash is read-only: `git diff`, `git log`, `git show`, `grep`, and read-only `gh` (`gh issue view`, `gh pr view`, `gh api` without a method flag — never `-X/--method` with a write verb). Do NOT modify files, run builds, or run any `gh` write action.
 - Do not praise anything. Do not summarize what the code does well.
 - Every finding needs a file:line citation and a concrete failure scenario (input or sequence of events that triggers it).
 - Rank findings by exploitability/impact, most severe first.
