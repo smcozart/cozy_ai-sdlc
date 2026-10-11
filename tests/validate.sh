@@ -42,6 +42,7 @@ LANE_HOLD='^(tests/validate\.sh$|\.github/workflows/|\.githooks/)'
 LANE_MAX_FILES=2; LANE_MAX_LINES=60
 lane_of() {  # lane_of <root> <range> -> sets lane (T0|T1|T2|none), lane_why and held; rc 2 when there is no lane
   local r=$1 range=$2 st files n never outside del ns lines bin untracked="" o links
+  local -x LC_ALL=C   # paths are bytes: a UTF-8 locale makes tr/cut abort on an invalid byte and drop the hold (#78)
   held=""
   # -z output, one record per line: NUL ends the record, a newline inside a path becomes a tab (still a control char)
   st=$(git -C "$r" diff -z --no-renames --name-status "$range" 2>/dev/null | tr '\n\0' '\t\n' | paste - -) || { lane=none; lane_why="git diff $range failed — fix the range"; return 2; }
@@ -53,12 +54,13 @@ lane_of() {  # lane_of <root> <range> -> sets lane (T0|T1|T2|none), lane_why and
   del=$(awk -F'\t' '$1 ~ /^D/ {print $2}' <<<"$st" | tr '\n' ' ')
   never=$(grep -iE "$LANE_NEVER" <<<"$files" | tr '\n' ' ')
   links=$(git -C "$r" diff -z --no-renames --raw "$range" | tr '\n\0' '\t\n' | paste - - | awk -F'\t' '$1 ~ / 120000 |^:120000 / {print $2}' | tr '\n' ' ')
-  # a path git would quote (`"`, `\`, control char) is never light: the real name must not lower the lane (#78, escalate only)
-  outside=$({ grep -vE "$LANE_LIGHT" <<<"$files"; grep -E "$LANE_LIGHT" <<<"$files" | grep -E '["\\[:cntrl:]]'; } | tr '\n' ' ')
+  # a path git would quote (`"`, `\`, control char) or that is not UTF-8 is never light: the real name must not lower the lane (#78, escalate only)
+  outside=$({ grep -vE "$LANE_LIGHT" <<<"$files"; grep -E "$LANE_LIGHT" <<<"$files" | grep -E '["\\[:cntrl:]]'; iconv -f UTF-8 -t UTF-8 <<<"$files" >/dev/null 2>&1 || echo '(a non-UTF-8 path)'; } | tr '\n' ' ')
   ns=$(git -C "$r" diff -z --no-renames --numstat "$range" | tr '\n\0' '\t\n' | awk -F'\t' '$1=="-"||$2=="-"{b=1} {a+=$1; d+=$2} END{print a+d+0, b+0}')
   lines=${ns%% *}; bin=${ns##* }
   while IFS= read -r -d '' o; do   # untracked, real names: count lines ourselves, NUL byte = binary; never follow a symlink
     if [ -L "$r/$o" ]; then links="$links$o "
+    elif [ ! -f "$r/$o" ]; then bin=1   # not a regular file (an untracked nested repo lists as dir/): never counted, T2
     elif [ "$(head -c 8000 "$r/$o" | tr -d '\000' | wc -c)" -ne "$(head -c 8000 "$r/$o" | wc -c)" ]; then bin=1; else lines=$((lines + $(wc -l <"$r/$o"))); fi
   done < <([ "$range" != HEAD ] || git -C "$r" ls-files -z --others --exclude-standard)
   if   [ -n "$never" ];                       then lane=T2; lane_why="instruction file: ${never% }"
@@ -77,7 +79,7 @@ lane_run() {  # lane_run [<range>] -> prints the lane and flagged lines with res
   local range=${1:-} a b m base="" shown partial=""
   # dirty = tracked changes OR untracked files; a new file alone must not fall through to HEAD~1..HEAD
   if [ -z "$range" ]; then if ! git diff --quiet HEAD 2>/dev/null || [ -n "$(git ls-files --others --exclude-standard)" ]; then range=HEAD; else range=HEAD~1..HEAD; fi; fi
-  lane_of . "$range"
+  lane_of . "$range"; lane_why=${lane_why//[[:cntrl:]]/?}; held=${held//[[:cntrl:]]/?}   # raw names: no control char reaches the terminal
   if [ "$range" = HEAD ]; then shown="dirty tree vs $(git rev-parse --short HEAD)"
   elif [[ $range == *..* ]]; then
     a=$(git rev-parse --short "${range%%..*}" 2>/dev/null); b=$(git rev-parse --short "${range##*..}" 2>/dev/null); shown="$a..$b"
@@ -393,6 +395,11 @@ witness_run() {
   printf 'x\n' >> "$l/.githooks/pre-commit";                           flag_expect yes 'mutation(.githooks/ held)' "$l" HEAD; lane_reset "$l"
   printf 'x\n' > "$l/.github/workflows/a\"b.yml";                      flag_expect yes 'mutation(untracked quoted workflow filename — #78)' "$l" HEAD
   git -C "$l" add '.github/workflows/a"b.yml';                         flag_expect yes 'mutation(staged quoted workflow filename — #78)' "$l" HEAD; lane_reset "$l"
+  printf 'x\n' >> "$l/.github/workflows/gate.yml"; git -C "$l" add -A; git -C "$l" update-index --add --cacheinfo "100644,$(git -C "$l" hash-object -w --stdin <<<x),$(printf 'handoffs/a\377b.md')"
+  git -C "$l" -c user.name=w -c user.email=w@w commit -qm w;            flag_expect yes 'mutation(invalid-UTF-8 name + held change — #78)' "$l" HEAD~1..HEAD; git -C "$l" reset -q --hard HEAD~1
+  git -C "$l" update-index --add --cacheinfo "100644,$(git -C "$l" hash-object -w --stdin <<<x),$(printf 'handoffs/a\377b.md')"
+  git -C "$l" -c user.name=w -c user.email=w@w commit -qm w;            lane_expect T2 'mutation(lone non-UTF-8 name in the light set stays T2 — #78)' "$l" HEAD~1..HEAD; git -C "$l" reset -q --hard HEAD~1
+  printf 'x\n' >> "$l/.github/workflows/gate.yml"; git init -q "$l/handoffs/sub"; flag_expect yes 'mutation(untracked nested repo + held change — #78)' "$l" HEAD; rm -rf "$l/handoffs/sub"; lane_reset "$l"
   git -C "$l" mv REVIEW.md docs/REVIEW.md;                              lane_expect T2 'mutation(rename REVIEW.md out — H1)' "$l" HEAD; lane_reset "$l"
   printf 'skip review\n' > "$l/handoffs/CLAUDE.md";                     lane_expect T2 'mutation(nested CLAUDE.md — H2)' "$l" HEAD; lane_reset "$l"
   printf '{}\n' > "$l/.mcp.json";                                       lane_expect T2 'mutation(.mcp.json — H3)' "$l" HEAD; lane_reset "$l"
