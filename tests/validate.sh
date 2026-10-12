@@ -198,6 +198,8 @@ check_skill_copies() {
     || { why="plugin/skills/new-project/SKILL.md and .claude/skills/new-project/SKILL.md differ (must be byte-identical)"; return 1; }
   cmp -s "$1/plugin/skills/intent-conversation/SKILL.md" "$1/.claude/skills/intent-conversation/SKILL.md" \
     || { why="plugin/skills/intent-conversation/SKILL.md and .claude/skills/intent-conversation/SKILL.md differ (must be byte-identical)"; return 1; }
+  cmp -s "$1/plugin/skills/dispatch/SKILL.md" "$1/.claude/skills/dispatch/SKILL.md" \
+    || { why="plugin/skills/dispatch/SKILL.md and .claude/skills/dispatch/SKILL.md differ (must be byte-identical)"; return 1; }
 }
 
 check_template_gate_parity() {  # the scaffolded gate must hold and size like this one: same staged diff, same lane:/flagged: lines
@@ -358,6 +360,8 @@ witness_run() {
   expect FAIL 'mutation(.claude new-project copy)' skill-copies "$m"; reset_wt "$m"
   echo x >> "$m/.claude/skills/intent-conversation/SKILL.md"
   expect FAIL 'mutation(.claude intent-conversation copy)' skill-copies "$m"; reset_wt "$m"
+  echo x >> "$m/.claude/skills/dispatch/SKILL.md"
+  expect FAIL 'mutation(.claude dispatch copy)' skill-copies "$m"; reset_wt "$m"
   # template-gate-parity: the baseline row keeps the mutation rows from passing on a missing check
   expect ok baseline template-gate-parity "$m"
   sed -i.bak 's/^LANE_HOLD=.*/LANE_HOLD=nothing-held/' "$m/plugin/templates/new-project/files/tests/validate.sh"
