@@ -19,7 +19,7 @@ cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)" || exit 2
 FO=plugin/skills/factory-orchestrator/SKILL.md
 DOC=docs/engineering-workflow.md
 SK=plugin/skills/engineering-workflow/SKILL.md
-CHECKS="sync-rule stage-parity intent-layout adr-numbering adr-refs hooks-json skill-frontmatter skill-copies template-gate-parity agents-commands t1-trust-wording t1-log-clobber t1-spawn-session t3-label-drift t3-precedence pr-adr-line"
+CHECKS="sync-rule stage-parity intent-layout adr-numbering adr-refs hooks-json skill-frontmatter skill-copies template-gate-parity agents-commands t1-trust-wording t1-log-clobber t1-spawn-session t3-label-drift t3-precedence dispatch-hold pr-adr-line"
 
 fail=0; why=""
 list_checks() { printf '%s\n' $CHECKS; }
@@ -251,6 +251,12 @@ check_t3_precedence() {
   grep -qF 'Overrides to the vendored skill:' "$1" || { why="$1: missing 'Overrides to the vendored skill:'"; return 1; }
 }
 
+# dispatch-hold  plugin dispatch skill (#42, ADR 0005): the merge step ties to `flagged: no`; the old fail-open line is gone  witness: mutation rows
+check_dispatch_hold() {
+  grep -qF 'flagged: no' "$1" && ! grep -qF 'plus this one QC check merges' "$1" \
+    || { why="$1: expected the merge tied to 'flagged: no' and no 'plus this one QC check merges'"; return 1; }
+}
+
 # pr-adr-line  PR body file (ADR 0005: every PR body carries an ADR: line; presence only)  witness: three mutation rows
 check_pr_adr_line() {  # a fenced line is quoted text, not the PR's own ADR line
   awk '/^[[:space:]]*(```|~~~)/{f=!f; next} !f' "$1" | grep -qE '^ADR:[[:space:]]*[^[:space:]]' || { why="$1: no 'ADR:' line (write 'ADR: none' when the PR records no decision)"; return 1; }
@@ -278,6 +284,7 @@ default_run() {
   for c in stage-parity intent-layout adr-numbering adr-refs hooks-json skill-frontmatter skill-copies template-gate-parity agents-commands; do run "$c" .; done
   for c in t1-trust-wording t1-log-clobber t1-spawn-session; do run "$c" "$FO"; done
   for c in t3-label-drift t3-precedence; do run "$c" AGENTS.md; done
+  run dispatch-hold plugin/skills/dispatch/SKILL.md
   if [ -n "$body" ]; then run pr-adr-line "$body"; else echo "skipped: pr-adr-line — no PR body file given (CI passes one)"; fi
   echo "$ran_ok ok, $fail_count failed (range: $range)"
   lane_run "$range" || true   # trailer, not a check: same range as the gate so one paste carries both (ADR 0003)
@@ -406,6 +413,9 @@ witness_run() {
   showfile 4e9b547 $FO; sed -i.bak 's/trust dialog is SKIPPED/trust dialog is shown/' "$T"; expect FAIL 'mutation(SKIPPED→shown)' t1-trust-wording "$T"
   showfile 92e6a25 AGENTS.md; echo 'never auto-apply labels' >>"$T";                  expect FAIL 'mutation(+never auto-apply labels)' t3-label-drift "$T"
   showfile 92e6a25 AGENTS.md; sed -i.bak 's/does NOT apply/does not apply/' "$T";     expect FAIL 'mutation(NOT→not)' t3-label-drift "$T"
+  showfile HEAD plugin/skills/dispatch/SKILL.md;                                      expect ok baseline dispatch-hold "$T"
+  sed -i.bak 's/flagged: no/flagged: maybe/' "$T";                                    expect FAIL 'mutation(-flagged: no tie)' dispatch-hold "$T"
+  showfile HEAD plugin/skills/dispatch/SKILL.md; echo 'Green `validate` plus this one QC check merges — no' >>"$T"; expect FAIL 'mutation(+f467444 merge line)' dispatch-hold "$T"
   printf 'Summary\n\nNo decision line.\n' >"$BASE/body";                              expect FAIL 'mutation(PR body, no ADR: line)' pr-adr-line "$BASE/body"
   printf 'Summary\n\nADR: none\n' >"$BASE/body";                                      expect ok 'PR body, ADR: none' pr-adr-line "$BASE/body"
   printf 'Summary\n\n```\nADR: none\n```\n' >"$BASE/body";                            expect FAIL 'mutation(PR body, ADR: line only fenced)' pr-adr-line "$BASE/body"

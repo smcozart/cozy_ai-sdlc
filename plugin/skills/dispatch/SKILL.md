@@ -4,7 +4,7 @@ description: >
   Dispatch approved work from this conversation: start one fresh,
   worktree-isolated worker per ready-for-agent issue, respect blockers and
   overlapping files, and own progress, QC, lane-sized adversary, merge gates,
-  and retirement. Dispatch is automatic — it fires at /build gate 1 whenever
+  and retirement. Dispatch is automatic — it fires whenever
   the live frontier is non-empty, immediately after any approval that leaves
   ready-for-agent work, and on every worker idle notification or QC
   completion, never by background polling. Also use when the developer says
@@ -42,7 +42,7 @@ intent is not a worker brief. Re-check the frontier immediately before each
 launch, not just at the top of the move.
 
 An operation that provisions, first-deploys, migrates or changes identities
-stays human-run even if labelled — never dispatched (ADR-001 D5).
+stays human-run even if labelled — never dispatched.
 
 ## Move 2 — Batch
 
@@ -113,29 +113,33 @@ conflicting work for re-batching. Review against the ticket's spec and this
 repo's review policy. A fix needs fail-first evidence. If the branch is stale,
 the worker rebases and proof reruns before merge.
 
-This one check folds in the lane's review (ADR-002): T2 one read-only
+This one check folds in the lane's review (ADR 0003): T2 one read-only
 adversary pass, T1 one bounded pass over the diff's own claims (MED+ only), T0
 none — `adversary: n/a — T0` plus the filled `no-ADR=<y/n>
 not-speculative=<y/n>` line. Escalate a lane, never lower it. Two consecutive
 QC failures across the chain halt new launches until the developer weighs in.
 
-**Merge gate is light.** Green `validate` plus this one QC check merges — no
-further review rounds. `flagged-risk` merges only on a named human checkoff.
-Send unresolved findings back to the same worker, never to a new one. When the
-QC check passes, the orchestrator merges: `gh pr merge --squash --delete-branch
-<pr>`. Workers never enable auto-merge on ticket PRs — that would land a
-change before this check runs.
+**Merge gate is light (ADR 0005).** The orchestrator merges only when the
+required `gate` check is green, this QC check passed, and the gate run's
+`flagged:` line says `flagged: no` — then `gh pr merge --squash
+--delete-branch <pr>`, no further review rounds. At `flagged: yes`, or with no
+`flagged:` line, dispatch never merges on its own: a human does (below). A
+`flagged-risk` or `ready-for-human` label only adds a hold, never removes one.
+Send unresolved findings back to the same worker, never to a new one. Workers
+never enable auto-merge on ticket PRs — that would land a change before this
+check runs.
 
 **A held PR is announced, never implied.** When a PR waits on a human
-(`flagged-risk`, `ready-for-human`, or a path this repo's review policy holds),
-the turn ends on the fuller `Needs you:` line: the PR number and link, one line
-on what it changes, its gate state (`validate`, this QC check, the adversary
-verdict), and the two ways through — `say "merge <n>"` or merge it in GitHub.
+(`flagged: yes`, no `flagged:` line, or a `flagged-risk` or `ready-for-human`
+label), add the `flagged-risk` label and end the turn on the fuller `Needs you:`
+line: the PR number and link, one line on what it changes, its gate state
+(`gate`, this QC check, the adversary verdict), and the two ways through —
+`say "merge <n>"` or merge it in GitHub.
 Nothing else waits on the developer: an unheld PR that is green and QC-clean
 merges without asking.
 
 **"merge <n>" is the checkoff — after a green gate, never instead of one.**
-Only when `validate` is green and this QC check has passed: write `Checkoff by
+Only when `gate` is green and this QC check has passed: write `Checkoff by
 <developer> at <UTC timestamp>:` and their words verbatim to a file, post it on
 the PR thread (`gh pr comment <n> --body-file <file>`), then merge. If the gate
 is red or QC is open, say so in the `Needs you:` line and do not merge — the
