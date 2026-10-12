@@ -56,7 +56,8 @@ Concurrency: 2 workers by default, 1 when any candidate's Touches are unknown
 or overlapping, 0 new launches while any PR waits on a human gate. The
 developer can change this in plain language for the rest of the conversation.
 
-Reserve issue, branch, worktree path, Touches, base SHA, worker/session id, PR
+Reserve issue, branch, worktree path, Touches, base SHA (`git rev-parse
+origin/<base>` at reservation, `<base>` as in Move 5), worker/session id, PR
 and state under the repo's own ignored `.factory/` directory before launching.
 Reconcile against Git/worktrees/PRs before retrying or re-entering after a
 restart; never double-launch. This is local recovery state, not a second
@@ -105,8 +106,9 @@ and never closed — they are the developer's own.
 
 Run yourself, on the worker's branch, never by switching the developer's busy
 checkout: the ticket's acceptance commands, then `bash tests/validate.sh
-origin/main..HEAD` (record base/head SHAs, full output, exit code and lane
-line). Compare the actual diff's paths to its Touches; expansion pauses
+origin/<base>..HEAD` (`<base>`: the base branch named in `AGENTS.md`,
+`**Base branch:**`, default `main`; record base/head SHAs, full output, exit
+code and lane line). Compare the actual diff's paths to its Touches; expansion pauses
 conflicting work for re-batching. Review against the ticket's spec and this
 repo's review policy. A fix needs fail-first evidence. If the branch is stale,
 the worker rebases and proof reruns before merge.
@@ -187,7 +189,8 @@ developer should never have to guess whether the loop is waiting on them.
 ## Worker brief (send this, filled in, as the kickoff prompt)
 
 > You are the worker for issue #<n> only in <owner/repo>, worktree
-> <absolute-path>, expected branch `t<n>-<slug>`, approved base `<sha>`. You
+> <absolute-path>, expected branch `t<n>-<slug>`, approved base `<sha>`
+> (`git rev-parse origin/<base>` at reservation). You
 > implement; your creator orchestrates. Do not load `dispatch` or start
 > another ticket from here.
 >
@@ -209,19 +212,19 @@ developer should never have to guess whether the loop is waiting on them.
 > `git branch --show-current` is not `t<n>-<slug>`, rename it (your harness's
 > branch-rename tool, or `git branch -m`) or create it from `<sha>` before
 > editing. Never force an existing branch, write in the creator's checkout,
-> commit to `main`, or push `main`.
+> commit to `<base>`, or push `<base>`.
 >
 > No keys in code or `.env`. No provisioning, deploy, migration or identity
 > operation — cite platform ADRs, never re-decide them. Test-first, shortest
 > complete diff, no speculative abstractions.
 >
 > Run and paste the ticket's acceptance commands and `bash tests/validate.sh
-> origin/main..HEAD` (exit 0, with its lane line). Fixes carry fail-first
+> origin/<base>..HEAD` (exit 0, with its lane line). Fixes carry fail-first
 > proof. Rebase a stale base and rerun before you say you're done.
 >
 > Record any decision this ticket needs an ADR for, under this repo's
 > ownership rules, in this PR — never invent an approval. Commit and push only
-> your branch; open the PR to `main` with a body file carrying the same proof,
+> your branch; open the PR to `<base>` with a body file carrying the same proof,
 > and paste it on #<n> too. Do not merge or close the issue.
 >
 > Handoff ends your turn. Your final message is two lines and then you stop:
