@@ -19,7 +19,7 @@ cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)" || exit 2
 FO=plugin/skills/factory-orchestrator/SKILL.md
 DOC=docs/engineering-workflow.md
 SK=plugin/skills/engineering-workflow/SKILL.md
-CHECKS="sync-rule stage-parity intent-layout adr-numbering adr-refs hooks-json skill-frontmatter skill-copies agents-commands t1-trust-wording t1-log-clobber t1-spawn-session t3-label-drift t3-precedence pr-adr-line"
+CHECKS="sync-rule stage-parity intent-layout adr-numbering adr-refs hooks-json skill-frontmatter skill-copies template-gate-parity agents-commands t1-trust-wording t1-log-clobber t1-spawn-session t3-label-drift t3-precedence pr-adr-line"
 
 fail=0; why=""
 list_checks() { printf '%s\n' $CHECKS; }
@@ -198,6 +198,23 @@ check_skill_copies() {
     || { why="plugin/skills/new-project/SKILL.md and .claude/skills/new-project/SKILL.md differ (must be byte-identical)"; return 1; }
 }
 
+check_template_gate_parity() {  # the scaffolded gate must hold and size like this one: same staged diff, same lane:/flagged: lines
+  local r=$1 t=$1/plugin/templates/new-project/files d f a b rc=0
+  cmp -s "$r/.pi/agents/adversary.md" "$t/.pi/agents/adversary.md" \
+    || { why=".pi/agents/adversary.md and its template copy differ (must be byte-identical)"; return 1; }
+  d=$(mktemp -d "${TMPDIR:-/tmp}/parity.XXXXXX"); mkdir -p "$d/tests"   # a temp repo, never a worktree
+  cp "$r/tests/validate.sh" "$d/tests/validate.sh" && cp "$t/tests/validate.sh" "$d/tests/template.sh" && git -C "$d" init -q && git -C "$d" add -A \
+    && git -C "$d" -c user.name=parity -c user.email=parity@localhost -c commit.gpgsign=false -c core.hooksPath=/dev/null commit -qm base \
+    || { why="cannot build the temp repo in $d"; rm -rf "$d"; return 1; }
+  for f in .github/workflows/x.yml handoffs/x.md; do   # the merge hold, then a light path
+    mkdir -p "$d/${f%/*}"; printf 'x\n' >"$d/$f"; git -C "$d" add "$f"
+    a=$(bash "$d/tests/validate.sh" --lane | grep -E '^(lane|flagged):'); b=$(bash "$d/tests/template.sh" --lane | grep -E '^(lane|flagged):')
+    [[ $a == *flagged:* ]] && [ "$a" = "$b" ] || { why="$f: main [${a//$'\n'/ | }] vs template [${b//$'\n'/ | }]"; rc=1; break; }
+    git -C "$d" reset -q --hard
+  done
+  rm -rf "$d"; return $rc
+}
+
 check_agents_commands() {
   local r=$1 have want
   [ -f "$r/AGENTS.md" ] || { why="AGENTS.md missing"; return 1; }
@@ -254,7 +271,7 @@ default_run() {
     if ! git diff --quiet HEAD 2>/dev/null; then range=HEAD; else range=HEAD~1..HEAD; fi
   fi
   run sync-rule "$range"
-  for c in stage-parity intent-layout adr-numbering adr-refs hooks-json skill-frontmatter skill-copies agents-commands; do run "$c" .; done
+  for c in stage-parity intent-layout adr-numbering adr-refs hooks-json skill-frontmatter skill-copies template-gate-parity agents-commands; do run "$c" .; done
   for c in t1-trust-wording t1-log-clobber t1-spawn-session; do run "$c" "$FO"; done
   for c in t3-label-drift t3-precedence; do run "$c" AGENTS.md; done
   if [ -n "$body" ]; then run pr-adr-line "$body"; else echo "skipped: pr-adr-line — no PR body file given (CI passes one)"; fi
@@ -319,7 +336,7 @@ witness_run() {
     else echo "witness FAIL: summary @$2 expected $1, got summary=$sum vs ok-lines=$lines"; wfail=1; fi
   }
   sum_row ok 'baseline — summary counts what ran'
-  sed -i.bak 's/echo "\$ran_ok ok, \$fail_count failed/echo "15 ok, \$fail_count failed/' "$m/tests/validate.sh" && rm -f "$m/tests/validate.sh.bak"
+  sed -i.bak 's/echo "\$ran_ok ok, \$fail_count failed/echo "99 ok, \$fail_count failed/' "$m/tests/validate.sh" && rm -f "$m/tests/validate.sh.bak"
   sum_row FAIL 'mutation(summary hardcoded — the F2 bug shape)'; reset_wt "$m"
   (cd "$m" && python3 -c "p='intent/9-test-stage/intent.md';s=open(p).read().replace('#9','#8');open(p,'w').write(s)")
   expect FAIL mutation intent-layout "$m"; reset_wt "$m"
@@ -337,6 +354,12 @@ witness_run() {
   expect FAIL 'mutation(.claude cmu copy)' skill-copies "$m"; reset_wt "$m"
   echo x >> "$m/.claude/skills/new-project/SKILL.md"
   expect FAIL 'mutation(.claude new-project copy)' skill-copies "$m"; reset_wt "$m"
+  # template-gate-parity: the baseline row keeps the mutation rows from passing on a missing check
+  expect ok baseline template-gate-parity "$m"
+  sed -i.bak 's/^LANE_HOLD=.*/LANE_HOLD=nothing-held/' "$m/plugin/templates/new-project/files/tests/validate.sh"
+  expect FAIL "mutation(template LANE_HOLD)" template-gate-parity "$m"; reset_wt "$m"
+  echo x >> "$m/plugin/templates/new-project/files/.pi/agents/adversary.md"
+  expect FAIL 'mutation(template adversary copy)' template-gate-parity "$m"; reset_wt "$m"
   grep -v '^## Maintain' "$m/$DOC" > "$m/t" && mv "$m/t" "$m/$DOC"
   expect FAIL 'mutation(-## Maintain)' stage-parity "$m"; reset_wt "$m"
   grep -v '^## Maintain' "$m/$SK" > "$m/t" && mv "$m/t" "$m/$SK"
