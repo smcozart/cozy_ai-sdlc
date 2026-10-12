@@ -59,5 +59,5 @@ events.
 | Deploy: merge-gate honesty (401 vs absence); merge hold (ADR 0005) | [`merge-policy.md`](merge-policy.md) | Behavior. Written at the ADR 0005 adoption PR (#39). |
 | Maintain: eval-on-incident; prose parity | this file; sync-content row | The trigger above is the eval-on-incident rule. |
 | Close without proof (Test §1) | [`close-without-proof.md`](close-without-proof.md) | Contract on main today. This is the proof-of-concept file. |
-| Dispatch hold (never merge a held PR) | `dispatch-hold.md` (not yet written) | The `dispatch` skill is not on main. Write at the #42 adoption PR. |
+| Dispatch hold (never merge a held PR) | [`dispatch-hold.md`](dispatch-hold.md) | Behavior. Written at the #42 adoption PR (#82); first run owed, operator-run. Text half: the `dispatch-hold` check. |
 | cmu pickup (read-only catch-up) | [`cmu-pickup.md`](cmu-pickup.md) | Behavior. Written at the `cmu` adoption PR (#79). |
