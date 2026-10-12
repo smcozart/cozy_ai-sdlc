@@ -28,7 +28,8 @@ Design ──► spec.md beside the intent; ADRs over the bar; vertical-slice
           a settled decision is a record in the same turn (ADR, spec
           section, or ticket body); settling approves the decision;
           settling is not a merge approval — the record merges only under
-          the repo's merge policy (ADR 0005)
+          the repo's merge policy (ADR 0005); the `intent-conversation`
+          skill carries the mechanics
 Build ───► one ticket per agent session; workers cite ADRs, write ADRs
           (optional plan.md sequences tickets for multi-ticket builds — not
           the agent's per-session plan-before-code)
@@ -42,7 +43,7 @@ Deploy ──► review loop per REVIEW.md; merge gate pasted (review resolution
           .github/workflows/**, .githooks/**; `flagged: yes`) merges on a
           named human checkoff, everything else lands on green with review
           after merge; a 401 is not evidence of absence — authenticate first
-Maintain ─► intake: retros/incidents feed back through Plan; fixed incident classes → eval ledger (#8)
+Maintain ─► intake: retros/incidents feed back through Plan; fixed incident classes → eval ledger (#8); a resuming session reads the delta first with /cmu
 ```
 
 **Light lane, computed.** `tests/validate.sh --lane <range>` classifies a

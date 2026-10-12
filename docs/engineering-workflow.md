@@ -150,7 +150,8 @@ that moves work toward `ready-for-agent`.
    sign-off on the decision is owed beyond item 6's high-risk carve-out.
    Reply in one line naming the record. "Captured in this conversation
    only" and "finish mapping first, then update once" are not moves; batch
-   only when asked.
+   only when asked. The `intent-conversation` skill carries the mechanics
+   (records branch/PR, one-line reply).
 
 ## Light lane — thin front end, same tail
 
@@ -408,11 +409,12 @@ tooling — waits on #1.
 | Test discipline | `/tdd` | Default mode inside implement. Every test justifies itself — guards behavior no other test covers. |
 | Debugging | `/diagnosing-bugs` | When something is broken/slow, not during planned work. |
 | Review | `REVIEW.md`, `/code-review` | After each diff (or each batch). Two axes: standards + spec; policy per REVIEW.md. |
-| Adversarial review | `adversary` subagent (pi) | Mandatory on agent-produced diffs. Breaks the author-boss bias loop. Claude equivalent: a second review pass with "assume this is wrong" instructions. |
+| Adversarial review | `adversary` subagent (pi) | On agent-produced diffs, sized to the computed lane (ADR 0003): full at T2, bounded to the diff's claims at T1, none at T0 where the human review is the second pair of eyes. Breaks the author-boss bias loop. Claude equivalent: a second review pass with "assume this is wrong" instructions. |
 | Record decisions | `domain-modeling` | ADR bar: hard to reverse, surprising without context, or a real trade-off. One paragraph, `docs/adr/NNNN-slug.md`, **commit and push** — an unpushed ADR is invisible. Visible in code ⇒ no ADR. |
 | Shared vocabulary | `CONTEXT.md` via `domain-modeling` | Update when terminology shifts; consumers read it before issues. |
 | Milestone retro | `/retro` | At milestones or when a failure pattern repeats. Feed findings into ADRs or process edits. |
 | Session end | `/handoff` | Compact conversation → handoff doc for the next session. References artifacts by path; never duplicates them. |
+| Session pickup | `/cmu` | Resuming after time away, or after unattended dispatch. Reads the tracker and git for a grounded delta since an anchor — landed, in flight, needs you, next. Reports only; never dispatches or writes. |
 
 ## Orchestration layer (multi-agent builds)
 
