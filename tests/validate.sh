@@ -252,9 +252,10 @@ check_t3_precedence() {
 }
 
 # dispatch-hold  plugin dispatch skill (#42, ADR 0005): the merge step ties to `flagged: no`; the old fail-open line is gone  witness: mutation rows
-check_dispatch_hold() {
-  grep -qF 'flagged: no' "$1" && ! grep -qF 'plus this one QC check merges' "$1" \
-    || { why="$1: expected the merge tied to 'flagged: no' and no 'plus this one QC check merges'"; return 1; }
+check_dispatch_hold() {  # whitespace-joined, so a reflow neither hides the old line nor breaks the tie
+  local t; t=$(tr -s '[:space:]' ' ' <"$1")
+  grep -qF "and the gate run's \`flagged:\` line says \`flagged: no\`" <<<"$t" && ! grep -qF 'plus this one QC check merges' <<<"$t" \
+    || { why="$1: expected the merge tied by 'and the gate run's \`flagged:\` line says \`flagged: no\`' and no 'plus this one QC check merges'"; return 1; }
 }
 
 # pr-adr-line  PR body file (ADR 0005: every PR body carries an ADR: line; presence only)  witness: three mutation rows
@@ -416,6 +417,8 @@ witness_run() {
   showfile HEAD plugin/skills/dispatch/SKILL.md;                                      expect ok baseline dispatch-hold "$T"
   sed -i.bak 's/flagged: no/flagged: maybe/' "$T";                                    expect FAIL 'mutation(-flagged: no tie)' dispatch-hold "$T"
   showfile HEAD plugin/skills/dispatch/SKILL.md; echo 'Green `validate` plus this one QC check merges — no' >>"$T"; expect FAIL 'mutation(+f467444 merge line)' dispatch-hold "$T"
+  showfile HEAD plugin/skills/dispatch/SKILL.md; printf 'Green `validate` plus this one\nQC check merges — no\n' >>"$T"; expect FAIL 'mutation(+f467444 line reflowed)' dispatch-hold "$T"
+  showfile HEAD plugin/skills/dispatch/SKILL.md; sed -i.bak "s/passed, and the gate run's/passed, or the gate run's/" "$T"; expect FAIL 'mutation(and→or tie)' dispatch-hold "$T"
   printf 'Summary\n\nNo decision line.\n' >"$BASE/body";                              expect FAIL 'mutation(PR body, no ADR: line)' pr-adr-line "$BASE/body"
   printf 'Summary\n\nADR: none\n' >"$BASE/body";                                      expect ok 'PR body, ADR: none' pr-adr-line "$BASE/body"
   printf 'Summary\n\n```\nADR: none\n```\n' >"$BASE/body";                            expect FAIL 'mutation(PR body, ADR: line only fenced)' pr-adr-line "$BASE/body"
