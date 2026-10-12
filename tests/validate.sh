@@ -321,6 +321,8 @@ witness_run() {
   expect FAIL mutation skill-copies "$m"; reset_wt "$m"
   echo x >> "$m/.claude/skills/factory-orchestrator/SKILL.md"
   expect FAIL 'mutation(.claude factory copy)' skill-copies "$m"; reset_wt "$m"
+  echo x >> "$m/.claude/skills/cmu/SKILL.md"
+  expect FAIL 'mutation(.claude cmu copy)' skill-copies "$m"; reset_wt "$m"
   grep -v '^## Maintain' "$m/$DOC" > "$m/t" && mv "$m/t" "$m/$DOC"
   expect FAIL 'mutation(-## Maintain)' stage-parity "$m"; reset_wt "$m"
   grep -v '^## Maintain' "$m/$SK" > "$m/t" && mv "$m/t" "$m/$SK"
