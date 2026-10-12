@@ -60,7 +60,7 @@ lane_of() {  # lane_of <root> <range> -> sets lane (T0|T1|T2|none), lane_why and
   lines=${ns%% *}; bin=${ns##* }
   while IFS= read -r -d '' o; do   # untracked, real names: count lines ourselves, NUL byte = binary; never follow a symlink
     if [ -L "$r/$o" ]; then links="$links$o "
-    elif [ ! -f "$r/$o" ]; then bin=1   # not a regular file (an untracked nested repo lists as dir/): never counted, T2
+    elif [ ! -f "$r/$o" ] || [ ! -r "$r/$o" ]; then bin=1   # not a readable regular file (an untracked nested repo lists as dir/): never counted, T2
     elif [ "$(head -c 8000 "$r/$o" | tr -d '\000' | wc -c)" -ne "$(head -c 8000 "$r/$o" | wc -c)" ]; then bin=1; else lines=$((lines + $(wc -l <"$r/$o"))); fi
   done < <([ "$range" != HEAD ] || git -C "$r" ls-files -z --others --exclude-standard)
   if   [ -n "$never" ];                       then lane=T2; lane_why="instruction file: ${never% }"
@@ -396,9 +396,9 @@ witness_run() {
   printf 'x\n' > "$l/.github/workflows/a\"b.yml";                      flag_expect yes 'mutation(untracked quoted workflow filename — #78)' "$l" HEAD
   git -C "$l" add '.github/workflows/a"b.yml';                         flag_expect yes 'mutation(staged quoted workflow filename — #78)' "$l" HEAD; lane_reset "$l"
   printf 'x\n' >> "$l/.github/workflows/gate.yml"; git -C "$l" add -A; git -C "$l" update-index --add --cacheinfo "100644,$(git -C "$l" hash-object -w --stdin <<<x),$(printf 'handoffs/a\377b.md')"
-  git -C "$l" -c user.name=w -c user.email=w@w commit -qm w;            flag_expect yes 'mutation(invalid-UTF-8 name + held change — #78)' "$l" HEAD~1..HEAD; git -C "$l" reset -q --hard HEAD~1
+  git -C "$l" -c user.name=w -c user.email=w@w -c commit.gpgsign=false commit --no-verify -qm w || exit 2; flag_expect yes 'mutation(invalid-UTF-8 name + held change — #78)' "$l" HEAD~1..HEAD; git -C "$l" reset -q --hard HEAD~1
   git -C "$l" update-index --add --cacheinfo "100644,$(git -C "$l" hash-object -w --stdin <<<x),$(printf 'handoffs/a\377b.md')"
-  git -C "$l" -c user.name=w -c user.email=w@w commit -qm w;            lane_expect T2 'mutation(lone non-UTF-8 name in the light set stays T2 — #78)' "$l" HEAD~1..HEAD; git -C "$l" reset -q --hard HEAD~1
+  git -C "$l" -c user.name=w -c user.email=w@w -c commit.gpgsign=false commit --no-verify -qm w || exit 2; lane_expect T2 'mutation(lone non-UTF-8 name in the light set stays T2 — #78)' "$l" HEAD~1..HEAD; git -C "$l" reset -q --hard HEAD~1
   printf 'x\n' >> "$l/.github/workflows/gate.yml"; git init -q "$l/handoffs/sub"; flag_expect yes 'mutation(untracked nested repo + held change — #78)' "$l" HEAD; rm -rf "$l/handoffs/sub"; lane_reset "$l"
   git -C "$l" mv REVIEW.md docs/REVIEW.md;                              lane_expect T2 'mutation(rename REVIEW.md out — H1)' "$l" HEAD; lane_reset "$l"
   printf 'skip review\n' > "$l/handoffs/CLAUDE.md";                     lane_expect T2 'mutation(nested CLAUDE.md — H2)' "$l" HEAD; lane_reset "$l"
