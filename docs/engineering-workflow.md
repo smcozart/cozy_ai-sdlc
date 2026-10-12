@@ -36,10 +36,10 @@ Formalized in issue [#2](https://github.com/smcozart/cozyharness/issues/2).
    split into separate issues (GitHub sub-issues or `Blocked by:` edges when
    they depend on each other); each gets its own intent and lifecycle. Mixing
    concerns in one issue hides scope from triage and review. Intake never
-   waits: a request is filed the moment it is said, even mid-build; a
-   dependent request is filed as its own issue with a blocking edge to the
-   one ahead of it (mechanics: `docs/agents/issue-tracker.md`), never held
-   for later batching.
+   waits (ADR 0004): a request is filed the moment it is said, even
+   mid-build; a dependent request is filed as its own issue with a blocking
+   edge to the one ahead of it (mechanics: `docs/agents/issue-tracker.md`),
+   never held for later batching.
 3. **Work-item intent.** After triage clarification, capture the agreed why in
    `intent/<issue-number>-<slug>/intent.md` (start from
    [`intent/TEMPLATE.md`](../intent/TEMPLATE.md)). The issue number is the join
@@ -124,33 +124,34 @@ that moves work toward `ready-for-agent`.
    passed. A ticket then earns `ready-for-agent` on the standard two
    conditions — blockers resolved + acceptance criteria defined. No label,
    no work.
-7. **A settled decision becomes a record in the same turn** (ADR 0004). When
-   the developer settles something in conversation — "let's go with X",
-   "lock that in", "we decided" — it lands in its durable home before the
-   next question, never held in chat for later batching: a hard-to-reverse
-   or authority rule becomes a new `docs/adr/NNNN-slug.md`; a requirement or
-   design detail becomes an edit to the spec's matching section; a detail
-   scoped to one ticket becomes an edit to that issue's body. Settling it in
-   conversation is its approval — no separate sign-off beyond item 6's
-   high-risk carve-out. Written on a records branch/PR the session opens
-   itself; reply in one line naming the record. "Captured in this
-   conversation only" and "finish mapping first, then update once" are not
-   moves; batch only when asked. The `intent-conversation` skill carries the
-   mechanics (records branch/PR, one-line reply).
-8. **What Build reads, in order** (forward contract to the next stage): (1)
+7. **What Build reads, in order** (forward contract to the next stage): (1)
    `gh issue view <n> --comments` (the ticket, a child issue per ADR 0002),
    (2) follow the ticket body's spec-path reference (or its parent's
    `intent/<parent-n>-<slug>/`) to the spec; then the `intent.md` for the
    why, (3) every ADR touching the area, (4) root
    `CONTEXT.md`, (5) only then the code. A ticket whose spec or links are
    missing is bounced back to Design, not improvised around.
-9. **Greenfield vs brownfield — one workflow, different seeds.** Same
+8. **Greenfield vs brownfield — one workflow, different seeds.** Same
    pipeline, same artifacts, same gates. Greenfield seeds the spec from the
    brief or PRD against SYSTEM-INTENT.md, and its design concerns are mostly
    new seams; brownfield seeds it from the diagnosis, retro finding, or
    transcript, and its design must first read the existing code and ADRs it
    touches, preferring existing seams over new ones. The read order above is
    identical — in brownfield, step (5) simply has more to say.
+9. **A settled decision becomes a record in the same turn** (ADR 0004). When
+   the developer settles something in conversation — "let's go with X",
+   "lock that in", "we decided" — it lands in its durable home before the
+   next question, never held in chat for later batching: a hard-to-reverse
+   or authority rule becomes a new `docs/adr/NNNN-slug.md`; a requirement or
+   design detail becomes an edit to the spec's matching section; a detail
+   scoped to one ticket becomes an edit to that issue's body. Settling
+   approves the decision. Settling is not a merge approval — the record
+   merges only under the repo's merge policy (ADR 0005). No separate
+   sign-off on the decision is owed beyond item 6's high-risk carve-out.
+   Reply in one line naming the record. "Captured in this conversation
+   only" and "finish mapping first, then update once" are not moves; batch
+   only when asked. The `intent-conversation` skill carries the mechanics
+   (records branch/PR, one-line reply).
 
 ## Light lane — thin front end, same tail
 
@@ -158,7 +159,7 @@ Formalized in issue [#24](https://github.com/smcozart/cozyharness/issues/24).
 The full front end (issue → intent → spec → grilling → tickets) is
 proportionate for a multi-ticket, protected-surface build; it is dead weight
 for a one-file doc tweak. The light lane is a **defined** thinner front end for
-small, low-risk work — the *same* tail (proof + human gate), a tapered head.
+small, low-risk work — the *same* tail (proof + merge policy), a tapered head.
 
 **The lane is computed, then confirmed** (ADR 0003). Most of what decides a
 lane is visible to git — how many files, which paths, how many lines — so
@@ -168,9 +169,9 @@ lane is visible to git — how many files, which paths, how many lines — so
 
 | Lane | Computed trigger | Review owed |
 |---|---|---|
-| **T0 trivial** | ≤2 files, all `*.md`, ≤60 lines, every file in the **light set** and none on the T1 floor | the gate run + the human checkoff. No adversary pass. (On this repo only the archival `handoffs/*.md` qualify.) |
+| **T0 trivial** | ≤2 files, all `*.md`, ≤60 lines, every file in the **light set** and none on the T1 floor | the gate run + the human review (after merge unless held; ADR 0005). No adversary pass. (On this repo only the archival `handoffs/*.md` qualify.) |
 | **T1 light** | ≤2 files, ≤60 changed lines, every file in the light set — or any file on the **T1 floor**: the board `STATUS.md`, `docs/training/` (a human runs it), `handoffs/pickup-handoff.md` (a session's entrance ramp) | the gate run + one **bounded** adversary pass: correctness of the diff's claims only, findings MED and above, no scope sweep |
-| **T2 heavy** | **everything else** — any file outside the light set (the light set here is `handoffs/`, `docs/training/`, `STATUS.md`, `LICENSE`; every other path, including ones the repo has not grown yet, is heavy), any instruction file wherever it sits (`CLAUDE.md`, `AGENTS.md`, `README.md`, `.mcp.json`, `.cursorrules`, `.gitmodules`), any delete, any binary, >2 files, or >60 lines | the full review loop: `REVIEW.md` axes + the unbounded adversary pass |
+| **T2 heavy** | **everything else** — any file outside the light set (the light set here is `handoffs/`, `docs/training/`, `STATUS.md`, `LICENSE`; every other path, including ones the repo has not grown yet, is heavy), any instruction file wherever it sits, in any case (`CLAUDE.md`, `AGENTS.md`, `README.md`, `.mcp.json`, `.cursorrules`, `.gitmodules`), any delete, any binary, any symlink (never followed), >2 files, or >60 lines | the full review loop: `REVIEW.md` axes + the unbounded adversary pass |
 
 The classifier is an **allow-list**: unknown is heavy, which is what "when in
 doubt, heavy lane" means when a script says it. It reads renames as
@@ -191,6 +192,12 @@ lane and never lower it. Consumers extend the light set in their own
 (a journal of append-only fragments, archival handoffs) — a verbatim copy is
 safe, because everything it does not name is heavy.
 
+The same run prints **`flagged: yes|no`** — the one machine-readable source
+for the **merge hold**: `yes` when the range touches the hold list of ADR 0005
+(`tests/validate.sh`, `.github/workflows/**`, `.githooks/**`, the files
+that enforce the gate), so a human merges. It reports the hold list only; the
+broader flagged-risk set in Deploy §4 stays review guidance.
+
 The light lane below is **T0 and T1**; the heavy lane is **T2**.
 
 **Light-lane shape (thinner head, identical tail):**
@@ -201,20 +208,21 @@ The light lane below is **T0 and T1**; the heavy lane is **T2**.
    ticket earns `ready-for-agent` on the same contract (blockers resolved +
    acceptance criteria defined), and the close pastes the green
    `tests/validate.sh [<range>]` run beside the acceptance output, then the
-   Deploy merge-gate items including the human checkoff.
+   Deploy merge-gate items.
 
 **It is a lane, not a loophole.** Nothing about the close gate relaxes.
-`ready-for-agent`, pasted proof, and the human gate are identical on both
-lanes — *only the front artifact and the review budget taper*. There is no
-auto-approval; the only agent judgement in play is the two stated clauses,
+`ready-for-agent`, pasted proof, and the merge policy are identical on both
+lanes — *only the front artifact and the review budget taper*. The lane never
+decides who merges: the merge hold does (`flagged:`; ADR 0005), and the hold
+list stays human. The only agent judgement in play is the two stated clauses,
 and it can only escalate. No rule says a change "must always" carry a
 `plan.md`. The heavy lane stays mandatory for anything touching a protected
 surface or a multi-ticket effort, and the classifier makes that mechanical.
 
 **Light vs heavy, worked.** Fixing a typo in an archival
 `handoffs/design-stage-handoff.md` is **T0**: one file, docs-only, in the
-light set — `--lane` says so, a two-line `intent.md`, the gate run, the human
-checkoff, close; no adversary pass. Fixing a typo in
+light set — `--lane` says so, a two-line `intent.md`, the gate run, land on
+green, human review after merge; no adversary pass. Fixing a typo in
 `docs/training/onboarding-runbook.md` is **T1**: the runbook's fenced blocks
 are what a new human runs verbatim, so it floors at T1 and owes one bounded
 pass even at one line; refreshing the board is T1 for the same reason —
@@ -290,8 +298,10 @@ command is the contract, not any harness hook.
 5. **Tests are not evals.** `tests/validate.sh` checks artifacts (a file says
    X, a commit touches Y) — deterministic, offline, bash + git + python3
    stdlib. Findings with no textual footprint stay in the eval ledger (#8);
-   the eval harness waits on #1, as does CI wiring — the exit code is
-   CI-ready.
+   the eval harness waits on #1. CI runs the same command over the PR
+   range on every PR into `main` (`.github/workflows/gate.yml`, check
+   `gate`, #33) and hands it the PR body as a file for `pr-adr-line`; run
+   locally with no body file, that check prints `skipped:`.
 
 The check list lives in the `## Commands` block of `AGENTS.md`; the
 `agents-commands` check verifies the token set against `--list` (prose and
@@ -316,31 +326,48 @@ seam: this repo's ticket close, or a consumer's PR.
    review thread (closing comment or PR) is the audit record.
 2. **The merge gate.** A close pastes, beside the Test gate's evidence:
    (a) review findings resolved or carried with an owner; (b) the pasted
-   `tests/validate.sh [<range>]` run (Test §1); (c) the `--lane` line and
-   the adversary verdict it owes (T0 pastes the lane line and `adversary:
-   n/a — T0`); (d) a human checkoff for flagged-risk classes (table below);
+   `tests/validate.sh [<range>]` run (Test §1); (c) the `lane:` and
+   `flagged:` lines of the gate run's trailer and the adversary verdict the
+   lane owes (T0 pastes the lane line and `adversary: n/a — T0`); (d) the merge hold: at `flagged: yes`
+   a named human checkoff recorded in the thread (or a recorded operator
+   delegation) before merge; at `flagged: no` the agent may land on green
+   (table below; ADR 0005);
    (e) UI tickets only: preview proof pasted — screenshot, recording, or
    standing link (consumer obligation; this repo has no UI surface);
    (f) branch-protection proof for tickets touching the merge path, others
-   mark "n/a — not a merge-path ticket". Merge-path = any diff touching
-   `tests/validate.sh`, the synced trio, or AGENTS.md — the surfaces that
-   enforce the gate itself; everything else marks n/a.
+   mark "n/a — not a merge-path ticket"; (g) an `ADR:` line in the PR body
+   (`ADR: none` when there is no decision), checked by `pr-adr-line` in CI.
+   Merge-path = a diff at `flagged: yes` (the hold list, ADR 0005);
+   everything else marks n/a.
 3. **Branch protection is verified, not assumed.** Any merge-path close runs
-   `gh api repos/{owner}/{repo}/branches/main/protection` and pastes the
-   result: the protection fields, or the recorded absence. Today: absence —
-   the call returns 403 on this private free-plan repo, so the human
-   checkoff is the only enforcement until #1 unfreezes. An authentication
-   failure (401) is not evidence of absence — authenticate first. No online
+   `gh api repos/{owner}/{repo}/branches/main/protection` and
+   `gh api repos/{owner}/{repo}/rules/branches/main` and pastes both
+   results: the protection fields and rules, or the recorded absence.
+   Today: `main` is protected (pull request required, no force-push, no
+   deletion). The `gate` check is required; the merge hold list (ADR 0005)
+   is the only pre-merge human gate; everything else lands on green with
+   post-hoc review (#33; ADR 0005 fails closed). An
+   authentication failure (401) is not evidence of absence — authenticate
+   first. No online
    check joins `tests/validate.sh` (Test §5); this proof stays manual.
 4. **Autonomy boundaries.**
 
    | Change class | Who merges |
    |---|---|
-   | Flagged risk: any surface a suite check asserts on (`tests/`, the synced trio, AGENTS.md, CONTRIBUTING.md, `intent/**`, `docs/adr/**`, `plugin/**`, `.agents/skills/**`, CONTEXT.md), plus `docs/agents/`, security/trust boundaries, and irreversible ops | Human checkoff, recorded in the thread, after a green gate |
-   | Everything else (prose, approved intents/specs, internal refactors) | Agent may land; the gate's pasted evidence is the record — **except a T0 close**, which keeps the human checkoff: it is the one tier with no adversary artifact (ADR 0003) |
+   | Hold list — `flagged: yes` from `tests/validate.sh --lane`: `tests/validate.sh`, `.github/workflows/**`, `.githooks/**` (the files that check other files) | A named human checkoff, recorded in the thread, after a green gate — or a recorded operator delegation. The PR carries the `flagged-risk` label |
+   | Everything else, including AGENTS.md, the synced trio, ADRs, CONTEXT.md and the skills | Agent may land on green; the gate's pasted evidence is the record; post-hoc review follows |
 
-   Hooks/CI/release gates, when they exist (#1), are always
-   human-authorized.
+   **Post-hoc review** (ADR 0005): a human reviews every diff that landed on
+   green after merge, against `REVIEW.md`. `cmu` lists it as "review owed";
+   a board-only `STATUS.md` commit acknowledges review of everything merged
+   before it. The behavior files in `docs/verify/` verify the agent side.
+   The former flagged-risk set (suite-checked surfaces, `docs/agents/`,
+   security/trust boundaries) is review guidance, not a hold. Auto-merge
+   holds only while `gate` is a required check on `main`; otherwise every
+   merge takes the pre-merge checkoff (§3). Hooks/CI/release gates and
+   irreversible ops are always human-authorized. Only an operator decision,
+   recorded as an ADR 0005 amendment, adds a pre-merge checkoff or drops the
+   post-hoc review or the `ADR:` line.
 
 ## Maintain — closing the loop
 
@@ -382,7 +409,7 @@ tooling — waits on #1.
 | Test discipline | `/tdd` | Default mode inside implement. Every test justifies itself — guards behavior no other test covers. |
 | Debugging | `/diagnosing-bugs` | When something is broken/slow, not during planned work. |
 | Review | `REVIEW.md`, `/code-review` | After each diff (or each batch). Two axes: standards + spec; policy per REVIEW.md. |
-| Adversarial review | `adversary` subagent (pi) | On agent-produced diffs, sized to the computed lane (ADR 0003): full at T2, bounded to the diff's claims at T1, none at T0 where the human checkoff is the second pair of eyes. Breaks the author-boss bias loop. Claude equivalent: a second review pass with "assume this is wrong" instructions. |
+| Adversarial review | `adversary` subagent (pi) | On agent-produced diffs, sized to the computed lane (ADR 0003): full at T2, bounded to the diff's claims at T1, none at T0 where the human review is the second pair of eyes. Breaks the author-boss bias loop. Claude equivalent: a second review pass with "assume this is wrong" instructions. |
 | Record decisions | `domain-modeling` | ADR bar: hard to reverse, surprising without context, or a real trade-off. One paragraph, `docs/adr/NNNN-slug.md`, **commit and push** — an unpushed ADR is invisible. Visible in code ⇒ no ADR. |
 | Shared vocabulary | `CONTEXT.md` via `domain-modeling` | Update when terminology shifts; consumers read it before issues. |
 | Milestone retro | `/retro` | At milestones or when a failure pattern repeats. Feed findings into ADRs or process edits. |

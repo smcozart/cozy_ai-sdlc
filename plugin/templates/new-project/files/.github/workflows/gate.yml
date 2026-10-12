@@ -1,0 +1,28 @@
+name: gate
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]  # edited: a fixed PR body re-runs pr-adr-line
+  push:
+    branches: [{{BASE}}]
+permissions:
+  contents: read
+  pull-requests: read
+jobs:
+  gate:
+    name: gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: tests/validate.sh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ github.event_name }}" = pull_request ]; then
+            gh pr view ${{ github.event.pull_request.number }} -R ${{ github.repository }} --json body -q .body > "$RUNNER_TEMP/pr-body.md"
+            bash tests/validate.sh "origin/${{ github.base_ref }}..HEAD" "$RUNNER_TEMP/pr-body.md"
+          else
+            bash tests/validate.sh
+          fi

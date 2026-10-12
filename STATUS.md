@@ -26,9 +26,6 @@ Milestone tag: `v1-harness-complete`.
 
 ## Queued next
 
-- **Review effort follows a computed lane** (ADR 0003; branch `claude-harness`, not on `main`) —
-  `tests/validate.sh --lane`, T0/T1/T2 review budgets, trio + REVIEW.md + AGENTS.md synced. Awaiting the
-  issue number (Sean files) and his checkoff; raised from the arti-agent-platform 2026-09-15 retro.
 - **Claude-host pipeline pilot** — one real ticket through the full pipeline,
   Claude Code as orchestrator + worker (the agreed next intake).
 - Future (when the operator cuts them): **pi event-advisor** (under #1),
@@ -44,8 +41,10 @@ tests/validate.sh                     # the gate is the floor
 ```
 
 When you read this file, fetch the open issues — STATUS.md is a snapshot, the
-> tracker is the truth. All gates are human (the paste checkoff, and the
-merge-gate pasted proof); never let a hook replace that with an auto-yes.
+> tracker is the truth. The hold list stays human: a diff with `flagged: yes`
+merges only on a named human checkoff (ADR 0005); never let a hook replace
+that with an auto-yes. Everything else lands on green and is reviewed after
+merge.
 
 ## Maintain this file
 
