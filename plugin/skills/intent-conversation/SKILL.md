@@ -2,7 +2,7 @@
 name: intent-conversation
 description: >
   Turn what the developer says about their app into the records the loop needs —
-  the app's system intent, an issue with its intent file and its lane, a
+  the app's system intent, an issue with its intent file, a
   decision's ADR, spec section or ticket body, the approval comment, and the
   wrap-up handoff. Use when the developer describes a feature, a fix or a UI
   change in plain words ("add", "fix", "change", "I want", "we need", "can
@@ -14,7 +14,7 @@ description: >
   "done for today", "wrapping up", "let's stop here", "hand off".
 ---
 
-**Companion skill:** `dispatch` ships alongside this skill (ADR-006 child 3) — automatic
+**Companion skill:** `dispatch` ships alongside this skill — automatic
 one-worker-per-ticket dispatch from `ready-for-agent` issues, cross-referenced here by name only,
 never a path.
 
@@ -51,7 +51,7 @@ a status, never end on a question the repo could have answered.
 Trigger: `SYSTEM-INTENT.md` is absent, or a section under it is empty or still
 carries placeholder text.
 
-The section headings of this plugin's own `SYSTEM-INTENT.md` are the questions.
+The sections in this table are the questions.
 Ask them one at a time, in plain language, **only for the sections that are
 empty or placeholder**:
 
@@ -112,15 +112,13 @@ as it is — `needs-info` means the reporter owes an answer, and here they do no
 (`docs/agents/triage-labels.md`). Do not say "filed" until the intent file is on
 disk.
 
-Say which lane it will likely take — the gate computes the lane
-(`tests/validate.sh --lane`, escalate-only); this is a hint: one or two files,
-docs-only or internal, no protected surface → "likely T1 light"; anything else →
-"T2 heavy".
+Do not name a lane: the gate computes it over the diff at close
+(`tests/validate.sh --lane`, escalate-only).
 
-Reply in **one sentence**: the issue number and the lane. For example:
+Reply in **one sentence**: the issue number and the intent path. For example:
 
 > Filed #47 — a fleet-utilisation column on the dashboard; intent is in
-> `intent/47-fleet-utilisation-column/intent.md`. Likely T1 light.
+> `intent/47-fleet-utilisation-column/intent.md`.
 
 Ask at most one question, and only if the repo cannot answer it.
 
@@ -130,7 +128,7 @@ idea the moment it is said, in the same turn. "And Y depends on X" is filed
 blocked: write the tracker's own dependency edge (`gh api -X POST
 repos/{owner}/{repo}/issues/<n>/dependencies/blocked_by -F issue_id=<numeric
 id of the blocker>`, the form `dispatch` Move 1 reads) **and** a `Blocked by:
-#<m>` line in the body (what `dispatch` Move 3 reads) — both, always; the body
+#<m>` line in the body (what Move 3 below reads) — both, always; the body
 line alone is invisible to `dispatch` and would launch the blocked ticket
 early. If filing this idea requires a foundation ticket that does not exist
 yet, file it too, say so in one line, and keep taking input.
@@ -164,14 +162,15 @@ files you write, never the developer's words on a command line — commit and
 push after every decision, and keep **one open PR** to `<base>` that
 accumulates this conversation's records, with a `Records for: #<n> #<m>`
 line in the commit message and PR body naming every issue a record
-references. Reply in one line once the push lands: "Recorded: ADR-005
-priority authority; spec §Design concerns; #6 body (PR #n)" — then ask the
+references. Reply in one line once the push lands: "Recorded:
+`docs/adr/<NNNN>-priority-authority.md`; spec §Design concerns; #6 body (PR #n)" — then ask the
 next question.
 
-The developer's in-conversation approval of the decision is the approval of
-the record; no separate sign-off. Run Move 5 QC (`dispatch`) on the records
-PR yourself and merge it — before labelling a ticket that depends on a
-record in it, at wrap-up (Move 4), or when asked. Its lane is the gate's: ADR
+Settling approves the decision, not its merge (ADR 0004). Run Move 5 QC
+(`dispatch`) on the records PR yourself. It is on ADR 0005's post-hoc review
+list: merge it on a green required `gate` check only while its `flagged:`
+line says `no`; at `flagged: yes` a human merges. It merges before labelling
+a ticket that depends on a record in it, at wrap-up (Move 4), or when asked. Its lane is the gate's: ADR
 and spec edits sit outside the light set, so T2 — one read-only adversary
 pass, folded into that QC. Once it merges, retire the worktree and branch
 (`dispatch` Move 6) rather than leaving it for reuse; the next decision opens
@@ -198,7 +197,7 @@ Before anything: the intent file exists and cites this issue, and the issue has
 no open blockers (`gh issue view <n>` — a `Blocked by:` line names them), and it
 is neither closed nor labelled `wontfix` — if it is, someone took it off the
 frontier deliberately; say so in one line and do not label. **No open records
-PR names this issue** (Move 2b's `Records for:` line) — merge that PR first,
+PR names this issue** (Move 2b's `Records for:` line) — that PR merges first (Move 2b),
 so the worker starts from the record, not before it. If the
 intent still carries an open question, ask it now — one question — and put the
 answer (or their "go anyway") in the same comment. If a precondition fails, say
