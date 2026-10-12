@@ -26,7 +26,8 @@ system.
    posture — work with it).
 5. **Proof over claim.** Closing an issue requires pasting the verification
    commands and their output. PRs pass review: standards + spec, plus an
-   adversarial pass on agent-produced diffs.
+   adversarial pass on agent-produced diffs sized to the computed lane
+   (`tests/validate.sh --lane`, ADR 0003; full at T2).
 6. **ADRs.** If your change is hard to reverse, surprising without context, or
    a real trade-off, add `docs/adr/NNNN-slug.md` in the same PR — committed
    with the change, never after.

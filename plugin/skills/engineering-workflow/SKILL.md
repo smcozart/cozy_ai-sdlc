@@ -97,6 +97,8 @@ always-kept per-session plan-before-code.
    beyond item 4's high-risk carve-out. Reply in one line naming the
    record. "Captured in this conversation only" and "finish mapping first,
    then update once" are not moves; batch only when asked.
+   The `intent-conversation` skill carries the mechanics (records
+   branch/PR, one-line reply).
 
 ## Light lane — thin front end, same tail
 
@@ -197,7 +199,9 @@ Maintain is the intake point: retro findings, incident learnings, and
 transcripts become issues and work-item intents re-entering through Plan —
 findings become intents humans approve, never autonomous fixes; feedback
 deposits into git, never dies in chat. Every fixed incident class becomes
-text in the eval ledger (#8). Consumers owe a drift-detection rule set and
+text in the eval ledger (#8). A session resuming after time away reads the
+delta first with `/cmu` (session pickup, stage map) before re-entering here.
+Consumers owe a drift-detection rule set and
 a rehearsed rollback path; automation of the stage waits on #1.
 
 ## Humans above the loop

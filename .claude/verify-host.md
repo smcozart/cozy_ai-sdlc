@@ -17,15 +17,15 @@ classes?
 
 The session reads `CLAUDE.md` → `AGENTS.md` → `docs/engineering-workflow.md`;
 names `tests/validate.sh`; names REVIEW.md and Bugs/Security/Compliance; cites
-the Design §7 read order.
+the Design "What Build reads, in order" read order.
 
 ## 3. Pass bar (pinned)
 
 The transcript must show evidence of READING, not just plausible answers — the
 session must open `AGENTS.md` and cite content not present in `CLAUDE.md`'s
-pointer text (e.g. the Design §7 read order or the `--witness` fail-first
-rule), and name REVIEW.md's three risk classes. Plausible answers without read
-evidence = FAIL.
+pointer text (e.g. the Design "What Build reads, in order" read order or the
+`--witness` fail-first rule), and name REVIEW.md's three risk classes. Plausible
+answers without read evidence = FAIL.
 
 ## 4. Execution mechanics (pinned)
 
