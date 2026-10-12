@@ -154,13 +154,14 @@ Route it before the next question, in the same turn:
 **Never switch the developer's own checkout** (`dispatch` Move 5's rule) to
 write a record. On first use this conversation: `git fetch origin`, then
 create one per-conversation records worktree: `git worktree add
-.factory/records/<YYYY-MM-DD> -b records-<YYYY-MM-DD> origin/main` — the
-fetch first so the branch is never cut from a stale `main`. If that branch
-name already exists (a prior conversation today, or this one resuming after
+.factory/records/<YYYY-MM-DD> -b records-<YYYY-MM-DD> origin/<base>`, where
+`<base>` is the base branch named in `AGENTS.md` (`**Base branch:**`, default
+`main`) — the fetch first so the branch is never cut from a stale `<base>`.
+If that branch name already exists (a prior conversation today, or this one resuming after
 a merge), suffix `-2`, `-3`, … and open a fresh worktree there; never reuse a
 worktree or branch whose PR already merged. Write the file there — through
 files you write, never the developer's words on a command line — commit and
-push after every decision, and keep **one open PR** to `main` that
+push after every decision, and keep **one open PR** to `<base>` that
 accumulates this conversation's records, with a `Records for: #<n> #<m>`
 line in the commit message and PR body naming every issue a record
 references. Reply in one line once the push lands: "Recorded: ADR-005
