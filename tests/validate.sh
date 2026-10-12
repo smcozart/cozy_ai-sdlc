@@ -19,7 +19,7 @@ cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)" || exit 2
 FO=plugin/skills/factory-orchestrator/SKILL.md
 DOC=docs/engineering-workflow.md
 SK=plugin/skills/engineering-workflow/SKILL.md
-CHECKS="sync-rule stage-parity intent-layout adr-numbering adr-refs hooks-json skill-frontmatter skill-copies agents-commands t1-trust-wording t1-log-clobber t1-spawn-session t3-label-drift t3-precedence pr-adr-line"
+CHECKS="sync-rule stage-parity intent-layout adr-numbering adr-refs hooks-json skill-frontmatter skill-copies template-gate-parity agents-commands t1-trust-wording t1-log-clobber t1-spawn-session t3-label-drift t3-precedence pr-adr-line"
 
 fail=0; why=""
 list_checks() { printf '%s\n' $CHECKS; }
@@ -76,17 +76,25 @@ lane_of() {  # lane_of <root> <range> -> sets lane (T0|T1|T2|none), lane_why and
   fi
 }
 lane_run() {  # lane_run [<range>] -> prints the lane and flagged lines with resolved shas; exit 0 on a lane, 2 on none
-  local range=${1:-} a b m base="" shown partial=""
+  local range=${1:-} a b m hit="" base="" shown partial="" t bl refs="origin/main main"
+  # the base branch: LANE_TARGET overrides AGENTS.md's **Base branch:** line; neither set = main, as before (#47)
+  bl=$(grep -m1 '^\*\*Base branch' AGENTS.md 2>/dev/null | tr -d '\r')
+  t=${LANE_TARGET:-$(sed -nE 's/^\*\*Base branch:\*\*[[:space:]]*`?([^`[:space:]]+)`?.*/\1/p' <<<"$bl")}
+  [ -z "$t" ] || refs="origin/$t $t"
   # dirty = tracked changes OR untracked files; a new file alone must not fall through to HEAD~1..HEAD
   if [ -z "$range" ]; then if ! git diff --quiet HEAD 2>/dev/null || [ -n "$(git ls-files --others --exclude-standard)" ]; then range=HEAD; else range=HEAD~1..HEAD; fi; fi
   lane_of . "$range"; lane_why=${lane_why//[[:cntrl:]]/?}; held=${held//[[:cntrl:]]/?}   # raw names: no control char reaches the terminal
   if [ "$range" = HEAD ]; then shown="dirty tree vs $(git rev-parse --short HEAD)"
   elif [[ $range == *..* ]]; then
     a=$(git rev-parse --short "${range%%..*}" 2>/dev/null); b=$(git rev-parse --short "${range##*..}" 2>/dev/null); shown="$a..$b"
-    for m in origin/main main; do git rev-parse -q --verify "$m^{commit}" >/dev/null 2>&1 && { base=$(git merge-base "$m" "${range##*..}" 2>/dev/null); break; }; done
-    # a partial range hides files: the close needs the ticket's full range, i.e. merge-base(main, tip)..tip
-    if [ -n "$base" ] && [ "$(git rev-parse "${range##*..}")" != "$(git rev-parse "$m")" ] \
-       && [ "$(git rev-parse "${range%%..*}" 2>/dev/null)" != "$base" ]; then partial=" — PARTIAL RANGE (base is not the merge-base with $m); not valid for a close"; fi
+    for m in $refs; do git rev-parse -q --verify "$m^{commit}" >/dev/null 2>&1 && { hit=$m; base=$(git merge-base "$m" "${range##*..}" 2>/dev/null); break; }; done
+    # a partial range hides files: the close needs the ticket's full range, i.e. merge-base(base, tip)..tip
+    # a configured base fails closed: unreadable line, no ref, or no common history all print PARTIAL
+    if [ -z "$t" ] && [ -n "$bl" ]; then partial=" — PARTIAL RANGE (base branch line in AGENTS.md unreadable); not valid for a close"
+    elif [ -n "$base" ] && [ "$(git rev-parse "${range##*..}")" != "$(git rev-parse "$m")" ] \
+       && [ "$(git rev-parse "${range%%..*}" 2>/dev/null)" != "$base" ]; then partial=" — PARTIAL RANGE (base is not the merge-base with $m); not valid for a close"
+    elif [ -n "$t" ] && [ -z "$hit" ]; then partial=" — PARTIAL RANGE (base branch $t not found); not valid for a close"
+    elif [ -n "$t" ] && [ -z "$base" ]; then partial=" — PARTIAL RANGE (no common history with $hit); not valid for a close"; fi
   else shown=$range; fi
   case $lane in
     none) echo "lane: none — $lane_why ($shown)"; return 2;;
@@ -186,6 +194,25 @@ check_skill_copies() {
     || { why="$SK and .claude/skills/engineering-workflow/SKILL.md differ (must be byte-identical)"; return 1; }
   cmp -s "$1/plugin/skills/cmu/SKILL.md" "$1/.claude/skills/cmu/SKILL.md" \
     || { why="plugin/skills/cmu/SKILL.md and .claude/skills/cmu/SKILL.md differ (must be byte-identical)"; return 1; }
+  cmp -s "$1/plugin/skills/new-project/SKILL.md" "$1/.claude/skills/new-project/SKILL.md" \
+    || { why="plugin/skills/new-project/SKILL.md and .claude/skills/new-project/SKILL.md differ (must be byte-identical)"; return 1; }
+}
+
+check_template_gate_parity() {  # the scaffolded gate must hold and size like this one: same staged diff, same lane:/flagged: lines
+  local r=$1 t=$1/plugin/templates/new-project/files d f p a b rc=0
+  cmp -s "$r/.pi/agents/adversary.md" "$t/.pi/agents/adversary.md" \
+    || { why=".pi/agents/adversary.md and its template copy differ (must be byte-identical)"; return 1; }
+  d=$(mktemp -d "${TMPDIR:-/tmp}/parity.XXXXXX"); mkdir -p "$d/tests"   # a temp repo, never a worktree
+  cp "$r/tests/validate.sh" "$d/tests/validate.sh" && cp "$t/tests/validate.sh" "$d/tests/template.sh" && git -C "$d" init -q && git -C "$d" add -A \
+    && git -C "$d" -c user.name=parity -c user.email=parity@localhost -c commit.gpgsign=false -c core.hooksPath=/dev/null commit -qm base \
+    || { why="cannot build the temp repo in $d"; rm -rf "$d"; return 1; }
+  for f in 'tests/validate.sh .githooks/x .github/workflows/a"b.yml' handoffs/x.md; do   # every hold alternative + a name git quotes, then a light path
+    for p in $f; do mkdir -p "$d/${p%/*}"; printf '# x\n' >>"$d/$p"; git -C "$d" add "$p"; done
+    a=$(bash "$d/tests/validate.sh" --lane | grep -E '^(lane|flagged):'); b=$(bash "$d/tests/template.sh" --lane | grep -E '^(lane|flagged):')
+    [[ $a == *flagged:* ]] && [ "$a" = "$b" ] || { why="$f: main [${a//$'\n'/ | }] vs template [${b//$'\n'/ | }]"; rc=1; break; }
+    git -C "$d" reset -q --hard
+  done
+  rm -rf "$d"; return $rc
 }
 
 check_agents_commands() {
@@ -244,7 +271,7 @@ default_run() {
     if ! git diff --quiet HEAD 2>/dev/null; then range=HEAD; else range=HEAD~1..HEAD; fi
   fi
   run sync-rule "$range"
-  for c in stage-parity intent-layout adr-numbering adr-refs hooks-json skill-frontmatter skill-copies agents-commands; do run "$c" .; done
+  for c in stage-parity intent-layout adr-numbering adr-refs hooks-json skill-frontmatter skill-copies template-gate-parity agents-commands; do run "$c" .; done
   for c in t1-trust-wording t1-log-clobber t1-spawn-session; do run "$c" "$FO"; done
   for c in t3-label-drift t3-precedence; do run "$c" AGENTS.md; done
   if [ -n "$body" ]; then run pr-adr-line "$body"; else echo "skipped: pr-adr-line — no PR body file given (CI passes one)"; fi
@@ -309,7 +336,7 @@ witness_run() {
     else echo "witness FAIL: summary @$2 expected $1, got summary=$sum vs ok-lines=$lines"; wfail=1; fi
   }
   sum_row ok 'baseline — summary counts what ran'
-  sed -i.bak 's/echo "\$ran_ok ok, \$fail_count failed/echo "15 ok, \$fail_count failed/' "$m/tests/validate.sh" && rm -f "$m/tests/validate.sh.bak"
+  sed -i.bak 's/echo "\$ran_ok ok, \$fail_count failed/echo "99 ok, \$fail_count failed/' "$m/tests/validate.sh" && rm -f "$m/tests/validate.sh.bak"
   sum_row FAIL 'mutation(summary hardcoded — the F2 bug shape)'; reset_wt "$m"
   (cd "$m" && python3 -c "p='intent/9-test-stage/intent.md';s=open(p).read().replace('#9','#8');open(p,'w').write(s)")
   expect FAIL mutation intent-layout "$m"; reset_wt "$m"
@@ -325,6 +352,16 @@ witness_run() {
   expect FAIL 'mutation(.claude factory copy)' skill-copies "$m"; reset_wt "$m"
   echo x >> "$m/.claude/skills/cmu/SKILL.md"
   expect FAIL 'mutation(.claude cmu copy)' skill-copies "$m"; reset_wt "$m"
+  echo x >> "$m/.claude/skills/new-project/SKILL.md"
+  expect FAIL 'mutation(.claude new-project copy)' skill-copies "$m"; reset_wt "$m"
+  # template-gate-parity: the baseline row keeps the mutation rows from passing on a missing check
+  expect ok baseline template-gate-parity "$m"
+  sed -i.bak 's/^LANE_HOLD=.*/LANE_HOLD=nothing-held/' "$m/plugin/templates/new-project/files/tests/validate.sh"
+  expect FAIL "mutation(template LANE_HOLD)" template-gate-parity "$m"; reset_wt "$m"
+  sed -i.bak "s|^LANE_HOLD=.*|LANE_HOLD='^(.github/workflows/)'|" "$m/plugin/templates/new-project/files/tests/validate.sh"
+  expect FAIL "mutation(template LANE_HOLD partial — workflows only)" template-gate-parity "$m"; reset_wt "$m"
+  echo x >> "$m/plugin/templates/new-project/files/.pi/agents/adversary.md"
+  expect FAIL 'mutation(template adversary copy)' template-gate-parity "$m"; reset_wt "$m"
   grep -v '^## Maintain' "$m/$DOC" > "$m/t" && mv "$m/t" "$m/$DOC"
   expect FAIL 'mutation(-## Maintain)' stage-parity "$m"; reset_wt "$m"
   grep -v '^## Maintain' "$m/$SK" > "$m/t" && mv "$m/t" "$m/$SK"
@@ -416,6 +453,54 @@ witness_run() {
   printf 'x\n' > "$BASE/outside.md"; ln -s "$BASE/outside.md" "$l/handoffs/link.md"
                                                                         lane_expect T2 'mutation(untracked symlink out of the repo — never followed)' "$l" HEAD
   git -C "$l" add handoffs/link.md;                                     lane_expect T2 'mutation(staged symlink — mode 120000)' "$l" HEAD; lane_reset "$l"
+
+  # lane base (#47): the PARTIAL check measures the range against the configured base branch.
+  # Scratch repo: main A → cozyharness_full_workflow B → ticket C; AGENTS.md (untracked) names the base.
+  local g=$BASE/lane-base; git init -q "$g"; git -C "$g" symbolic-ref HEAD refs/heads/main
+  gc() { git -C "$g" -c user.name=witness -c user.email=witness@localhost -c commit.gpgsign=false -c core.hooksPath=/dev/null "$@"; }
+  printf 'a\n' > "$g/a.md"; gc add a.md; gc commit -qm A
+  gc checkout -qb cozyharness_full_workflow; printf 'b\n' > "$g/b.md"; gc add b.md; gc commit -qm B
+  gc checkout -qb t1-x; printf 'c\n' > "$g/c.md"; gc add c.md; gc commit -qm C
+  printf '**Base branch:** `cozyharness_full_workflow`\n' > "$g/AGENTS.md"
+  base_expect() {  # base_expect <PARTIAL|valid> <label> <LANE_TARGET value, '' = unset> <range>
+    local out got=valid; wn=$((wn+1)); out=$(cd "$g" && LANE_TARGET=$3 lane_run "$4" 2>&1)
+    [[ $out == *PARTIAL* ]] && got=PARTIAL
+    if [ "$got" = "$1" ]; then echo "witness ok: lane-base @$2 expected $1"
+    else echo "witness FAIL: lane-base @$2 expected $1, got $got — $out"; wfail=1; fi
+  }
+  base_expect PARTIAL 'LANE_TARGET=main, branch-on-branch range' main cozyharness_full_workflow..t1-x
+  base_expect valid   'AGENTS.md base, branch-on-branch range' '' cozyharness_full_workflow..t1-x
+  base_expect PARTIAL 'configured base not found (fail closed)' nope main..t1-x
+  printf '**Base branch:**\n' > "$g/AGENTS.md"   # a base line that names nothing must not fall back to main
+  base_expect PARTIAL 'base branch line unreadable (fail closed)' '' main..t1-x
+
+  # new-project scaffold (#49): the file step into an empty dir must give a repo whose own gate passes
+  np_expect() {  # np_expect <ok|FAIL> <label> <command run in the scaffolded dir $np>
+    local got=FAIL out; wn=$((wn+1)); out=$(cd "$np" && eval "$3" 2>&1) && got=ok
+    if [ "$got" = "$1" ]; then echo "witness ok: new-project @$2 expected $1"
+    else echo "witness FAIL: new-project @$2 expected $1, got $got — $(tail -3 <<<"$out" | tr '\n' ' ')"; wfail=1; fi
+  }
+  local np=$BASE/np; mkdir -p "$np"; git init -q "$np"
+  np_expect ok   'scaffold into an empty dir' "bash '$m/plugin/templates/new-project/scaffold.sh' . --owner demo --name demo"
+  np_expect ok   'every {{TOKEN}} substituted' "! grep -rIn --exclude-dir=.git '{{' . | grep -v '\${{ github\.'"
+  # F2 in the scaffolded gate: the summary counts the ok: lines that ran (pr-adr-line is skipped here)
+  np_expect ok   'scaffolded gate passes, summary counts what ran' 'out=$(bash tests/validate.sh) && [ "$(grep -c "^ok: " <<<"$out")" = "$(sed -nE "s/^([0-9]+) ok, [0-9]+ failed.*/\1/p" <<<"$out")" ]'
+  np_expect ok   'scaffolded --witness passes' 'bash tests/validate.sh --witness | tail -1 | grep -qE "^[1-9][0-9]* witnesses, 0 unexpected$"'
+  # a FAIL row would pass vacuously on a missing gate; assert the gate's own failure line instead
+  np_expect ok   'scaffolded gate fails when STATUS.md is deleted' 'mv STATUS.md S.bak; out=$(bash tests/validate.sh); r=$?; mv S.bak STATUS.md; [ $r -ne 0 ] && grep -q "^FAIL: shape — STATUS.md missing" <<<"$out"'
+  # (e) an existing repo on `trunk`: its files keep their bytes above the appended block, once
+  local sc=$m/plugin/templates/new-project/scaffold.sh o=$BASE/orig; np=$BASE/np-trunk; mkdir -p "$o"
+  git init -q -b trunk "$np"; for f in README.md .gitignore AGENTS.md; do echo "legacy $f" | tee "$o/$f" >"$np/$f"; done
+  mkdir -p "$np/docs/adr"; printf '**Issue:** #1\n' >"$np/docs/adr/0001-x.md"   # the policy ADR must take the next free number
+  git -C "$np" add -A; git -C "$np" -c user.name=witness -c user.email=witness@localhost -c commit.gpgsign=false -c core.hooksPath=/dev/null commit -qm legacy
+  np_expect ok   'existing repo: scaffold --base release/x appends, policy ADR at the next free number' "out=\$(bash '$sc' . --owner demo --name demo --base release/x) && grep -qx 'appended: AGENTS.md' <<<\"\$out\" && grep -qx 'wrote: docs/adr/0002-adopt-engineering-workflow.md' <<<\"\$out\""
+  np_expect ok   'existing repo: originals unchanged above the marker' "cmp README.md '$o/README.md' && for f in .gitignore AGENTS.md; do sed -n '/engineering-workflow:start/q;p' \$f | cmp - '$o/'\$f || exit 1; done"
+  np_expect ok   'existing repo: second run appends nothing' "out=\$(bash '$sc' . --owner demo --name demo --base release/x) && ! grep -q '^appended:' <<<\"\$out\" && [ \$(grep -c 'engineering-workflow:start' AGENTS.md) -eq 1 ]"
+  np_expect ok   'existing repo: gate passes, base is release/x' "bash tests/validate.sh && grep -qxF '**Base branch:** \`release/x\`' AGENTS.md"
+  # (f) a base that is not a branch name is refused before anything is written
+  np_expect ok   'bad --base refused, nothing written' "out=\$(bash '$sc' '$BASE/bad' --owner demo --base 'a;b' 2>&1); [ \$? -eq 2 ] && grep -q 'invalid base' <<<\"\$out\" && [ ! -e '$BASE/bad' ]"
+  np=$BASE/np
+  np_expect ok   'second scaffold writes nothing, skips every path' "out=\$(bash '$m/plugin/templates/new-project/scaffold.sh' . --owner demo --name demo) && ! grep -qv '^skip: ' <<<\"\$out\" && [ \"\$(grep -c . <<<\"\$out\")\" -eq \"\$(cd '$m/plugin/templates/new-project/files' && find . -type f | wc -l)\" ]"
 
   echo "$wn witnesses, $wfail unexpected"
   exit $wfail
