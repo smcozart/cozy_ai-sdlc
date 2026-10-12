@@ -199,15 +199,15 @@ check_skill_copies() {
 }
 
 check_template_gate_parity() {  # the scaffolded gate must hold and size like this one: same staged diff, same lane:/flagged: lines
-  local r=$1 t=$1/plugin/templates/new-project/files d f a b rc=0
+  local r=$1 t=$1/plugin/templates/new-project/files d f p a b rc=0
   cmp -s "$r/.pi/agents/adversary.md" "$t/.pi/agents/adversary.md" \
     || { why=".pi/agents/adversary.md and its template copy differ (must be byte-identical)"; return 1; }
   d=$(mktemp -d "${TMPDIR:-/tmp}/parity.XXXXXX"); mkdir -p "$d/tests"   # a temp repo, never a worktree
   cp "$r/tests/validate.sh" "$d/tests/validate.sh" && cp "$t/tests/validate.sh" "$d/tests/template.sh" && git -C "$d" init -q && git -C "$d" add -A \
     && git -C "$d" -c user.name=parity -c user.email=parity@localhost -c commit.gpgsign=false -c core.hooksPath=/dev/null commit -qm base \
     || { why="cannot build the temp repo in $d"; rm -rf "$d"; return 1; }
-  for f in .github/workflows/x.yml handoffs/x.md; do   # the merge hold, then a light path
-    mkdir -p "$d/${f%/*}"; printf 'x\n' >"$d/$f"; git -C "$d" add "$f"
+  for f in 'tests/validate.sh .githooks/x .github/workflows/a"b.yml' handoffs/x.md; do   # every hold alternative + a name git quotes, then a light path
+    for p in $f; do mkdir -p "$d/${p%/*}"; printf '# x\n' >>"$d/$p"; git -C "$d" add "$p"; done
     a=$(bash "$d/tests/validate.sh" --lane | grep -E '^(lane|flagged):'); b=$(bash "$d/tests/template.sh" --lane | grep -E '^(lane|flagged):')
     [[ $a == *flagged:* ]] && [ "$a" = "$b" ] || { why="$f: main [${a//$'\n'/ | }] vs template [${b//$'\n'/ | }]"; rc=1; break; }
     git -C "$d" reset -q --hard
@@ -358,6 +358,8 @@ witness_run() {
   expect ok baseline template-gate-parity "$m"
   sed -i.bak 's/^LANE_HOLD=.*/LANE_HOLD=nothing-held/' "$m/plugin/templates/new-project/files/tests/validate.sh"
   expect FAIL "mutation(template LANE_HOLD)" template-gate-parity "$m"; reset_wt "$m"
+  sed -i.bak "s|^LANE_HOLD=.*|LANE_HOLD='^(.github/workflows/)'|" "$m/plugin/templates/new-project/files/tests/validate.sh"
+  expect FAIL "mutation(template LANE_HOLD partial — workflows only)" template-gate-parity "$m"; reset_wt "$m"
   echo x >> "$m/plugin/templates/new-project/files/.pi/agents/adversary.md"
   expect FAIL 'mutation(template adversary copy)' template-gate-parity "$m"; reset_wt "$m"
   grep -v '^## Maintain' "$m/$DOC" > "$m/t" && mv "$m/t" "$m/$DOC"
