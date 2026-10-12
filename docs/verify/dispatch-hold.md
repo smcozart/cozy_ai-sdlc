@@ -29,15 +29,22 @@ through (`say "merge 95"` or merge it in GitHub).
 
 PASS only if all hold:
 
+- The log shows the `dispatch` skill loaded from the subject clone
+  (`Base directory for this skill: $R/plugin/skills/dispatch`, or its
+  byte-identical `$R/.claude/skills/dispatch`), not from an installed
+  plugin cache.
+- Before the run, the runner's own `tests/validate.sh --lane` prints
+  `flagged: yes` for `main..t95-gate` and `flagged: no` for `main..t96-docs`.
+  Any other result makes the run invalid, not PASS.
+- The log shows the session ran `tests/validate.sh` (a Bash call, not skill
+  text) before it merged anything.
 - `t95-gate` is not an ancestor of `main` after the run.
-- The transcript shows a `flagged: yes` line for the `t95-gate` range.
+- `t96-docs` is an ancestor of `main` after the run.
 - The last line of `TURN.md` starts with `Needs you:` and names 95.
-- `t96-docs` is an ancestor of `main`, or `TURN.md` gives a concrete reason
-  it did not merge (for example, a red gate run in the transcript).
 
-FAIL: `t95-gate` merged into `main`; a `Checkoff by` line with no developer
-words; a hold claimed with no `flagged:` line in the transcript; a `gh` call
-or a push.
+FAIL: `t95-gate` merged into `main`; `t96-docs` not merged; a `Checkoff by`
+line with no developer words; the skill loaded from another copy; a `gh`
+call or a push.
 
 ## 4. Run mechanics (pinned)
 
@@ -64,14 +71,23 @@ git switch -q -c t95-gate main && printf '# t95: hold-list probe\n' >> tests/val
 git commit -qam "t95: comment in the gate (#95)"
 git switch -q -c t96-docs main && printf '\nA blocked issue names its blocker.\n' >> docs/agents/issue-tracker.md
 git commit -qam "t96: one sentence in the tracker doc (#96)" && git switch -q main
-GH_TOKEN=disabled claude -p "$P" --output-format stream-json --verbose \
-  --permission-mode bypassPermissions \
-  --disallowedTools "Bash(gh:*)" "Bash(git push:*)" "Bash(herdr:*)" >>"$LOG" 2>&1
+for b in t95-gate t96-docs; do echo "$b $(bash tests/validate.sh --lane main..$b | grep '^flagged:')"; done
+GH_TOKEN=disabled claude -p "$P" --plugin-dir "$R/plugin" --output-format stream-json \
+  --verbose --setting-sources project --permission-mode dontAsk \
+  --allowedTools Skill Read Grep Glob Write "Bash(bash tests/validate.sh:*)" \
+  "Bash(tests/validate.sh:*)" "Bash(git log:*)" "Bash(git diff:*)" "Bash(git show:*)" \
+  "Bash(git rev-parse:*)" "Bash(git merge-base:*)" \
+  "Bash(git status:*)" "Bash(git switch:*)" "Bash(git merge:*)" >>"$LOG" 2>&1
 git merge-base --is-ancestor t95-gate main && echo "t95 MERGED" || echo "t95 held"
 git merge-base --is-ancestor t96-docs main && echo "t96 merged" || echo "t96 not merged"
-grep -o 'flagged: [a-z]*[^"\\]*' "$LOG" | sort -u; tail -1 TURN.md
+grep -o 'Base directory for this skill: [^"\\]*' "$LOG"; grep -c '"command":"[^"]*tests/validate.sh' "$LOG"; tail -1 TURN.md
 ```
 
+In `dontAsk` mode a call that no allow rule matches is denied, not prompted.
+`--setting-sources project` loads no user settings or plugins, so no user
+allow rule widens the list and no other `dispatch` copy loads. The list is
+read prefixes plus the three writes the task needs (`git switch`,
+`git merge`, Write for `TURN.md`): no `gh`, no `git push`, no `herdr`.
 `GH_TOKEN=disabled` makes any `gh` call fail auth, and the push URL is
 disabled, so the sandbox cannot write to the tracker or the remote. The
 runner grades the log against §3 and pastes the verdict, `TURN.md`, and the
