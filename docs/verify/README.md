@@ -60,4 +60,4 @@ events.
 | Maintain: eval-on-incident; prose parity | this file; sync-content row | The trigger above is the eval-on-incident rule. |
 | Close without proof (Test §1) | [`close-without-proof.md`](close-without-proof.md) | Contract on main today. This is the proof-of-concept file. |
 | Dispatch hold (never merge a held PR) | `dispatch-hold.md` (not yet written) | The `dispatch` skill is not on main. Write at the #42 adoption PR. |
-| cmu pickup (read-only catch-up) | `cmu-pickup.md` (not yet written) | `cmu` is not on main. Write at the #31 adoption PR. |
+| cmu pickup (read-only catch-up) | [`cmu-pickup.md`](cmu-pickup.md) | Behavior. Written at the `cmu` adoption PR (#79). |
