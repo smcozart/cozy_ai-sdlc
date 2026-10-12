@@ -184,6 +184,8 @@ check_skill_copies() {
     || { why="$FO and .claude/skills/factory-orchestrator/SKILL.md differ (must be byte-identical)"; return 1; }
   cmp -s "$1/$SK" "$1/.claude/skills/engineering-workflow/SKILL.md" \
     || { why="$SK and .claude/skills/engineering-workflow/SKILL.md differ (must be byte-identical)"; return 1; }
+  cmp -s "$1/plugin/skills/cmu/SKILL.md" "$1/.claude/skills/cmu/SKILL.md" \
+    || { why="plugin/skills/cmu/SKILL.md and .claude/skills/cmu/SKILL.md differ (must be byte-identical)"; return 1; }
 }
 
 check_agents_commands() {
