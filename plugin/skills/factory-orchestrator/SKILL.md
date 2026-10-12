@@ -59,7 +59,8 @@ frontier is GitHub, nothing in a file outranks it.
    idiomatic worker output diverges from an over-specific gate. Watch for both.
 
    When QC passes, the orchestrator merges the PR under the merge hold below
-   (`gh pr merge --squash --delete-branch <pr>` only at `flagged: no`). Then it closes
+   (`gh pr merge --squash --delete-branch --match-head-commit <the head SHA QC ran on> <pr>`
+   only at `flagged: no`; a new head re-runs QC before any merge). Then it closes
    the issue with the proof; a merge into a branch other than the default does not
    auto-close it.
 5. **Handoff before spin-down.** Workers end by pinging the orchestrator session

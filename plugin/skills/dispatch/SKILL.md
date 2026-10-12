@@ -122,7 +122,8 @@ QC failures across the chain halt new launches until the developer weighs in.
 **Merge gate is light (ADR 0005).** The orchestrator merges only when the
 required `gate` check is green, this QC check passed, and the gate run's
 `flagged:` line says `flagged: no` — then `gh pr merge --squash
---delete-branch <pr>`, no further review rounds. At `flagged: yes`, or with no
+--delete-branch --match-head-commit <the head SHA QC ran on> <pr>`, no further
+review rounds; a new head re-runs QC before any merge. At `flagged: yes`, or with no
 `flagged:` line, dispatch never merges on its own: a human does (below). A
 `flagged-risk` or `ready-for-human` label only adds a hold, never removes one.
 Send unresolved findings back to the same worker, never to a new one. Workers
@@ -141,7 +142,8 @@ merges without asking.
 **"merge <n>" is the checkoff — after a green gate, never instead of one.**
 Only when `gate` is green and this QC check has passed: write `Checkoff by
 <developer> at <UTC timestamp>:` and their words verbatim to a file, post it on
-the PR thread (`gh pr comment <n> --body-file <file>`), then merge. If the gate
+the PR thread (`gh pr comment <n> --body-file <file>`), then merge with
+`--match-head-commit <the head SHA QC ran on>`. If the gate
 is red or QC is open, say so in the `Needs you:` line and do not merge — the
 checkoff is the human half of the hold, not a bypass. A merge clicked in GitHub
 is read on the next turn (`gh pr view <n> --json state,mergedBy,mergedAt`) and
