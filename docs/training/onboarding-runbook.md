@@ -126,10 +126,12 @@ then the Deploy merge-gate items (review, adversary, human checkoff). See
   sync-rule, pre-push validate), installed by `bootstrap.sh`, are local and
   bypassable by design: a clone that never bootstraps `core.hooksPath`, or a
   `git push --no-verify` / `git commit --no-verify`, sails through unblocked
-  — there is no CI or branch protection on this private repo (403). A green
+  — the required CI `gate` check on every PR into `main` (#33) is the
+  backstop. A green
   `validate.sh` is necessary, not sufficient.
 - **Still paper/staged:** the eval harness (#8) and two carried findings
   (#18) are outstanding; gates like the merge gate are pasted-evidence plus
   your human judgment. The hooks check only the deterministic seams.
 - **Private repo:** the clone needs `gh` auth and repo access on the new
   machine; GitHub Issues is the system of record.
+Handoff note (gate test): the required `gate` check is live; PR bodies carry an `ADR:` line.

@@ -1,9 +1,8 @@
 # Decisions are records in the same turn, and intake never waits
 
-**Issue:** (pending — Sean files on `smcozart/cozyharness`; landed on branch
-`claude-harness`, not `main`) · **Status:** proposed · **Decision owner:**
-Sean Cozart · **Intent:** arti-build issue #77 ("decisions become records"),
-narrowed for this repo by arti-build-plugin issue #82.
+**Issue:** #41 · **Status:** accepted (approved by the operator on #41) ·
+**Intent:** arti-build issue #77 ("decisions become records"), narrowed by
+arti-build-plugin issue #82; first landed on branch `claude-harness`.
 
 Upstream (arti-build #77), a developer's session settled a design decision in
 conversation and left it there — parked in chat, promised for a later batch
@@ -17,18 +16,24 @@ decided" — becomes a record in the same turn it is settled, before the next
 question, never held for later batching. It lands by kind: a hard-to-reverse
 or authority rule becomes a new ADR in `docs/adr/NNNN-slug.md`; a requirement
 or design detail becomes an edit to the spec's matching section; a detail
-scoped to one ticket becomes an edit to that issue's body. The developer's
-in-conversation settling of the decision is its approval — no separate
-sign-off beyond the Design approval gate's high-risk carve-out. Paired with
-this: intake never waits — filing a new request is never gated by running
-workers, an open blocker, or a foundation ticket in flight; a dependent
-request is filed as its own issue with a blocking edge to the one ahead of
-it (mechanics: `docs/agents/issue-tracker.md`).
+scoped to one ticket becomes an edit to that issue's body. **Settling approves
+the decision. It is NOT a merge approval — the record merges only under the
+repo's merge policy** (ADR 0005). No separate sign-off on the decision is
+owed beyond the Design approval gate's high-risk carve-out. Paired with this: intake never
+waits — filing a new request is never gated by running workers, an open
+blocker, or a foundation ticket in flight; a dependent request is filed as
+its own issue with a blocking edge to the one ahead of it (mechanics:
+`docs/agents/issue-tracker.md`).
 
-**Consequences.** Design item 7 / SKILL.md item 5 states the rule and the
-record locations only; the records-worktree mechanics (a per-conversation
-branch that commits, pushes, and PRs itself) belong to a skill, not this
-doc, and arrive in a later ticket. Until that skill lands, recording a
-decision this way is manual. The synced trio
-(`docs/engineering-workflow.md`, `plugin/skills/engineering-workflow/SKILL.md`,
-`README.md`) changed together in this commit per the sync rule.
+**Amended from `claude-harness`.** There, settling was the record's approval,
+which let an agent self-merge its own records with no merge policy behind
+them. Here, approval of the decision and merge of the record are separate.
+
+**Consequences.** The Design item "a settled decision becomes a record in the
+same turn" and the Plan item "one request, one issue" state the rule only.
+Records-worktree mechanics are out of scope until a ticket proposes them. The
+synced trio (`docs/engineering-workflow.md`,
+`plugin/skills/engineering-workflow/SKILL.md`, `README.md`) changed together
+per the sync rule.
+
+Forward reference: none; the merge policy is ADR 0005.

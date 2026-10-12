@@ -1,6 +1,6 @@
 # Review effort follows a computed lane, and the lane is computed by the gate
 
-**Issue:** (pending — Sean files on `smcozart/cozyharness`; landed on branch `claude-harness`, not `main`) · **Status:** proposed · **Intent:** the arti-agent-platform retro `.factory/retro-scaffold-speed.md` (2026-09-15) and its `improvements` pane review; the intent dir follows the issue number.
+**Issue:** #40 · **Status:** accepted (approved on #39, the ADR 0005 package) · **Intent:** the arti-agent-platform retro `.factory/retro-scaffold-speed.md` (2026-09-15); first landed on branch `claude-harness`.
 
 The adversary pass was mandatory on every agent-produced diff, and the light
 lane (#24) was a nine-clause predicate an agent evaluated by hand. Together
@@ -13,8 +13,8 @@ in the loop tiered verification to the change.
 **Decision.** Review effort is a function of a **lane**, and the lane is
 **computed by the Test gate**, not judged. `tests/validate.sh --lane <range>`
 classifies the diff from what git can see — file count, paths against an
-**allow-list** of light paths, changed lines, deletes, binaries, instruction
-files — and prints one `lane:` line, with resolved shas, pasted beside the
+**allow-list** of light paths, changed lines, deletes, binaries, symlinks (never
+followed), instruction files in any case — and prints one `lane:` line, with resolved shas, pasted beside the
 gate run (the default gate run prints it too, over the same range). **T0**
 (≤2 docs files, all in the light set, none on the T1 floor): the gate run and
 the human checkoff, no adversary pass. **T1** (≤2 files, ≤60 lines, all in
@@ -29,6 +29,11 @@ close — `no-ADR=<y/n> not-speculative=<y/n>` — and **escalation is the only
 direction**: an agent may raise a computed lane, never lower it. Consumers
 extend the light set with the paths they will review on a bounded budget; a
 verbatim copy is safe. A repo without `--lane`, or a PARTIAL range, is T2.
+The same run prints a second line, `flagged: yes|no`: yes when the range
+touches the **merge hold list** of ADR 0005 — `tests/validate.sh`,
+`.github/workflows/**`, `.githooks/**`, the files that enforce the gate — so
+a human merges it. That line is the one machine-readable source for the hold;
+the broader flagged-risk set in Deploy §4 stays review guidance, not the hold.
 The classifier is a mode, not a check — it never turns a line red and is not
 in `--list` — but it carries a witness per decision branch and per known
 evasion in `--witness`, because a wrong lane is a wrong review budget.
@@ -49,6 +54,5 @@ deliberate, the `lane:` line is the record of why, and the human checkoff
 stays on T0 so an agent's diff is never the last pair of eyes on itself. The thresholds (2
 files, 60 lines) are starting values, changed by amending this ADR with the
 evidence. The synced trio, `REVIEW.md` and `AGENTS.md ## Commands` changed in
-the same commit; the platform's `herdr-factory` QC step 3 ("adversary pass
-mandatory") follows as a consumer PR, and the orchestrator's standing rule
-"adversary on every PR incl. docs" becomes "at T2, bounded at T1".
+the same commit; a consumer rule that mandates an adversary pass on every
+diff follows as that consumer's own change and becomes "at T2, bounded at T1".

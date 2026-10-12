@@ -81,9 +81,11 @@ _Avoid_: fixture, snapshot, example
 The thinner front end for a small, low-risk change: a short `intent.md`
 (problem, one-line outcome, scope, acceptance) with no `spec.md` and no
 `plan.md`. The tail is unchanged — same `ready-for-agent` contract, same
-pasted `tests/validate.sh` proof, same human gate. A defined lane, not a
-loophole; it applies only when nothing protected is touched (see the light-lane
-section of `docs/engineering-workflow.md`).
+pasted `tests/validate.sh` proof, same merge policy (ADR 0005); the lane
+never decides who merges. A defined lane, not a
+loophole; the lane is computed, not judged — `tests/validate.sh --lane`
+prints T0 or T1 for it, T2 for the heavy lane (ADR 0003; light-lane section of
+`docs/engineering-workflow.md`).
 _Avoid_: fast track, bypass, shortcut
 
 **gate**:
@@ -91,24 +93,28 @@ A recorded human decision that lets work cross a phase boundary. The Design
 gate is approval of the spec; the Test gate is the pasted `tests/validate.sh`
 run (exit 0, ticket range) beside the pasted acceptance-criteria output.
 Triage is not a gate — it is a label state machine that ends at
-`ready-for-agent`.
+`ready-for-agent`. Merge is a human gate only for the hold list
+(`flagged: yes`; ADR 0005); every other diff lands on a green `gate` check
+and is reviewed after merge.
 _Avoid_: sign-off (only the high-risk variant), approval (the act, not the
 record)
 
 **merge gate**:
 The checklist a diff owes before it merges, pasted at the seam (ticket close
 here, PR for consumers): review findings resolved or carried with an owner,
-the pasted `tests/validate.sh [<range>]` run, the adversary verdict, a human
-checkoff for flagged-risk classes, preview proof for UI tickets, and
-branch-protection proof for merge-path tickets.
+the pasted `tests/validate.sh [<range>]` run, the adversary verdict, the
+merge hold (a named human checkoff when `flagged: yes`, ADR 0005), preview
+proof for UI tickets, branch-protection proof for merge-path tickets, and an
+`ADR:` line in the PR body.
 _Avoid_: approval (the human checkoff is one item of the gate, not the
-whole), CI gate (none exists until #1)
+whole), CI gate (the `gate` check runs the suite on PRs — one item
+of the merge gate, not the whole)
 
 **merge-path**:
-A diff touching `tests/validate.sh`, the synced trio, or AGENTS.md — the
-surfaces that enforce the merge gate itself. Only these owe the gate's
-branch-protection proof; every other close marks it "n/a — not a merge-path
-ticket".
+A diff at `flagged: yes` — the hold list (ADR 0005), the files that enforce
+the merge gate itself. Only these owe
+the gate's branch-protection proof; every other close marks it "n/a — not a
+merge-path ticket".
 _Avoid_: merge diff (any diff), gate surface (the file, not the change)
 
 **preview proof**:
@@ -131,3 +137,9 @@ writes are text only until the eval harness exists (#1). Fixed incident
 classes land here per the Maintain section's eval-on-incident rule.
 _Avoid_: eval suite (nothing runs yet), regression tests (those are
 checks)
+
+**behavior file**:
+An authored run for one ledger behavior, at `docs/verify/<behavior>.md`:
+prompt, expected observations, pass bar, run mechanics. Run only at an
+adoption PR or an incident-fix close (`docs/verify/README.md`).
+_Avoid_: eval (no harness runs it), test (tests are checks)

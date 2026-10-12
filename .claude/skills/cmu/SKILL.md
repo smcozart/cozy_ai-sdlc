@@ -80,7 +80,10 @@ hide real work.
   state, not a delta; a gate does not expire because the anchor moved.
 - The repo's merge policy from its workflow doc (in this plugin's canon, the
   Deploy section): the paths **held** for a human before merge, and any paths
-  that merge on green but owe a human **review** after. When the doc names
+  that merge on green but owe a human **review** after. Where the repo's
+  `tests/validate.sh --lane` prints a `flagged:` line, that line is the hold
+  source (ADR 0005): the held paths are its hold list, and every other path
+  merges on green and owes review after. When the doc names
   only one human-gated set (a "flagged risk" set needing a human checkoff),
   that set is both: held for open PRs, and owed review for anything that
   merged on it without a checkoff. Say "review paths: none defined here" once
@@ -140,10 +143,10 @@ Next
   tags, since the anchor.
 - **In flight** — open PRs, running or idle workers, branches ahead of the
   default branch.
-- **Needs you** — changed paths decide, and a `flagged-risk` label adds to
-  them (it covers what paths cannot show, such as a trust boundary):
-  **merge held** — an open PR touching a held path or labelled
-  `flagged-risk`, or awaiting a human gate (`ready-for-human`, review
+- **Needs you** — changed paths decide; a `flagged-risk` label only marks
+  a hold and never adds one (ADR 0005):
+  **merge held** — an open PR touching a held path, or awaiting a human
+  gate (`ready-for-human`, review
   requested, red CI); **review owed** — a merge or direct push since the last
   acknowledgement touching a review path, with no human checkoff stated on
   its thread. Agent verdicts (adversary, QC, `HANDOFF:`, "ready for merge")
