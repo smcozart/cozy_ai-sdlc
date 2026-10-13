@@ -2,7 +2,7 @@
 
 **Issue:** none (repo creation, {{DATE}}) · **Status:** accepted
 
-This repo runs the `engineering-workflow` plugin's six-stage loop
+This repo runs the `ai-sdlc` plugin's six-stage loop
 (v{{PLUGIN_VERSION}} at creation): GitHub Issues are the tracker, intents and
 specs live in `intent/<n>-<slug>/`, decisions are ADRs here, and
 `tests/validate.sh` is the gate. Merges follow one policy, written in
