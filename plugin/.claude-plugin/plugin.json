@@ -1,7 +1,7 @@
 {
   "name": "engineering-workflow",
   "description": "The standard engineering process: intent-first planning, GitHub-tracked tickets with blocking edges and triage labels, ADR-recorded decisions, proof-over-claim verification, and herdr-orchestrated parallel builds.",
-  "version": "1.4.4",
+  "version": "1.4.5",
   "author": { "name": "Sean Cozart" },
   "homepage": "https://github.com/smcozart/cozycode_pi",
   "repository": "https://github.com/smcozart/cozycode_pi"
