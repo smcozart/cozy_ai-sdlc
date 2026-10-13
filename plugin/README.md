@@ -59,14 +59,15 @@ outside it:
    skill-git mechanism; in Claude Code, vendor `SKILL.md` into
    `~/.claude/skills/ponytail/` if you want the complete version.
 3. **CLIs**: `gh` (authenticated — the tracker depends on it) always; `herdr`
-   only for parallel orchestrated builds (factory-orchestrator skill).
+   only for parallel orchestrated builds (herdr-orchestrator skill).
 
 ## What's inside
 
 - `skills/engineering-workflow/` — the six-phase process (plan intent → design
   tickets+ADRs → build → test proof → deploy → maintain intake)
-- `skills/factory-orchestrator/` — herdr multi-agent orchestration (only used
-  when doing parallel builds; needs `herdr` on PATH)
+- `skills/herdr-orchestrator/` — herdr multi-agent orchestration (only used
+  when doing parallel builds; needs `herdr` on PATH). `factory-orchestrator` is
+  now `herdr-orchestrator`.
 - `hooks/hooks.json` — UserPromptSubmit reminder keeping the process in-context
 
 ## The replication pattern (how to do this for other harnesses)

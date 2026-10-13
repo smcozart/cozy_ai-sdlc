@@ -16,7 +16,8 @@ set -uo pipefail
 unset GIT_DIR GIT_WORK_TREE  # #45: a hook-exported GIT_DIR makes rev-parse return cwd (tests/), not the root
 cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)" || exit 2
 
-FO=plugin/skills/factory-orchestrator/SKILL.md
+FO=plugin/skills/herdr-orchestrator/SKILL.md
+FO_OLD=plugin/skills/factory-orchestrator/SKILL.md  # the t1-* sha witnesses predate the rename (#97)
 DOC=docs/engineering-workflow.md
 SK=plugin/skills/engineering-workflow/SKILL.md
 CHECKS="sync-rule stage-parity intent-layout adr-numbering adr-refs hooks-json skill-frontmatter skill-copies template-gate-parity agents-commands t1-trust-wording t1-log-clobber t1-spawn-session t3-label-drift t3-precedence dispatch-hold pr-adr-line"
@@ -186,10 +187,10 @@ check_skill_frontmatter() {
 }
 
 check_skill_copies() {
-  cmp -s "$1/$FO" "$1/.agents/skills/factory-orchestrator/SKILL.md" \
-    || { why="$FO and .agents/skills/factory-orchestrator/SKILL.md differ (must be byte-identical)"; return 1; }
-  cmp -s "$1/$FO" "$1/.claude/skills/factory-orchestrator/SKILL.md" \
-    || { why="$FO and .claude/skills/factory-orchestrator/SKILL.md differ (must be byte-identical)"; return 1; }
+  cmp -s "$1/$FO" "$1/.agents/skills/herdr-orchestrator/SKILL.md" \
+    || { why="$FO and .agents/skills/herdr-orchestrator/SKILL.md differ (must be byte-identical)"; return 1; }
+  cmp -s "$1/$FO" "$1/.claude/skills/herdr-orchestrator/SKILL.md" \
+    || { why="$FO and .claude/skills/herdr-orchestrator/SKILL.md differ (must be byte-identical)"; return 1; }
   cmp -s "$1/$SK" "$1/.claude/skills/engineering-workflow/SKILL.md" \
     || { why="$SK and .claude/skills/engineering-workflow/SKILL.md differ (must be byte-identical)"; return 1; }
   cmp -s "$1/plugin/skills/cmu/SKILL.md" "$1/.claude/skills/cmu/SKILL.md" \
@@ -358,9 +359,9 @@ witness_run() {
   expect FAIL mutation hooks-json "$m"; reset_wt "$m"
   (cd "$m" && grep -v '^name:' $FO > t && mv t $FO)
   expect FAIL mutation skill-frontmatter "$m"; reset_wt "$m"
-  echo x >> "$m/.agents/skills/factory-orchestrator/SKILL.md"
+  echo x >> "$m/.agents/skills/herdr-orchestrator/SKILL.md"
   expect FAIL mutation skill-copies "$m"; reset_wt "$m"
-  echo x >> "$m/.claude/skills/factory-orchestrator/SKILL.md"
+  echo x >> "$m/.claude/skills/herdr-orchestrator/SKILL.md"
   expect FAIL 'mutation(.claude factory copy)' skill-copies "$m"; reset_wt "$m"
   echo x >> "$m/.claude/skills/cmu/SKILL.md"
   expect FAIL 'mutation(.claude cmu copy)' skill-copies "$m"; reset_wt "$m"
@@ -398,20 +399,20 @@ witness_run() {
   expect FAIL 'mutation(one name deleted)' agents-commands "$m"; reset_wt "$m"
 
   # sha witnesses — regression (single file via git show)
-  for s in 7e8a195 da9eb33; do sha_row FAIL "$s" t1-trust-wording $FO; done
-  sha_row ok   4e9b547 t1-trust-wording $FO
-  sha_row FAIL da9eb33 t1-log-clobber $FO
-  sha_row ok   4e9b547 t1-log-clobber $FO
-  for s in 7e8a195 da9eb33; do sha_row FAIL "$s" t1-spawn-session $FO; done
-  sha_row ok   4e9b547 t1-spawn-session $FO
+  for s in 7e8a195 da9eb33; do sha_row FAIL "$s" t1-trust-wording $FO_OLD; done
+  sha_row ok   4e9b547 t1-trust-wording $FO_OLD
+  sha_row FAIL da9eb33 t1-log-clobber $FO_OLD
+  sha_row ok   4e9b547 t1-log-clobber $FO_OLD
+  for s in 7e8a195 da9eb33; do sha_row FAIL "$s" t1-spawn-session $FO_OLD; done
+  sha_row ok   4e9b547 t1-spawn-session $FO_OLD
   sha_row FAIL 43b63dc t3-label-drift AGENTS.md
   sha_row ok   92e6a25 t3-label-drift AGENTS.md
   sha_row FAIL 43b63dc t3-precedence AGENTS.md
   sha_row ok   92e6a25 t3-precedence AGENTS.md
 
   # per-clause mutations on the good-sha copy
-  showfile 4e9b547 $FO; echo REFUSES >>"$T";                                          expect FAIL 'mutation(+REFUSES)' t1-trust-wording "$T"
-  showfile 4e9b547 $FO; sed -i.bak 's/trust dialog is SKIPPED/trust dialog is shown/' "$T"; expect FAIL 'mutation(SKIPPED→shown)' t1-trust-wording "$T"
+  showfile 4e9b547 $FO_OLD; echo REFUSES >>"$T";                                          expect FAIL 'mutation(+REFUSES)' t1-trust-wording "$T"
+  showfile 4e9b547 $FO_OLD; sed -i.bak 's/trust dialog is SKIPPED/trust dialog is shown/' "$T"; expect FAIL 'mutation(SKIPPED→shown)' t1-trust-wording "$T"
   showfile 92e6a25 AGENTS.md; echo 'never auto-apply labels' >>"$T";                  expect FAIL 'mutation(+never auto-apply labels)' t3-label-drift "$T"
   showfile 92e6a25 AGENTS.md; sed -i.bak 's/does NOT apply/does not apply/' "$T";     expect FAIL 'mutation(NOT→not)' t3-label-drift "$T"
   showfile HEAD plugin/skills/dispatch/SKILL.md;                                      expect ok baseline dispatch-hold "$T"

@@ -1,9 +1,9 @@
 ---
-name: factory-orchestrator
+name: herdr-orchestrator
 description: Orchestrate a multi-agent build via herdr worker sessions. Use when continuing a tracked build, dispatching tickets to worker sessions via herdr panes across a factory build (for a single repo's own session, use `dispatch`), supervising parallel agents, or when asked "where are we" on the build — for a read-only delta since you last looked, use `cmu`.
 ---
 
-# Factory Orchestrator
+# Herdr Orchestrator
 
 You orchestrate the factory build: you manage worker sessions, you do not write
 factory code yourself. Read the design issue's `intent/<n>-<slug>/spec.md` (ADR 0002:

@@ -143,7 +143,7 @@ hard-to-reverse decisions as ADRs — pushed immediately. Closing a ticket
 requires pasted proof of its acceptance criteria. Orchestration is optional
 and host-specific (single session works the frontier serially; parallel
 builds use the host's mechanism — herdr panes under pi, headless workers
-under Claude Code — under the host-neutral rules in the factory-orchestrator
+under Claude Code — under the host-neutral rules in the herdr-orchestrator
 skill: orchestrator never writes code, QC + adversarial review before
 blessing, HANDOFF ping, two-failure halt). Workers end with a HANDOFF ping
 to the orchestrator when orchestrated: what landed, ADRs written, followups.

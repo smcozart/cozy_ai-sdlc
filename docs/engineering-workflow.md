@@ -265,7 +265,7 @@ under pi, headless workers under Claude Code, etc.) under the same
 host-neutral rules — orchestrator never writes code, one ticket per worker,
 QC + adversarial review before blessing, workers end with a `HANDOFF:` ping,
 two consecutive QC failures halt the chain. Those rules live in the
-`factory-orchestrator` skill; the hosts change, the contract doesn't.
+`herdr-orchestrator` skill; the hosts change, the contract doesn't.
 
 ## Test — one command, fail-first, protected checks
 
@@ -418,7 +418,7 @@ tooling — waits on #1.
 
 ## Orchestration layer (multi-agent builds)
 
-**`factory-orchestrator` skill + a host worker mechanism** — when tickets are
+**`herdr-orchestrator` skill + a host worker mechanism** — when tickets are
 parallelizable and you want workers, not a single session. The skill's rules
 are host-neutral; the mechanics below use herdr under pi as the reference
 host (swap in your host's equivalent — headless Claude Code workers, Codex
@@ -436,7 +436,7 @@ sessions — keeping the same contract). Key rules (full detail in the skill):
 7. No load-bearing sessions: any pane can die and work resumes from GitHub + pushed
    commits — the tracker and the remote are the only state.
 
-The full skill text lives at `.agents/skills/factory-orchestrator/SKILL.md` in this repo
+The full skill text lives at `.agents/skills/herdr-orchestrator/SKILL.md` in this repo
 (it's self-contained except for `.factory/design.md`, which is build-specific — replace
 that per project). Copy it into `.agents/skills/` (pi) or `.claude/skills/` (Claude Code)
 on the target machine, or let the repo's git checkout supply it.
