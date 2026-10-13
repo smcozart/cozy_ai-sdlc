@@ -262,8 +262,8 @@ check_dispatch_hold() {  # whitespace-joined, so a reflow neither hides the old 
 # herdr-retire  herdr-orchestrator (#97): retire removes the worker's clone only behind the squash-safe guard  witness: mutation rows
 check_herdr_retire() {  # whitespace-joined, like dispatch-hold
   local t; t=$(tr -s '[:space:]' ' ' <"$1")
-  grep -qF "then remove the worker's clone (\`rm -rf <clone>\`) only if \`git -C <clone> status --porcelain\` is empty, \`gh pr view <pr> --json state,headRefOid\` says \`MERGED\` and \`git -C <clone> rev-parse HEAD\` equals its \`headRefOid\`" <<<"$t" \
-    || { why="$1: expected the clone removal behind status clean + MERGED + HEAD == headRefOid"; return 1; }
+  grep -qF "then remove the worker's clone (\`rm -rf <clone>\`) only if \`git -C <clone> status --porcelain\` is empty, \`git -C <clone> stash list\` is empty, \`git -C <clone> log --oneline --branches --not --remotes HEAD\` is empty, \`gh pr view <pr> --json state,headRefOid\` says \`MERGED\` and \`git -C <clone> rev-parse HEAD\` equals its \`headRefOid\` — what QC checked and was merged is all the clone holds. Otherwise keep it and name it, with the reason, in the checkpoint." <<<"$t" \
+    || { why="$1: expected the clone removal behind status clean + no stash + no unpushed branch commit + MERGED + HEAD == headRefOid, else keep it"; return 1; }
 }
 
 # pr-adr-line  PR body file (ADR 0005: every PR body carries an ADR: line; presence only)  witness: three mutation rows
@@ -431,6 +431,8 @@ witness_run() {
   showfile HEAD $FO;                                                                  expect ok baseline herdr-retire "$T"
   sed -i.bak "s/then remove the worker's clone (\`rm -rf <clone>\`) //" "$T";              expect FAIL 'mutation(-clone removal)' herdr-retire "$T"
   showfile HEAD $FO; sed -i.bak 's/`git -C <clone> rev-parse HEAD` equals its `headRefOid` //' "$T"; expect FAIL 'mutation(-headRefOid comparison)' herdr-retire "$T"
+  showfile HEAD $FO; sed -i.bak 's/`git -C <clone> stash list` is empty, //' "$T";            expect FAIL 'mutation(-stash list condition)' herdr-retire "$T"
+  showfile HEAD $FO; sed -i.bak 's/Otherwise keep it and name it/Otherwise remove it anyway and name it/' "$T"; expect FAIL 'mutation(fallback→remove it anyway)' herdr-retire "$T"
   printf 'Summary\n\nNo decision line.\n' >"$BASE/body";                              expect FAIL 'mutation(PR body, no ADR: line)' pr-adr-line "$BASE/body"
   printf 'Summary\n\nADR: none\n' >"$BASE/body";                                      expect ok 'PR body, ADR: none' pr-adr-line "$BASE/body"
   printf 'Summary\n\n```\nADR: none\n```\n' >"$BASE/body";                            expect FAIL 'mutation(PR body, ADR: line only fenced)' pr-adr-line "$BASE/body"

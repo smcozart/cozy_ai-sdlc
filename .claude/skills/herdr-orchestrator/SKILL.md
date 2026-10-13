@@ -34,7 +34,7 @@ frontier is GitHub, nothing in a file outranks it.
    ~/.factory/<repo>/workers/w<n>`, never a worktree) and a fresh herdr pane in it
    (`herdr tab create --cwd ~/.factory/<repo>/workers/w<n>` → note pane_id →
    `herdr agent start <name> --kind <worker kind from AGENTS.md (default claude)> --pane <id>` →
-   `herdr agent prompt <pane> "$(cat promptfile)"` with the Worker Prompt Template below). One ticket per
+   `herdr agent prompt <pane> "$(cat ~/.factory/<repo>/logs/w<n>-prompt.md)"` with the Worker Prompt Template below). One ticket per
    session, never reused. Parallel-safe tickets may run in parallel panes; blocker
    edges decide order. Pre-answer the 2–3 ambiguities you'd have about the ticket
    IN the worker prompt, and always include your own pane id so the worker can
@@ -76,7 +76,9 @@ frontier is GitHub, nothing in a file outranks it.
    worker with the handoff addendum if absent. Review findings go back to the same
    worker, never a new one. After the PR is merged, close the pane (`herdr tab close`),
    then remove the worker's clone (`rm -rf <clone>`) only if `git -C <clone> status
-   --porcelain` is empty, `gh pr view <pr> --json state,headRefOid` says `MERGED` and
+   --porcelain` is empty, `git -C <clone> stash list` is empty, `git -C <clone> log
+   --oneline --branches --not --remotes HEAD` is empty, `gh pr view <pr> --json
+   state,headRefOid` says `MERGED` and
    `git -C <clone> rev-parse HEAD` equals its `headRefOid` — what QC checked and was
    merged is all the clone holds. Otherwise keep it and name it, with the reason, in
    the checkpoint. Never delete anything the build did not create.
@@ -126,7 +128,8 @@ not work.
 > 4. Before done: run the ticket's acceptance commands and the gate from
 >    `AGENTS.md ## Commands` over `origin/<base>..HEAD`, review your own diff against every
 >    acceptance criterion, push your branch (never `--no-verify`), open a PR into
->    `<base>` with a body file carrying the commands and output, and paste the same
+>    `<base>` with a body file outside the clone (`~/.factory/<repo>/logs/pr-<n>-body.md`)
+>    carrying the commands and output, and paste the same
 >    proof on #N. **Never close the issue** — the orchestrator merges and closes it
 >    after QC.
 > 5. Go idle. Do NOT start any other ticket.
@@ -167,7 +170,7 @@ not work.
 
 ## Mechanics cheatsheet
 
-- New worker pane: `git clone <url> ~/.factory/<repo>/workers/w<n>` → `herdr tab create --cwd ~/.factory/<repo>/workers/w<n>` → note pane_id → `herdr agent start <name> --kind <worker kind from AGENTS.md (default claude)> --pane <id>` → `herdr agent prompt <pane> "$(cat promptfile)"`
+- New worker pane: `git clone <url> ~/.factory/<repo>/workers/w<n>` → `herdr tab create --cwd ~/.factory/<repo>/workers/w<n>` → note pane_id → `herdr agent start <name> --kind <worker kind from AGENTS.md (default claude)> --pane <id>` → `herdr agent prompt <pane> "$(cat ~/.factory/<repo>/logs/w<n>-prompt.md)"`
 - Poll: `herdr agent list` (JSON; pane_id + agent_status per agent)
 - Read a screen: `herdr agent read <pane>`
 - Send input: `herdr agent prompt <pane> "…"`
@@ -199,7 +202,7 @@ orchestrator pane), `herdr tab close` to retire.
 Spawn one non-interactive `claude -p` session per ticket inside a tmux window or
 as a background session; verified against `claude --help`:
 
-- Spawn: `claude -p --output-format stream-json "$(cat promptfile)" >log-<ticket>.log 2>&1`
+- Spawn: `cd ~/.factory/<repo>/workers/w<n> && claude -p --output-format stream-json "$(cat ~/.factory/<repo>/logs/w<n>-prompt.md)" >~/.factory/<repo>/logs/log-<ticket>.log 2>&1`
   in a fresh `tmux new-window` (redirect, or output is lost when the process
   exits); streaming JSON prints `session_id` as it goes, so Poll/Read work
   mid-run and Ping's resume-id is recoverable (or pin `--session-id <uuid>` at
@@ -231,11 +234,11 @@ known `codex exec` entry point but every flag must be verified against
 `codex --help` on the host before dispatch. The mechanism is the generic one:
 
 - Spawn: one non-interactive exec session per ticket (`codex exec` with the
-  worker prompt as its input), in its own terminal/pane or with output
-  redirected to a per-ticket log. One session per ticket, never reused.
+  worker prompt as its input), run in `~/.factory/<repo>/workers/w<n>`, in its own
+  terminal/pane or with output redirected to `~/.factory/<repo>/logs/log-<ticket>.log`. One session per ticket, never reused.
 - Poll: session/process liveness plus the tail of its captured output.
 - Ping: assume no mid-run steering channel. Steer by starting a follow-up exec
-  session against the same working tree carrying a tighter-scope directive
+  session against the same working tree (`~/.factory/<repo>/workers/w<n>`) carrying a tighter-scope directive
   (numbered slices, commit after each).
 - Close: the session exits at completion; kill the process to abandon.
 - HANDOFF: the worker's final output line carries `HANDOFF: …`; the
