@@ -74,7 +74,7 @@ checkout is never a worker, whatever the host.
 
 | Capability | Launch | Watch / steer |
 |---|---|---|
-| Desktop app with a session-creation tool (`create_session`) | Worktree workspace, autopilot kickoff carrying the worker brief below, coordinated with the creator, notified on idle; title it `#<n> <slug> worker` when the tool takes one, so the sidebar reads as a board. The worker renames its own branch to `t<n>-<slug>`. | Idle notification; its own session-inspect/session-message tools; keep the returned session id. |
+| Desktop app with a session-creation tool (`create_session`) | Worktree workspace, autopilot kickoff carrying the worker brief below, coordinated with the creator, notified on idle; title it `#<n> <slug> worker` when the tool takes one, so the sidebar reads as a board. The worker renames its own branch to `t<n>-<slug>`. | Idle notification; `get_sessions_status` (roster), `get_session` / `send_session_message` (inspect, steer), `archive_session` (retire); keep the returned session id — it is the handle for all of them. |
 | CLI with headless child sessions (`--worktree`) | A child headless session in its own worktree on branch `t<n>-<slug>` (verify: sibling worktree, exact branch). A shared-checkout sub-agent is not a worktree and may be used only after you have created the worktree yourself, or not at all. | Process completion and structured output; resume the exact session id, not an ambiguous "continue latest". |
 | Harness with a worktree-isolating sub-agent tool (its own worktree option) | Its documented worktree-isolation and background-completion mode; the worker checks out or creates `t<n>-<slug>`. | Its native completion/message/resume tools; keep the returned identifier. |
 
@@ -99,8 +99,10 @@ stops carries it, directly above the `Needs you:` line, one entry per worker
 session **this conversation launched**, in this shape:
 `Workers: #12 handed off (PR 12, awaiting QC) · #14 running · #9 retired — dismiss it`.
 The developer reads one conversation and knows what every worker is and
-whether it waits on anyone. Sessions you did not launch are never rostered
-and never closed — they are the developer's own.
+whether it waits on anyone. In the desktop app build it from
+`get_sessions_status`, keeping only the ids this conversation created.
+Sessions you did not launch are never rostered and never closed — they are
+the developer's own.
 
 ## Move 5 — QC
 
@@ -162,12 +164,15 @@ not a checkoff.
 
 Confirm `gh pr view <pr> --json state` is `MERGED` and the worktree has
 nothing uncommitted or unpushed. CLI/other-host worktrees: `git worktree
-remove <path> && git branch -D <branch>`. **Close the worker session** with
-your harness's own session close/archive tool when it has one (then remove
-its worktree and branch the same way, so nothing stale is left for the next
-reconcile); an app workspace without such a tool is never deleted from disk —
-instead say "worker for #<n> retired — you can dismiss that session" and mark
-it `retired` on the roster until it is gone.
+remove <path> && git branch -D <branch>`. **Close the worker session.** In
+the desktop app call `archive_session` with the worker's session id (the id
+`create_session` returned), then confirm with `get_sessions_status` that it
+is gone; on another host use its own close/archive tool, then remove the
+worktree and branch the same way so nothing stale is left for the next
+reconcile. Only a host with no such tool falls back to "worker for #<n>
+retired — you can dismiss that session", with the worker marked `retired` on
+the roster until it is gone. Never archive a session this conversation did
+not launch.
 
 **A worker that handed off blocked or failed does not linger either.** Send
 one concrete same-ticket correction (Move 4). If the block is the developer's
