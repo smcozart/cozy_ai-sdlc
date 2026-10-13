@@ -16,10 +16,11 @@ set -uo pipefail
 unset GIT_DIR GIT_WORK_TREE  # #45: a hook-exported GIT_DIR makes rev-parse return cwd (tests/), not the root
 cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)" || exit 2
 
-FO=plugin/skills/factory-orchestrator/SKILL.md
+FO=plugin/skills/herdr-orchestrator/SKILL.md
+FO_OLD=plugin/skills/factory-orchestrator/SKILL.md  # the t1-* sha witnesses predate the rename (#97)
 DOC=docs/engineering-workflow.md
 SK=plugin/skills/engineering-workflow/SKILL.md
-CHECKS="sync-rule stage-parity intent-layout adr-numbering adr-refs hooks-json skill-frontmatter skill-copies template-gate-parity agents-commands t1-trust-wording t1-log-clobber t1-spawn-session t3-label-drift t3-precedence dispatch-hold pr-adr-line"
+CHECKS="sync-rule stage-parity intent-layout adr-numbering adr-refs hooks-json skill-frontmatter skill-copies template-gate-parity agents-commands t1-trust-wording t1-log-clobber t1-spawn-session t3-label-drift t3-precedence dispatch-hold herdr-retire pr-adr-line"
 
 fail=0; why=""
 list_checks() { printf '%s\n' $CHECKS; }
@@ -186,10 +187,10 @@ check_skill_frontmatter() {
 }
 
 check_skill_copies() {
-  cmp -s "$1/$FO" "$1/.agents/skills/factory-orchestrator/SKILL.md" \
-    || { why="$FO and .agents/skills/factory-orchestrator/SKILL.md differ (must be byte-identical)"; return 1; }
-  cmp -s "$1/$FO" "$1/.claude/skills/factory-orchestrator/SKILL.md" \
-    || { why="$FO and .claude/skills/factory-orchestrator/SKILL.md differ (must be byte-identical)"; return 1; }
+  cmp -s "$1/$FO" "$1/.agents/skills/herdr-orchestrator/SKILL.md" \
+    || { why="$FO and .agents/skills/herdr-orchestrator/SKILL.md differ (must be byte-identical)"; return 1; }
+  cmp -s "$1/$FO" "$1/.claude/skills/herdr-orchestrator/SKILL.md" \
+    || { why="$FO and .claude/skills/herdr-orchestrator/SKILL.md differ (must be byte-identical)"; return 1; }
   cmp -s "$1/$SK" "$1/.claude/skills/engineering-workflow/SKILL.md" \
     || { why="$SK and .claude/skills/engineering-workflow/SKILL.md differ (must be byte-identical)"; return 1; }
   cmp -s "$1/plugin/skills/cmu/SKILL.md" "$1/.claude/skills/cmu/SKILL.md" \
@@ -258,6 +259,13 @@ check_dispatch_hold() {  # whitespace-joined, so a reflow neither hides the old 
     || { why="$1: expected the merge tied by 'and the gate run's \`flagged:\` line says \`flagged: no\`' and no 'plus this one QC check merges'"; return 1; }
 }
 
+# herdr-retire  herdr-orchestrator (#97): retire removes the worker's clone only behind the squash-safe guard  witness: mutation rows
+check_herdr_retire() {  # whitespace-joined, like dispatch-hold
+  local t; t=$(tr -s '[:space:]' ' ' <"$1")
+  grep -qF "then remove the worker's clone (\`rm -rf <clone>\`) only if \`git -C <clone> status --porcelain\` is empty, \`git -C <clone> stash list\` is empty, \`git -C <clone> log --oneline --branches --not --remotes HEAD\` is empty, \`gh pr view <pr> --json state,headRefOid\` says \`MERGED\` and \`git -C <clone> rev-parse HEAD\` equals its \`headRefOid\` — what QC checked and was merged is all the clone holds. Otherwise keep it and name it, with the reason, in the checkpoint." <<<"$t" \
+    || { why="$1: expected the clone removal behind status clean + no stash + no unpushed branch commit + MERGED + HEAD == headRefOid, else keep it"; return 1; }
+}
+
 # pr-adr-line  PR body file (ADR 0005: every PR body carries an ADR: line; presence only)  witness: three mutation rows
 check_pr_adr_line() {  # a fenced line is quoted text, not the PR's own ADR line
   awk '/^[[:space:]]*(```|~~~)/{f=!f; next} !f' "$1" | grep -qE '^ADR:[[:space:]]*[^[:space:]]' || { why="$1: no 'ADR:' line (write 'ADR: none' when the PR records no decision)"; return 1; }
@@ -286,6 +294,7 @@ default_run() {
   for c in t1-trust-wording t1-log-clobber t1-spawn-session; do run "$c" "$FO"; done
   for c in t3-label-drift t3-precedence; do run "$c" AGENTS.md; done
   run dispatch-hold plugin/skills/dispatch/SKILL.md
+  run herdr-retire "$FO"
   if [ -n "$body" ]; then run pr-adr-line "$body"; else echo "skipped: pr-adr-line — no PR body file given (CI passes one)"; fi
   echo "$ran_ok ok, $fail_count failed (range: $range)"
   lane_run "$range" || true   # trailer, not a check: same range as the gate so one paste carries both (ADR 0003)
@@ -358,9 +367,9 @@ witness_run() {
   expect FAIL mutation hooks-json "$m"; reset_wt "$m"
   (cd "$m" && grep -v '^name:' $FO > t && mv t $FO)
   expect FAIL mutation skill-frontmatter "$m"; reset_wt "$m"
-  echo x >> "$m/.agents/skills/factory-orchestrator/SKILL.md"
+  echo x >> "$m/.agents/skills/herdr-orchestrator/SKILL.md"
   expect FAIL mutation skill-copies "$m"; reset_wt "$m"
-  echo x >> "$m/.claude/skills/factory-orchestrator/SKILL.md"
+  echo x >> "$m/.claude/skills/herdr-orchestrator/SKILL.md"
   expect FAIL 'mutation(.claude factory copy)' skill-copies "$m"; reset_wt "$m"
   echo x >> "$m/.claude/skills/cmu/SKILL.md"
   expect FAIL 'mutation(.claude cmu copy)' skill-copies "$m"; reset_wt "$m"
@@ -398,20 +407,20 @@ witness_run() {
   expect FAIL 'mutation(one name deleted)' agents-commands "$m"; reset_wt "$m"
 
   # sha witnesses — regression (single file via git show)
-  for s in 7e8a195 da9eb33; do sha_row FAIL "$s" t1-trust-wording $FO; done
-  sha_row ok   4e9b547 t1-trust-wording $FO
-  sha_row FAIL da9eb33 t1-log-clobber $FO
-  sha_row ok   4e9b547 t1-log-clobber $FO
-  for s in 7e8a195 da9eb33; do sha_row FAIL "$s" t1-spawn-session $FO; done
-  sha_row ok   4e9b547 t1-spawn-session $FO
+  for s in 7e8a195 da9eb33; do sha_row FAIL "$s" t1-trust-wording $FO_OLD; done
+  sha_row ok   4e9b547 t1-trust-wording $FO_OLD
+  sha_row FAIL da9eb33 t1-log-clobber $FO_OLD
+  sha_row ok   4e9b547 t1-log-clobber $FO_OLD
+  for s in 7e8a195 da9eb33; do sha_row FAIL "$s" t1-spawn-session $FO_OLD; done
+  sha_row ok   4e9b547 t1-spawn-session $FO_OLD
   sha_row FAIL 43b63dc t3-label-drift AGENTS.md
   sha_row ok   92e6a25 t3-label-drift AGENTS.md
   sha_row FAIL 43b63dc t3-precedence AGENTS.md
   sha_row ok   92e6a25 t3-precedence AGENTS.md
 
   # per-clause mutations on the good-sha copy
-  showfile 4e9b547 $FO; echo REFUSES >>"$T";                                          expect FAIL 'mutation(+REFUSES)' t1-trust-wording "$T"
-  showfile 4e9b547 $FO; sed -i.bak 's/trust dialog is SKIPPED/trust dialog is shown/' "$T"; expect FAIL 'mutation(SKIPPED→shown)' t1-trust-wording "$T"
+  showfile 4e9b547 $FO_OLD; echo REFUSES >>"$T";                                          expect FAIL 'mutation(+REFUSES)' t1-trust-wording "$T"
+  showfile 4e9b547 $FO_OLD; sed -i.bak 's/trust dialog is SKIPPED/trust dialog is shown/' "$T"; expect FAIL 'mutation(SKIPPED→shown)' t1-trust-wording "$T"
   showfile 92e6a25 AGENTS.md; echo 'never auto-apply labels' >>"$T";                  expect FAIL 'mutation(+never auto-apply labels)' t3-label-drift "$T"
   showfile 92e6a25 AGENTS.md; sed -i.bak 's/does NOT apply/does not apply/' "$T";     expect FAIL 'mutation(NOT→not)' t3-label-drift "$T"
   showfile HEAD plugin/skills/dispatch/SKILL.md;                                      expect ok baseline dispatch-hold "$T"
@@ -419,6 +428,11 @@ witness_run() {
   showfile HEAD plugin/skills/dispatch/SKILL.md; echo 'Green `validate` plus this one QC check merges — no' >>"$T"; expect FAIL 'mutation(+f467444 merge line)' dispatch-hold "$T"
   showfile HEAD plugin/skills/dispatch/SKILL.md; printf 'Green `validate` plus this one\nQC check merges — no\n' >>"$T"; expect FAIL 'mutation(+f467444 line reflowed)' dispatch-hold "$T"
   showfile HEAD plugin/skills/dispatch/SKILL.md; sed -i.bak "s/passed, and the gate run's/passed, or the gate run's/" "$T"; expect FAIL 'mutation(and→or tie)' dispatch-hold "$T"
+  showfile HEAD $FO;                                                                  expect ok baseline herdr-retire "$T"
+  sed -i.bak "s/then remove the worker's clone (\`rm -rf <clone>\`) //" "$T";              expect FAIL 'mutation(-clone removal)' herdr-retire "$T"
+  showfile HEAD $FO; sed -i.bak 's/`git -C <clone> rev-parse HEAD` equals its `headRefOid` //' "$T"; expect FAIL 'mutation(-headRefOid comparison)' herdr-retire "$T"
+  showfile HEAD $FO; sed -i.bak 's/`git -C <clone> stash list` is empty, //' "$T";            expect FAIL 'mutation(-stash list condition)' herdr-retire "$T"
+  showfile HEAD $FO; sed -i.bak 's/Otherwise keep it and name it/Otherwise remove it anyway and name it/' "$T"; expect FAIL 'mutation(fallback→remove it anyway)' herdr-retire "$T"
   printf 'Summary\n\nNo decision line.\n' >"$BASE/body";                              expect FAIL 'mutation(PR body, no ADR: line)' pr-adr-line "$BASE/body"
   printf 'Summary\n\nADR: none\n' >"$BASE/body";                                      expect ok 'PR body, ADR: none' pr-adr-line "$BASE/body"
   printf 'Summary\n\n```\nADR: none\n```\n' >"$BASE/body";                            expect FAIL 'mutation(PR body, ADR: line only fenced)' pr-adr-line "$BASE/body"

@@ -32,7 +32,8 @@ Design ──► spec.md beside the intent; ADRs over the bar; vertical-slice
           skill carries the mechanics
 Build ───► one ticket per agent session; workers cite ADRs, write ADRs
           (optional plan.md sequences tickets for multi-ticket builds — not
-          the agent's per-session plan-before-code)
+          the agent's per-session plan-before-code); parallel builds: the
+          `herdr-orchestrator` skill
 Test ────► tests/validate.sh exits 0 (fail-first; checks and the content
           they guard protected) — run + acceptance output (+ pair for fixes)
           pasted at close; CI runs it on every PR (check `gate`)
