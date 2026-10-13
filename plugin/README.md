@@ -1,7 +1,8 @@
-# Engineering Workflow Plugin (Claude Code)
+# AI SDLC Plugin (`ai-sdlc`, Claude Code)
 
 Packages the repo's engineering process as a Claude Code plugin: skills,
-session-start hook, no external deps beyond `gh`.
+session-start hook, no external deps beyond `gh` and the `mattpocock-skills`
+plugin it declares as a dependency.
 
 ## Adoption order (canonical — one command on a new machine)
 
@@ -30,6 +31,12 @@ ready-for-agent`.
 
 ## Install
 
+```
+/plugin install ai-sdlc --marketplace smcozart/claude-plugins
+```
+
+This also installs `mattpocock-skills` from `claude-plugins-official`.
+
 From this repo (local path install):
 
 ```bash
@@ -39,7 +46,7 @@ claude plugin add /path/to/repo/plugin
 Or host a marketplace later by adding `.claude-plugin/marketplace.json` at repo
 root and pointing other machines at the GitHub URL.
 
-After install, verify: `/plugin` shows `engineering-workflow`; a new session
+After install, verify: `/plugin` shows `ai-sdlc`; a new session
 prints the workflow reminder; the `engineering-workflow` skill is available.
 
 ## Dependencies (not bundled — install per below)

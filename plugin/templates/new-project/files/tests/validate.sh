@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# scaffolded from engineering-workflow--v{{PLUGIN_VERSION}}
+# scaffolded from ai-sdlc--v{{PLUGIN_VERSION}}
 # The Test gate: one command, one exit code, one line per check.
 #
 #   tests/validate.sh [<range>]         run every check; print the lane and flagged lines for <range> (else dirty tree, else HEAD~1..HEAD)

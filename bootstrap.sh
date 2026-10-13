@@ -47,8 +47,8 @@ if have gh && gh auth status >/dev/null 2>&1; then echo "  ok: gh authenticated"
 else echo "  !! run: gh auth login"; fail=1; fi
 if have claude; then
   claude plugin marketplace add "$(pwd)" >/dev/null 2>&1 || true
-  claude plugin install engineering-workflow@cozycode 2>&1 | grep -qE "already installed|Installing" \
-    && echo "  ok: engineering-workflow plugin" || { echo "  !! plugin install failed"; fail=1; }
+  claude plugin install ai-sdlc@cozycode 2>&1 | grep -qE "already installed|Installing" \
+    && echo "  ok: ai-sdlc plugin" || { echo "  !! plugin install failed"; fail=1; }
 else
   echo "  -- claude not installed, skipping plugin registration"
 fi

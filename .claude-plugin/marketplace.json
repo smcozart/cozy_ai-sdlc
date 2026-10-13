@@ -1,9 +1,11 @@
 {
   "name": "cozycode",
+  "description": "Sean Cozart's AI SDLC plugin: the six-phase engineering loop.",
   "owner": { "name": "Sean Cozart" },
+  "allowCrossMarketplaceDependenciesOn": ["claude-plugins-official"],
   "plugins": [
     {
-      "name": "engineering-workflow",
+      "name": "ai-sdlc",
       "source": "./plugin",
       "description": "Six-phase AI-native SDLC: intent-first planning, GitHub-tracked tickets, ADRs, proof-over-claim verification."
     }

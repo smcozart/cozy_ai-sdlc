@@ -8,7 +8,7 @@ GitHub Issues stay the system of record.
 
 ## Where the board is
 
-Repo created from the `engineering-workflow` plugin, v{{PLUGIN_VERSION}}.
+Repo created from the `ai-sdlc` plugin, v{{PLUGIN_VERSION}}.
 Next: the system intent (`SYSTEM-INTENT.md`) — say what the app is for.
 
 ## Open

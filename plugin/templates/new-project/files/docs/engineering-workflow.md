@@ -1,7 +1,7 @@
 # Engineering workflow
 
 This repo runs the six-stage loop (Plan → Design → Build → Test → Deploy →
-Maintain) of the `engineering-workflow` plugin, v{{PLUGIN_VERSION}}. The
+Maintain) of the `ai-sdlc` plugin, v{{PLUGIN_VERSION}}. The
 loop and its contracts live in the plugin's `engineering-workflow` skill;
 this file does not copy them. It holds only what is this repo's own: the
 merge policy below (`docs/adr/*-adopt-engineering-workflow.md`).

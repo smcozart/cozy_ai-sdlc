@@ -4,7 +4,7 @@
 > issues it mirrors are the live frontier. Then `CONTEXT.md` for the
 > vocabulary, and this file for the contracts.
 
-This repo runs the six-stage loop of the `engineering-workflow` plugin
+This repo runs the six-stage loop of the `ai-sdlc` plugin
 (Plan → Design → Build → Test → Deploy → Maintain). The loop lives in the
 plugin's `engineering-workflow` skill; this repo's merge policy is
 `docs/engineering-workflow.md` Deploy.
