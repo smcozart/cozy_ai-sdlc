@@ -27,7 +27,12 @@ frontier is GitHub, nothing in a file outranks it.
 
 1. **Orient:** `gh issue list --label ready-for-agent`. The frontier is any ticket
    whose blockers are all closed.
-2. **Dispatch:** fresh herdr pane per ticket (`herdr tab create` → note pane_id →
+2. **Dispatch:** everything the build creates on disk lives under `~/.factory/<repo>/`:
+   worker clones `workers/w<n>`, the QC checkout `qc`, QC and witness logs `logs/`.
+   Never inside the repo, never a sibling of it (a nested clone also loads the outer
+   checkout's `CLAUDE.md`). Per ticket: a full clone (`git clone <url>
+   ~/.factory/<repo>/workers/w<n>`, never a worktree) and a fresh herdr pane in it
+   (`herdr tab create --cwd ~/.factory/<repo>/workers/w<n>` → note pane_id →
    `herdr agent start <name> --kind <worker kind from AGENTS.md (default claude)> --pane <id>` →
    `herdr agent prompt <pane> "$(cat promptfile)"` with the Worker Prompt Template below). One ticket per
    session, never reused. Parallel-safe tickets may run in parallel panes; blocker
@@ -40,8 +45,9 @@ frontier is GitHub, nothing in a file outranks it.
    goes idle with no `HANDOFF:` line, it stalled or truncated: read its screen,
    send a resume directive with tighter scope (numbered slices, commit after each).
 4. **QC — run the gates yourself.** GitHub is the claim; your terminal is the proof.
-   Per ticket, on the worker's branch in a QC checkout or clone (for example
-   `gh pr checkout <pr>`), never on the orchestrator's base: run the acceptance
+   Per ticket, on the worker's branch in the QC checkout `~/.factory/<repo>/qc` (a full
+   clone; `gh pr checkout <pr>` there), logs in `~/.factory/<repo>/logs/`, never on the
+   orchestrator's base: run the acceptance
    criteria with your own commands, run the gate from `AGENTS.md ## Commands` over the
    ticket's range (`origin/<base>..HEAD`, `<base>` = the `**Base branch:**` line in
    `AGENTS.md`, default `main`; an empty range or `lane: none` is not a pass), review the
@@ -68,11 +74,19 @@ frontier is GitHub, nothing in a file outranks it.
    and leave the same line as an in-buffer fallback; any ADRs are pushed to the remote.
    Verify on QC: watch for the direct ping or read the screen for the line; ping the
    worker with the handoff addendum if absent. Review findings go back to the same
-   worker, never a new one. Close the pane (`herdr tab close`) only after the PR is
-   merged.
+   worker, never a new one. After the PR is merged, close the pane (`herdr tab close`),
+   then remove the worker's clone (`rm -rf <clone>`) only if `git -C <clone> status
+   --porcelain` is empty, `gh pr view <pr> --json state,headRefOid` says `MERGED` and
+   `git -C <clone> rev-parse HEAD` equals its `headRefOid` — what QC checked and was
+   merged is all the clone holds. Otherwise keep it and name it, with the reason, in
+   the checkpoint. Never delete anything the build did not create.
 6. **Checkpoint.** Report to the operator between tickets: what landed, diff stats,
    QC result, what's next. Operator releases the next ticket. Trivial tickets may be
-   batch-approved; big ones get a real look.
+   batch-approved; big ones get a real look. At the end of the build, remove
+   `~/.factory/<repo>/qc` the same way (`git -C ~/.factory/<repo>/qc status --porcelain`
+   empty) and `~/.factory/<repo>/logs`, then `rmdir` the empty `~/.factory/<repo>/…`
+   dirs. The final checkpoint lists what is still under `~/.factory/<repo>/` (`ls -A`),
+   or says "nothing left on disk".
 
 **Merge hold (ADR 0005):** never merge a PR whose `tests/validate.sh --lane`
 prints `flagged: yes` — it touches `tests/validate.sh`, `.github/workflows/**` or
@@ -99,8 +113,9 @@ not work.
 > Process contract (non-negotiable):
 > 1. Read in this order: `AGENTS.md` → the issue → its spec and intent
 >    (`intent/<n>-<slug>/`) → the ADRs it cites → `CONTEXT.md` → code. A missing
->    link, spec or ADR: stop and say so in your `HANDOFF:` line. Work in your own
->    checkout or clone, never the orchestrator's, on branch `t<n>-<slug>` from
+>    link, spec or ADR: stop and say so in your `HANDOFF:` line. Work only in your own
+>    clone `~/.factory/<repo>/workers/w<n>` (never a worktree, never the
+>    orchestrator's checkout), on branch `t<n>-<slug>` from
 >    `origin/<base>` (`<base>` = the `**Base branch:**` line in `AGENTS.md`, default
 >    `main`); verify `git branch --show-current` before editing. If `t<n>-<slug>` or a
 >    PR for #N already exists, check it out and continue; never force-push.
@@ -152,7 +167,7 @@ not work.
 
 ## Mechanics cheatsheet
 
-- New worker pane: `herdr tab create` → note pane_id → `herdr agent start <name> --kind <worker kind from AGENTS.md (default claude)> --pane <id>` → `herdr agent prompt <pane> "$(cat promptfile)"`
+- New worker pane: `git clone <url> ~/.factory/<repo>/workers/w<n>` → `herdr tab create --cwd ~/.factory/<repo>/workers/w<n>` → note pane_id → `herdr agent start <name> --kind <worker kind from AGENTS.md (default claude)> --pane <id>` → `herdr agent prompt <pane> "$(cat promptfile)"`
 - Poll: `herdr agent list` (JSON; pane_id + agent_status per agent)
 - Read a screen: `herdr agent read <pane>`
 - Send input: `herdr agent prompt <pane> "…"`

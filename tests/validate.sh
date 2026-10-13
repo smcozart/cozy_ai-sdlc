@@ -20,7 +20,7 @@ FO=plugin/skills/herdr-orchestrator/SKILL.md
 FO_OLD=plugin/skills/factory-orchestrator/SKILL.md  # the t1-* sha witnesses predate the rename (#97)
 DOC=docs/engineering-workflow.md
 SK=plugin/skills/engineering-workflow/SKILL.md
-CHECKS="sync-rule stage-parity intent-layout adr-numbering adr-refs hooks-json skill-frontmatter skill-copies template-gate-parity agents-commands t1-trust-wording t1-log-clobber t1-spawn-session t3-label-drift t3-precedence dispatch-hold pr-adr-line"
+CHECKS="sync-rule stage-parity intent-layout adr-numbering adr-refs hooks-json skill-frontmatter skill-copies template-gate-parity agents-commands t1-trust-wording t1-log-clobber t1-spawn-session t3-label-drift t3-precedence dispatch-hold herdr-retire pr-adr-line"
 
 fail=0; why=""
 list_checks() { printf '%s\n' $CHECKS; }
@@ -259,6 +259,13 @@ check_dispatch_hold() {  # whitespace-joined, so a reflow neither hides the old 
     || { why="$1: expected the merge tied by 'and the gate run's \`flagged:\` line says \`flagged: no\`' and no 'plus this one QC check merges'"; return 1; }
 }
 
+# herdr-retire  herdr-orchestrator (#97): retire removes the worker's clone only behind the squash-safe guard  witness: mutation rows
+check_herdr_retire() {  # whitespace-joined, like dispatch-hold
+  local t; t=$(tr -s '[:space:]' ' ' <"$1")
+  grep -qF "then remove the worker's clone (\`rm -rf <clone>\`) only if \`git -C <clone> status --porcelain\` is empty, \`gh pr view <pr> --json state,headRefOid\` says \`MERGED\` and \`git -C <clone> rev-parse HEAD\` equals its \`headRefOid\`" <<<"$t" \
+    || { why="$1: expected the clone removal behind status clean + MERGED + HEAD == headRefOid"; return 1; }
+}
+
 # pr-adr-line  PR body file (ADR 0005: every PR body carries an ADR: line; presence only)  witness: three mutation rows
 check_pr_adr_line() {  # a fenced line is quoted text, not the PR's own ADR line
   awk '/^[[:space:]]*(```|~~~)/{f=!f; next} !f' "$1" | grep -qE '^ADR:[[:space:]]*[^[:space:]]' || { why="$1: no 'ADR:' line (write 'ADR: none' when the PR records no decision)"; return 1; }
@@ -287,6 +294,7 @@ default_run() {
   for c in t1-trust-wording t1-log-clobber t1-spawn-session; do run "$c" "$FO"; done
   for c in t3-label-drift t3-precedence; do run "$c" AGENTS.md; done
   run dispatch-hold plugin/skills/dispatch/SKILL.md
+  run herdr-retire "$FO"
   if [ -n "$body" ]; then run pr-adr-line "$body"; else echo "skipped: pr-adr-line — no PR body file given (CI passes one)"; fi
   echo "$ran_ok ok, $fail_count failed (range: $range)"
   lane_run "$range" || true   # trailer, not a check: same range as the gate so one paste carries both (ADR 0003)
@@ -420,6 +428,9 @@ witness_run() {
   showfile HEAD plugin/skills/dispatch/SKILL.md; echo 'Green `validate` plus this one QC check merges — no' >>"$T"; expect FAIL 'mutation(+f467444 merge line)' dispatch-hold "$T"
   showfile HEAD plugin/skills/dispatch/SKILL.md; printf 'Green `validate` plus this one\nQC check merges — no\n' >>"$T"; expect FAIL 'mutation(+f467444 line reflowed)' dispatch-hold "$T"
   showfile HEAD plugin/skills/dispatch/SKILL.md; sed -i.bak "s/passed, and the gate run's/passed, or the gate run's/" "$T"; expect FAIL 'mutation(and→or tie)' dispatch-hold "$T"
+  showfile HEAD $FO;                                                                  expect ok baseline herdr-retire "$T"
+  sed -i.bak "s/then remove the worker's clone (\`rm -rf <clone>\`) //" "$T";              expect FAIL 'mutation(-clone removal)' herdr-retire "$T"
+  showfile HEAD $FO; sed -i.bak 's/`git -C <clone> rev-parse HEAD` equals its `headRefOid` //' "$T"; expect FAIL 'mutation(-headRefOid comparison)' herdr-retire "$T"
   printf 'Summary\n\nNo decision line.\n' >"$BASE/body";                              expect FAIL 'mutation(PR body, no ADR: line)' pr-adr-line "$BASE/body"
   printf 'Summary\n\nADR: none\n' >"$BASE/body";                                      expect ok 'PR body, ADR: none' pr-adr-line "$BASE/body"
   printf 'Summary\n\n```\nADR: none\n```\n' >"$BASE/body";                            expect FAIL 'mutation(PR body, ADR: line only fenced)' pr-adr-line "$BASE/body"
