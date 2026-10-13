@@ -6,7 +6,7 @@
 
 ## Problem
 
-On a free private GitHub repo the ruleset is refused with HTTP 403. `new-project` then writes the fail-closed rule, and every PR waits for the developer, starting with the first records PR. The skill expects a `[]` read-back and does not name the 403 case. `dispatch` cites "ADR 0005" by cozyharness's number, and that number can mean something else in a scaffolded repo.
+On a free private GitHub repo the ruleset is refused with HTTP 403. `new-project` then writes the fail-closed rule, and every PR waits for the developer, starting with the first records PR. The skill expects a `[]` read-back and does not name the 403 case. `dispatch` Move 5 names its merge rule by a fixed ADR number, which does not resolve to a file in cozyharness (the `adr-refs` check rejects it) and can mean something else in a scaffolded repo.
 
 ## Desired outcome
 
