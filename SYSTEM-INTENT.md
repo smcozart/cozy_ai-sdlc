@@ -1,6 +1,6 @@
 # System Intent — The Harness
 
-**Status:** approved · **Origin:** issue [#2](https://github.com/smcozart/cozyharness/issues/2)
+**Status:** approved · **Origin:** issue [#2](https://github.com/smcozart/cozy_ai-sdlc/issues/2)
 
 ## Why this system exists
 

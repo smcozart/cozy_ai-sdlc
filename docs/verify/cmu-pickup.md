@@ -52,7 +52,7 @@ The tracker reads are live; `cmu` needs them.
 
 ```bash
 H=$(git rev-parse --show-toplevel); R=$(mktemp -d)/run; LOG=$R.log
-git clone -q https://github.com/smcozart/cozyharness.git "$R" && cd "$R"
+git clone -q https://github.com/smcozart/cozy_ai-sdlc.git "$R" && cd "$R"
 git remote set-url --push origin DISABLED; rm -f docs/verify/cmu-pickup.md
 B=$(git status --porcelain)
 for n in $(gh pr list --state open --json number --jq '.[].number'); do  # held set

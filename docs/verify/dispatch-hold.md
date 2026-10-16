@@ -63,7 +63,7 @@ file.
 ```bash
 H=$(git rev-parse --show-toplevel); R=$(mktemp -d)/run; LOG=$R.log; PIN=<#82 squash sha>
 P=$(awk '/^## 1\./{f=1;next} /^## 2\./{f=0} f' "$H/docs/verify/dispatch-hold.md")
-git clone -q https://github.com/smcozart/cozyharness.git "$R" && cd "$R" && git checkout -q "$PIN"
+git clone -q https://github.com/smcozart/cozy_ai-sdlc.git "$R" && cd "$R" && git checkout -q "$PIN"
 git rm -rq docs/verify && git commit -qm "subject clone: no behavior files"
 git branch -f main HEAD && git switch -q main && git update-ref refs/remotes/origin/main HEAD
 git remote set-url --push origin DISABLED
