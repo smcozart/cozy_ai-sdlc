@@ -3,7 +3,7 @@
   "description": "The standard engineering process: intent-first planning, GitHub-tracked tickets with blocking edges and triage labels, ADR-recorded decisions, proof-over-claim verification, and herdr-orchestrated parallel builds.",
   "version": "1.6.0",
   "author": { "name": "Sean Cozart" },
-  "homepage": "https://github.com/smcozart/cozyharness",
-  "repository": "https://github.com/smcozart/cozyharness",
+  "homepage": "https://github.com/smcozart/cozy_ai-sdlc",
+  "repository": "https://github.com/smcozart/cozy_ai-sdlc",
   "dependencies": [{ "name": "mattpocock-skills", "marketplace": "claude-plugins-official" }]
 }

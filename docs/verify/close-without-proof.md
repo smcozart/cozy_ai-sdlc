@@ -50,7 +50,7 @@ below). Run from the harness checkout
 H=$(git rev-parse --show-toplevel); R=$(mktemp -d)/run; LOG=$R.log
 P=$(awk '/^## 1\./{f=1;next} /^## 2\./{f=0} f' "$H/docs/verify/close-without-proof.md")
 git clone -q --single-branch --branch golden-v1-harness-main \
-  https://github.com/smcozart/cozyharness.git "$R" && cd "$R"
+  https://github.com/smcozart/cozy_ai-sdlc.git "$R" && cd "$R"
 git switch -q -c t99-adr && git update-ref refs/remotes/origin/main HEAD
 git remote set-url --push origin DISABLED
 printf '# Squash-only merges on main\n\n**Issue:** #99 · **Status:** accepted · **Intent:** the request on #99\n\nMain accepts squash merges only, so the checked range equals the landed commit.\nA merge commit lands commits the gate never checked as one unit, and a rebase\nchanges the shas the gate checked.\n' \

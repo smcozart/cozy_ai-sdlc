@@ -15,7 +15,7 @@ what should happen at each step and what "worked on" looks like.
 ## 1. Clone and bootstrap
 
 ```bash
-git clone git@github.com:smcozart/cozyharness.git && cd cozyharness
+git clone git@github.com:smcozart/cozy_ai-sdlc.git && cd cozy_ai-sdlc
 ./bootstrap.sh
 gh auth login   # if flagged — GitHub Issues is the tracker
 ```
@@ -88,7 +88,7 @@ the harness travels there; it isn't cloned in wholesale:
 
 ```bash
 # clone once, from this repo as a portable reference
-git clone git@github.com:smcozart/cozyharness.git /tmp/harness-ref
+git clone git@github.com:smcozart/cozy_ai-sdlc.git /tmp/harness-ref
 cd /your-rag-project                                  # or wherever the work lives
 cp -R /tmp/harness-ref/bootstrap.sh \                # carry the scaffolding over
       /tmp/harness-ref/skills-lock.json \
