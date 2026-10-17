@@ -30,6 +30,30 @@ instigate, direct, and govern; agents take the center of the loop.**
   auditable, they don't remove it.
 - Not tool-locked: Claude Code, pi, and Copilot are hosts, not the product.
 
+## Finish line for v1
+
+v1 is done when both hold:
+
+1. The six-stage loop has run end to end, from intent to a merged and proven
+   PR, on two real product repos: cozy_view (done: 19 tickets, 45 PRs from
+   2026-10-12 to 2026-10-16) and cozy_fit.
+2. During the cozy_fit run, the developer makes fewer corrections per session
+   than in the week of 2026-10-12 (9 in 5 sessions), as cozy_view measures.
+
+## How the system changes
+
+Before and after v1, a change to the system gets in only when one of these
+holds:
+
+- cozy_view shows the deviation it fixes at least 5 times in at least 2
+  sessions;
+- a real run stalled on it (the session id is on the issue);
+- a check or a merge hold gives a wrong result (shown by a fail-first witness).
+
+Anything else goes on the one ledger issue, not into a new issue. A change
+that adds a skill, a gate check or a template file names what it replaces, or
+why nothing can be removed.
+
 ## Alignment
 
 Every work-item intent (`intent/<issue-number>-<slug>/intent.md`) is checked
