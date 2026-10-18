@@ -5,7 +5,7 @@ and contracts for this repo. This file is only the pointer.
 
 - Workflow: `docs/engineering-workflow.md` (six-stage loop)
 - Review policy: `REVIEW.md` · Vocabulary: `CONTEXT.md`
-- Skills: `.claude/skills/` (copies of `plugin/skills/`)
+- Skills: `.claude/skills/` (symlinks to `plugin/skills/`)
 - Proof gate: `tests/validate.sh [<range>]` · `--witness` for fail-first
 - Prerequisite: install Matt Pocock skills once per machine
   (`mattpocock/skills`) — `/to-spec`, `/triage`, `/to-tickets` are not

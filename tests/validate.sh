@@ -20,7 +20,7 @@ FO=plugin/skills/herdr-orchestrator/SKILL.md
 FO_OLD=plugin/skills/factory-orchestrator/SKILL.md  # the t1-* sha witnesses predate the rename (#97)
 DOC=docs/engineering-workflow.md
 SK=plugin/skills/engineering-workflow/SKILL.md
-CHECKS="sync-rule stage-parity intent-layout adr-numbering adr-refs hooks-json skill-frontmatter skill-copies template-gate-parity agents-commands t1-trust-wording t1-log-clobber t1-spawn-session t3-label-drift t3-precedence dispatch-hold herdr-retire pr-adr-line"
+CHECKS="sync-rule stage-parity intent-layout adr-numbering adr-refs hooks-json skill-frontmatter skill-links template-gate-parity agents-commands t1-trust-wording t1-log-clobber t1-spawn-session t3-label-drift t3-precedence dispatch-hold herdr-retire pr-adr-line"
 
 fail=0; why=""
 list_checks() { printf '%s\n' $CHECKS; }
@@ -186,21 +186,15 @@ check_skill_frontmatter() {
   done <<<"$files"
 }
 
-check_skill_copies() {
-  cmp -s "$1/$FO" "$1/.agents/skills/herdr-orchestrator/SKILL.md" \
-    || { why="$FO and .agents/skills/herdr-orchestrator/SKILL.md differ (must be byte-identical)"; return 1; }
-  cmp -s "$1/$FO" "$1/.claude/skills/herdr-orchestrator/SKILL.md" \
-    || { why="$FO and .claude/skills/herdr-orchestrator/SKILL.md differ (must be byte-identical)"; return 1; }
-  cmp -s "$1/$SK" "$1/.claude/skills/engineering-workflow/SKILL.md" \
-    || { why="$SK and .claude/skills/engineering-workflow/SKILL.md differ (must be byte-identical)"; return 1; }
-  cmp -s "$1/plugin/skills/cmu/SKILL.md" "$1/.claude/skills/cmu/SKILL.md" \
-    || { why="plugin/skills/cmu/SKILL.md and .claude/skills/cmu/SKILL.md differ (must be byte-identical)"; return 1; }
-  cmp -s "$1/plugin/skills/new-project/SKILL.md" "$1/.claude/skills/new-project/SKILL.md" \
-    || { why="plugin/skills/new-project/SKILL.md and .claude/skills/new-project/SKILL.md differ (must be byte-identical)"; return 1; }
-  cmp -s "$1/plugin/skills/intent-conversation/SKILL.md" "$1/.claude/skills/intent-conversation/SKILL.md" \
-    || { why="plugin/skills/intent-conversation/SKILL.md and .claude/skills/intent-conversation/SKILL.md differ (must be byte-identical)"; return 1; }
-  cmp -s "$1/plugin/skills/dispatch/SKILL.md" "$1/.claude/skills/dispatch/SKILL.md" \
-    || { why="plugin/skills/dispatch/SKILL.md and .claude/skills/dispatch/SKILL.md differ (must be byte-identical)"; return 1; }
+SKILL_LINKS=".claude/skills/cmu .claude/skills/dispatch .claude/skills/engineering-workflow .claude/skills/herdr-orchestrator .claude/skills/intent-conversation .claude/skills/new-project .agents/skills/herdr-orchestrator"
+check_skill_links() {  # each host copy is a link into plugin/skills/; the index mode alone is not enough — core.symlinks=false still reports 120000
+  local r=$1 l want
+  for l in $SKILL_LINKS; do
+    want=../../plugin/skills/${l##*/}
+    [ -L "$r/$l" ] || { why="$l is not a symlink — enable symlinks (\`git config core.symlinks true\`, Windows Developer Mode) and re-checkout"; return 1; }
+    [ "$(readlink "$r/$l")" = "$want" ] || { why="$l -> $(readlink "$r/$l"), expected $want"; return 1; }
+    [ -f "$r/$l/SKILL.md" ] || { why="$l -> $want has no SKILL.md (dangling link)"; return 1; }
+  done
 }
 
 check_template_gate_parity() {  # the scaffolded gate must hold and size like this one: same staged diff, same lane:/flagged: lines
@@ -290,7 +284,7 @@ default_run() {
     if ! git diff --quiet HEAD 2>/dev/null; then range=HEAD; else range=HEAD~1..HEAD; fi
   fi
   run sync-rule "$range"
-  for c in stage-parity intent-layout adr-numbering adr-refs hooks-json skill-frontmatter skill-copies template-gate-parity agents-commands; do run "$c" .; done
+  for c in stage-parity intent-layout adr-numbering adr-refs hooks-json skill-frontmatter skill-links template-gate-parity agents-commands; do run "$c" .; done
   for c in t1-trust-wording t1-log-clobber t1-spawn-session; do run "$c" "$FO"; done
   for c in t3-label-drift t3-precedence; do run "$c" AGENTS.md; done
   run dispatch-hold plugin/skills/dispatch/SKILL.md
@@ -367,18 +361,14 @@ witness_run() {
   expect FAIL mutation hooks-json "$m"; reset_wt "$m"
   (cd "$m" && grep -v '^name:' $FO > t && mv t $FO)
   expect FAIL mutation skill-frontmatter "$m"; reset_wt "$m"
-  echo x >> "$m/.agents/skills/herdr-orchestrator/SKILL.md"
-  expect FAIL mutation skill-copies "$m"; reset_wt "$m"
-  echo x >> "$m/.claude/skills/herdr-orchestrator/SKILL.md"
-  expect FAIL 'mutation(.claude factory copy)' skill-copies "$m"; reset_wt "$m"
-  echo x >> "$m/.claude/skills/cmu/SKILL.md"
-  expect FAIL 'mutation(.claude cmu copy)' skill-copies "$m"; reset_wt "$m"
-  echo x >> "$m/.claude/skills/new-project/SKILL.md"
-  expect FAIL 'mutation(.claude new-project copy)' skill-copies "$m"; reset_wt "$m"
-  echo x >> "$m/.claude/skills/intent-conversation/SKILL.md"
-  expect FAIL 'mutation(.claude intent-conversation copy)' skill-copies "$m"; reset_wt "$m"
-  echo x >> "$m/.claude/skills/dispatch/SKILL.md"
-  expect FAIL 'mutation(.claude dispatch copy)' skill-copies "$m"; reset_wt "$m"
+  # skill-links: a good tree, then the three ways a link breaks; the first is a real core.symlinks=false checkout (Windows)
+  expect ok baseline skill-links "$m"
+  rm "$m/.claude/skills/cmu"; git -C "$m" -c core.symlinks=false checkout -- .claude/skills/cmu
+  expect FAIL 'mutation(link checked out as a text file)' skill-links "$m"; reset_wt "$m"
+  ln -sfn ../../plugin/skills/dispatch "$m/.claude/skills/cmu"
+  expect FAIL 'mutation(link to the wrong skill)' skill-links "$m"; reset_wt "$m"
+  rm -rf "$m/plugin/skills/cmu"
+  expect FAIL 'mutation(dangling link)' skill-links "$m"; reset_wt "$m"
   # template-gate-parity: the baseline row keeps the mutation rows from passing on a missing check
   expect ok baseline template-gate-parity "$m"
   sed -i.bak 's/^LANE_HOLD=.*/LANE_HOLD=nothing-held/' "$m/plugin/templates/new-project/files/tests/validate.sh"
