@@ -107,11 +107,11 @@ a missing or unbounded list as "unknown" and runs that ticket alone.
 **The intent's `**Type:**` picks where it lands.** `feature` or `bug`: `git
 fetch origin`, then `git worktree add .factory/worktrees/t<n>-<slug> -b
 t<n>-<slug> origin/<base>` (`<base>` as in Move 2b; never the developer's
-checkout), commit `intent/<n>-<slug>/intent.md` there and push the branch to
-`origin/t<n>-<slug>`, with no PR. Then `git worktree remove
-.factory/worktrees/t<n>-<slug> && git branch -D t<n>-<slug>`: git refuses a
-branch that another worktree holds, and the worker checks it out. The worker continues on that branch, so the
-intent and the code land in one PR, and its QC reviews the intent first: a
+checkout), commit `intent/<n>-<slug>/intent.md` there, then, chained so a
+failed push deletes nothing: `git push -u origin t<n>-<slug> && git worktree
+remove .factory/worktrees/t<n>-<slug> && git branch -D t<n>-<slug>`, with no
+PR. Git refuses a branch that another worktree holds, and the worker checks
+it out. The worker continues on that branch, so the intent and the code land in one PR, and its QC reviews the intent first: a
 HIGH defect in the intent is fixed first, then the code, in that same PR.
 `system-change`: the intent goes in the records PR (Move 2b), which merges
 before "go".
@@ -165,8 +165,9 @@ Route it before the next question, in the same turn:
 **Never switch the developer's own checkout** (`dispatch` Move 5's rule) to
 write a record. A record for one ticket that is not in flight and whose
 `origin/t<n>-<slug>` exists (Move 2) goes on that branch, the Move 2 way
-(`git worktree add .factory/worktrees/t<n>-<slug> t<n>-<slug>`, commit,
-push, remove), with no records PR. Every other record: on first use this conversation: `git fetch origin`, then
+(`git worktree add .factory/worktrees/t<n>-<slug> t<n>-<slug>`, commit, then
+the same chained push and remove), with no records PR. Every other record: on
+first use this conversation: `git fetch origin`, then
 create one per-conversation records worktree: `git worktree add
 .factory/records/<YYYY-MM-DD> -b records-<YYYY-MM-DD> origin/<base>`, where
 `<base>` is the base branch named in `AGENTS.md` (`**Base branch:**`, default
