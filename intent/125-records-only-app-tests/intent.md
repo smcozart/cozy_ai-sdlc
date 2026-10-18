@@ -17,7 +17,9 @@ Evidence (#125 comments):
 | cozystudio | 262 s (session 02202fed) | 277–398 s, 2 runs per records PR | 0 |
 | cozy_view | 14–15 s, app tests about 95% | 20–37 s | 0 |
 
-cozy-view read 272 local gate runs (2026-09-27 to 2026-10-18). Many runs cannot be classified, so 0 failures means no counter-evidence, not proof. No cozystudio test reads `intent/`, `handoffs/`, `docs/` or `STATUS.md`.
+cozy-view read 272 local gate runs (2026-09-27 to 2026-10-18). Many runs cannot be classified, so 0 failures means no counter-evidence, not proof. No app test in cozystudio or cozy_view reads `intent/`, `handoffs/`, `docs/` or `STATUS.md`.
+
+This change saves the local run and the PR run. The push-to-main run in CI has no range (`gate.yml` runs `validate.sh` bare), so it still runs app tests. It stays as the backstop.
 
 ## Desired outcome
 
@@ -25,16 +27,27 @@ When the gate is given a range and every path in it matches the records set, it 
 
 ## Scope
 
-- One records rule in the template gate: `RECORDS_ONLY='^(intent/|handoffs/|STATUS\.md$)'`, which a repo extends the same way it extends `LANE_LIGHT` (safe by omission).
+- One records rule in the template gate: `RECORDS_ONLY='^(intent/|handoffs/|STATUS\.md$)'`. A repo widens it the same way it extends `LANE_LIGHT`. `RECORDS_ONLY=''` turns the skip off, for a repo whose tests read records. The default is not empty, so the template `AGENTS.md` says this in one line.
 - The skip applies only to `app-tests`. `shape`, `intent-layout`, `adr-numbering` and `pr-adr-line` always run.
-- `app-tests` runs when: no range is given; the range is empty or git cannot read it; any path in the range (or an untracked or dirty file) is outside the set; or the range deletes a file.
-- The template `AGENTS.md` says in one line that records-only ranges skip app tests, and how a repo adds a path.
+- The skip is about the code that the tests run on, which is the working tree. So:
+  - it applies only when the range's end is `HEAD` (`A..HEAD`, `A...HEAD`, or `HEAD`). For `A...HEAD` it compares the merge-base, as git does;
+  - the working tree must also be clean apart from records paths. The check reads `git status --porcelain -z`, so a dirty or untracked code file runs the tests under `origin/main..HEAD` too.
+- The path list reuses `lane_of`'s listing (`-z`, `--no-renames`, no quoting), with its delete and symlink results. It does not run a second `git diff --name-only`. That listing must run before `app-tests`.
+- `app-tests` runs when:
+  - no range is given;
+  - the range is empty or git cannot read it;
+  - the range's end is not `HEAD`;
+  - any path in the range or the working tree is outside the set;
+  - the range deletes a file;
+  - any entry is a symlink or a submodule (mode `160000`).
+- The template `AGENTS.md` says in one line that records-only ranges skip app tests, how a repo adds a path, and that `RECORDS_ONLY=''` turns the skip off.
 
 ## Non-goals
 
 - Making "records-only" a lane. The lane classifier stays as it is (`intent/` is outside `LANE_LIGHT`).
 - This repo's own gate (`tests/validate.sh` at the root). It has no app tests.
 - Skipping the local gate run in the loop (option 2 on #125).
+- The push-to-main CI run (`gate.yml`, no range). It still runs app tests. Do not switch it to the push's before-commit: that breaks on a first push (all-zero commit) and on a force-push.
 - Speeding up cozystudio's own tests (`--test-concurrency=1`). That is cozystudio's change.
 
 ## Acceptance criteria
@@ -43,7 +56,14 @@ When the gate is given a range and every path in it matches the records set, it 
   - a range with only `intent/` and `STATUS.md` paths, and `**App tests:** \`false\``: prints `skipped: app-tests`, exit 0;
   - the same range plus one code file: `FAIL: app-tests`;
   - no range given, `**App tests:** \`false\``: `FAIL: app-tests`;
-  - a records-only range that deletes a file: `app-tests` runs.
+  - a records-only range that deletes a file: `app-tests` runs;
+  - a rename from a code path into `intent/`: `app-tests` runs;
+  - a symlink under `intent/`: `app-tests` runs;
+  - `origin/main..HEAD` records-only, with an untracked `src/x.js` in the working tree: `app-tests` runs;
+  - a records-only range whose end is not `HEAD` (for example `HEAD~2..HEAD~1`, or `main..<records-branch>` while on another branch): `app-tests` runs;
+  - a path with a newline in its name (`STATUS.md\nintent/x`): `app-tests` runs;
+  - `RECORDS_ONLY=''` on a records-only range: `app-tests` runs.
+- A `skipped: app-tests` line does not count toward `N ok` (the root gate's scaffolded-summary witness counts `ok:` lines).
 - `bash plugin/templates/new-project/files/tests/validate.sh --witness` passes, and so does the root `tests/validate.sh --witness`.
 - `tests/validate.sh origin/main..HEAD` passes on the ticket range.
 - The PR is held for the developer's review (the template gate is on the hold list).
