@@ -91,8 +91,8 @@ frontier is GitHub, nothing in a file outranks it.
    or says "nothing left on disk".
 
 **Merge hold (ADR 0005):** never merge a PR whose `tests/validate.sh --lane`
-prints `flagged: yes` — it touches `tests/validate.sh`, `.github/workflows/**` or
-`.githooks/**` — without a named human checkoff recorded in the thread, or a
+prints `flagged: yes` — it touches `tests/validate.sh`, `.github/workflows/**`,
+`.githooks/**`, `plugin/templates/new-project/files/tests/validate.sh`, `plugin/templates/new-project/files/.github/workflows/**` or `plugin/templates/new-project/scaffold.sh` — without a named human checkoff recorded in the thread, or a
 recorded operator delegation. Label it `flagged-risk` and report it as merge
 held. One GitHub identity merges, so GitHub cannot enforce this; you do.
 Everything else may land on a green gate and is reviewed after merge.

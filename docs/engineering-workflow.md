@@ -194,7 +194,8 @@ safe, because everything it does not name is heavy.
 
 The same run prints **`flagged: yes|no`** — the one machine-readable source
 for the **merge hold**: `yes` when the range touches the hold list of ADR 0005
-(`tests/validate.sh`, `.github/workflows/**`, `.githooks/**`, the files
+(`tests/validate.sh`, `.github/workflows/**`, `.githooks/**`, `plugin/templates/new-project/files/tests/validate.sh`,
+`plugin/templates/new-project/files/.github/workflows/**`, `plugin/templates/new-project/scaffold.sh`, the files
 that enforce the gate), so a human merges. It reports the hold list only; the
 broader flagged-risk set in Deploy §4 stays review guidance.
 
@@ -354,7 +355,7 @@ seam: this repo's ticket close, or a consumer's PR.
 
    | Change class | Who merges |
    |---|---|
-   | Hold list — `flagged: yes` from `tests/validate.sh --lane`: `tests/validate.sh`, `.github/workflows/**`, `.githooks/**` (the files that check other files) | A named human checkoff, recorded in the thread, after a green gate — or a recorded operator delegation. The PR carries the `flagged-risk` label |
+   | Hold list — `flagged: yes` from `tests/validate.sh --lane`: `tests/validate.sh`, `.github/workflows/**`, `.githooks/**`, `plugin/templates/new-project/files/tests/validate.sh`, `plugin/templates/new-project/files/.github/workflows/**`, `plugin/templates/new-project/scaffold.sh` (the files that check other files) | A named human checkoff, recorded in the thread, after a green gate — or a recorded operator delegation. The PR carries the `flagged-risk` label |
    | Everything else, including AGENTS.md, the synced trio, ADRs, CONTEXT.md and the skills | Agent may land on green; the gate's pasted evidence is the record; post-hoc review follows |
 
    **Post-hoc review** (ADR 0005): a human reviews every diff that landed on
