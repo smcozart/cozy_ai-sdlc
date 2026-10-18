@@ -16,7 +16,9 @@ In the root lane classifier (`lane_of` in `tests/validate.sh`), a range prints l
 - every changed file is in the light set, except `plugin/.claude-plugin/plugin.json`;
 - that file's diff is exactly one removed line and one added line, and both match `^[[:space:]]*"version": "[0-9]+\.[0-9]+\.[0-9]+",?$`.
 
-T1, not T0: a release still gets one bounded pass. The rule only lowers the computed T2 for this one shape. All other escalation rules come first: instruction files, deletes, binaries, symlinks, the file and line caps, and the hold list.
+T1, not T0: a release still gets one bounded pass.
+
+Placement: the rule excludes `plugin/.claude-plugin/plugin.json` from `outside` (near `tests/validate.sh:59`) only when its diff is version-only. Every later rule then applies unchanged: instruction files, deletes, binaries, symlinks and the file and line caps. The final branch sets `lane_why` to "version-only bump" and forces T1, never T0. The hold list never changes the lane, so it plays no part here.
 
 ## Scope
 
@@ -26,11 +28,12 @@ T1, not T0: a release still gets one bounded pass. The rule only lowers the comp
 ## Non-goals
 
 - The consumer template's classifier. Consumers have no `plugin.json` there.
+- `docs/engineering-workflow.md` (near 174) and the `engineering-workflow` skill (near 115) say any file outside the light set is T2. They stay as they are, because #134 edits those files. ADR 0003 records the exception.
 - Any other light-set change.
 
 ## Acceptance criteria
 
-- Witness rows (each must fail on `origin/main` before the change):
+- Witness rows. Only the T1 row must fail on `origin/main` before the change; the 3 T2 rows already pass there and guard against loosening:
   - only the version line changed: T1;
   - the version line plus the `description` line: T2;
   - the version line plus a file outside the light set: T2;

@@ -2,7 +2,7 @@
 
 **Issue:** #133 · **Status:** approved · **Type:** system-change
 
-**Touches:** `["tests/validate.sh", "AGENTS.md"]`
+**Touches:** `["tests/validate.sh", "AGENTS.md", "REVIEW.md"]`
 
 From the harness review, Sean, 2026-10-18 (item 2).
 
@@ -24,7 +24,15 @@ The gate keeps a check only when it guards behavior, or when it has caught a rea
 - **Cut** a check only if both are true: it is one of the 5 wording checks above, and its real FAIL count is 0.
 - **Keep** a wording check that has a real FAIL. Name it and the run on #133.
 - **Never cut a behavior check** under this ticket, whatever its count.
-- **For each cut check**, remove its function, its `CHECKS` entry, its `default_run` line, its sha witness rows, and its line in `AGENTS.md ## Commands`. The `agents-commands` check must still pass. If `FO_OLD` and the `#8 corpus` comments are no longer used, remove them too.
+- **For each cut check**, remove:
+  - its function, its `CHECKS` entry and its `default_run` line;
+  - its 12 sha rows (`tests/validate.sh`, near 410-419);
+  - its mutation rows (near 422-425). With the function gone, those rows still expect FAIL and would pass on nothing;
+  - the 5 shas from `have_sha` (near 328), and `sha_row`, `FO_OLD` and the `#8 corpus` comments if nothing else uses them;
+  - its line in `AGENTS.md ## Commands`, plus the "regression (#8 corpus)" label (near `AGENTS.md:42`);
+  - the "t1/t3 regression claims" text in `REVIEW.md` (near line 20).
+
+  The `agents-commands` check must still pass.
 - **Wait for the data.** If it is not on #133 when the worker starts, the worker stops and says so in `HANDOFF:`. It does not cut anything on a guess.
 
 ## Non-goals
@@ -35,7 +43,7 @@ The gate keeps a check only when it guards behavior, or when it has caught a rea
 ## Acceptance criteria
 
 - On #133: the data table, and the cut list it leads to.
-- `bash tests/validate.sh --witness` passes, with fewer witnesses by exactly the removed sha rows.
+- `bash tests/validate.sh --witness` passes, with exactly 16 fewer witnesses (the 12 sha rows plus the 4 mutation rows). Paste the counts before and after.
 - `bash tests/validate.sh origin/main..HEAD <body>` exits 0, prints one `ok:` line per remaining check, and prints `flagged: yes`. A named human merges.
 
 ## System-intent alignment
