@@ -38,6 +38,13 @@ The classifier is a mode, not a check — it never turns a line red and is not
 in `--list` — but it carries a witness per decision branch and per known
 evasion in `--witness`, because a wrong lane is a wrong review budget.
 
+**Amended on #135 (2026-10-18).** A release PR that changes only the
+`"version"` line of `plugin/.claude-plugin/plugin.json` is T1, not T2: the
+light-set rule ignores that file when its diff is one removed and one added
+line in one hunk, both a semver `"version"` line, and the same line, only the
+version number changes. Every other rule still applies. It
+is never T0, so a release still gets one bounded pass.
+
 **Rejected.** *Keep "adversary on everything"*: correct when it caught 13
 defects in a two-file skill PR, but it cannot distinguish that PR from a typo
 fix, and the cost grows with every parallel worker. *Let the agent pick the
