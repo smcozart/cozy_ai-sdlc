@@ -37,7 +37,8 @@ Frontier = open, labelled `ready-for-agent`, zero open `blocked_by`, not
 labelled `ready-for-human`, not `wontfix`. Fetch every page. Read each
 candidate's blocker summary (`gh api repos/{owner}/{repo}/issues/<n>`); missing
 or errored data means unknown, not zero — skip it this pass. Require the
-issue's intent file to exist and cite the issue; an uncommitted or missing
+issue's intent file to exist and cite the issue, committed on `<base>` or on
+`origin/t<n>-<slug>` (`intent-conversation` Move 2); an uncommitted or missing
 intent is not a worker brief. Re-check the frontier immediately before each
 launch, not just at the top of the move.
 
@@ -57,7 +58,9 @@ or overlapping, 0 new launches while any PR waits on a human gate. The
 developer can change this in plain language for the rest of the conversation.
 
 Reserve issue, branch, worktree path, Touches, base SHA (`git rev-parse
-origin/<base>` at reservation, `<base>` as in Move 5), worker/session id, PR
+origin/<base>` at reservation, `<base>` as in Move 5; when
+`origin/t<n>-<slug>` exists, `git merge-base origin/t<n>-<slug>
+origin/<base>`), worker/session id, PR
 and state under the repo's own ignored `.factory/` directory before launching.
 Reconcile against Git/worktrees/PRs before retrying or re-entering after a
 restart; never double-launch. This is local recovery state, not a second
@@ -65,7 +68,10 @@ tracker.
 
 ## Move 3 — Dispatch
 
-Branch name is always `t<n>-<slug>`. Detect and use, in this order: your
+Branch name is always `t<n>-<slug>`. When `origin/t<n>-<slug>` exists (it
+carries the intent), the worktree checks it out (`git worktree add <path>
+t<n>-<slug>`), never creates it with `-b`; that one worktree is the worker's,
+and a harness worktree is never made beside it. Detect and use, in this order: your
 harness's own session-creation tool; else a child headless session in a
 worktree; else a sub-agent with worktree isolation. A sub-agent over a shared
 checkout is never a worker, whatever the host.
@@ -74,7 +80,7 @@ checkout is never a worker, whatever the host.
 
 | Capability | Launch | Watch / steer |
 |---|---|---|
-| Desktop app with a session-creation tool (`create_session`) | Worktree workspace, autopilot kickoff carrying the worker brief below, coordinated with the creator, notified on idle; title it `#<n> <slug> worker` when the tool takes one, so the sidebar reads as a board. The worker renames its own branch to `t<n>-<slug>`. | Idle notification; its own session-inspect/session-message tools; keep the returned session id. |
+| Desktop app with a session-creation tool (`create_session`) | Worktree workspace, autopilot kickoff carrying the worker brief below, coordinated with the creator, notified on idle; title it `#<n> <slug> worker` when the tool takes one, so the sidebar reads as a board. The worker renames its own branch to `t<n>-<slug>`, unless `origin/t<n>-<slug>` exists; then it checks it out. | Idle notification; its own session-inspect/session-message tools; keep the returned session id. |
 | CLI with headless child sessions (`--worktree`) | A child headless session in its own worktree on branch `t<n>-<slug>` (verify: sibling worktree, exact branch). A shared-checkout sub-agent is not a worktree and may be used only after you have created the worktree yourself, or not at all. | Process completion and structured output; resume the exact session id, not an ambiguous "continue latest". |
 | Harness with a worktree-isolating sub-agent tool (its own worktree option) | Its documented worktree-isolation and background-completion mode; the worker checks out or creates `t<n>-<slug>`. | Its native completion/message/resume tools; keep the returned identifier. |
 
@@ -111,7 +117,8 @@ origin/<base>..HEAD` (`<base>`: the base branch named in `AGENTS.md`,
 code and lane line). Compare the actual diff's paths to its Touches; expansion pauses
 conflicting work for re-batching. Review against the ticket's spec and this
 repo's review policy. A fix needs fail-first evidence. If the branch is stale,
-the worker rebases and proof reruns before merge.
+the worker updates it (the brief's rebase-or-merge rule) and proof reruns
+before merge.
 
 This one check folds in the lane's review (ADR 0003): T2 one read-only
 adversary pass, T1 one bounded pass over the diff's own claims (MED+ only), T0
@@ -196,7 +203,7 @@ developer should never have to guess whether the loop is waiting on them.
 
 > You are the worker for issue #<n> only in <owner/repo>, worktree
 > <absolute-path>, expected branch `t<n>-<slug>`, approved base `<sha>`
-> (`git rev-parse origin/<base>` at reservation). You
+> (the Move 2 base SHA). You
 > implement; your creator orchestrates. Do not load `dispatch` or start
 > another ticket from here.
 >
@@ -215,6 +222,8 @@ developer should never have to guess whether the loop is waiting on them.
 >
 > Before editing, verify `git rev-parse --show-toplevel` and `git branch
 > --show-current` land you in your own worktree on your own branch. If
+> `origin/t<n>-<slug>` exists, `git switch t<n>-<slug>` and continue on it;
+> never rename it, and never create it from `<sha>`. Otherwise, if
 > `git branch --show-current` is not `t<n>-<slug>`, rename it (your harness's
 > branch-rename tool, or `git branch -m`) or create it from `<sha>` before
 > editing. Never force an existing branch, write in the creator's checkout,
@@ -226,7 +235,9 @@ developer should never have to guess whether the loop is waiting on them.
 >
 > Run and paste the ticket's acceptance commands and `bash tests/validate.sh
 > origin/<base>..HEAD` (exit 0, with its lane line). Fixes carry fail-first
-> proof. Rebase a stale base and rerun before you say you're done.
+> proof. Update a stale base and rerun before you say you're done: on a
+> branch that is already pushed, `git merge origin/<base>` instead of
+> rebasing (the PR squashes); rebase only a branch that was never pushed.
 >
 > Record any decision this ticket needs an ADR for, under this repo's
 > ownership rules, in this PR — never invent an approval. Commit and push only

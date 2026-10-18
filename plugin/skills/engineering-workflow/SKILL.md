@@ -42,7 +42,9 @@ After triage clarification, capture the agreed why as **work-item intent** at
 issue number joins issue, intent, branch, PR, and proof. Check the intent
 against `SYSTEM-INTENT.md` (the system's enduring purpose) — conflicts amend
 it deliberately or rewrite the intent. Bug fixes seed the intent from the
-diagnosis; features from the brief; PRDs from transcripts.
+diagnosis; features from the brief; PRDs from transcripts. A `feature` or
+`bug` intent rides its ticket branch into the work PR; a `system-change`
+intent merges first in a records PR (`intent-conversation` Move 2).
 
 **Approval:** normal work is approved conversationally in the issue thread
 (`ready-for-agent` = approved to proceed). High-risk work (security, data
