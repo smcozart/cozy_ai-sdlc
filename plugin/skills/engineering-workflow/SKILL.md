@@ -121,7 +121,8 @@ agent fills in two clauses at close — `no-ADR=<y/n> not-speculative=<y/n>` —
 and any `n` means T2. Escalate only; never lower a computed lane. Consumers
 extend the light set, never the heavy one. The same run prints `flagged: yes|no` —
 `yes` when the range touches the merge hold list (`tests/validate.sh`,
-`.github/workflows/**`, `.githooks/**`; ADR 0005), so a human merges; it is
+`.github/workflows/**`, `.githooks/**`, `plugin/templates/new-project/files/tests/validate.sh`,
+`plugin/templates/new-project/files/.github/workflows/**`, `plugin/templates/new-project/scaffold.sh`; ADR 0005), so a human merges; it is
 the hold list only, not the former Deploy flagged-risk set.
 
 Shape: a short `intent/<n>-<slug>/intent.md` only — problem, one-line outcome,
@@ -181,7 +182,8 @@ the adversary verdict the lane owes, the merge hold, preview proof for UI
 tickets, branch-protection proof for merge-path tickets, and an `ADR:` line in
 the PR body (`ADR: none` when there is no decision; check `pr-adr-line` in CI).
 **Merge policy (ADR 0005):** the hold list — `tests/validate.sh`,
-`.github/workflows/**`, `.githooks/**`, the files that check other files,
+`.github/workflows/**`, `.githooks/**`, `plugin/templates/new-project/files/tests/validate.sh`,
+`plugin/templates/new-project/files/.github/workflows/**`, `plugin/templates/new-project/scaffold.sh`, the files that check other files,
 reported by `flagged: yes` — merges only on a named human checkoff recorded in
 the thread or a recorded operator delegation (label `flagged-risk`).
 Everything else, including AGENTS.md, the synced trio and ADRs, an agent may

@@ -39,7 +39,7 @@ list_checks() { printf '%s\n' $CHECKS; }
 LANE_LIGHT='^(handoffs/|docs/training/|STATUS\.md$|LICENSE$)'
 LANE_FLOOR_T1='^(STATUS\.md$|docs/training/|handoffs/pickup-handoff\.md$)'   # README.md anywhere is LANE_NEVER (T2), never a floor entry
 LANE_NEVER='(^|/)(CLAUDE|AGENTS|GEMINI|COPILOT|README)\.md$|(^|/)\.(cursorrules|mcp\.json|gitmodules)$'
-LANE_HOLD='^(tests/validate\.sh$|\.github/workflows/|\.githooks/)'
+LANE_HOLD='^(tests/validate\.sh$|\.github/workflows/|\.githooks/|plugin/templates/new-project/files/tests/validate\.sh$|plugin/templates/new-project/files/\.github/workflows/|plugin/templates/new-project/scaffold\.sh$)'
 LANE_MAX_FILES=2; LANE_MAX_LINES=60
 lane_of() {  # lane_of <root> <range> -> sets lane (T0|T1|T2|none), lane_why and held; rc 2 when there is no lane
   local r=$1 range=$2 st files n never outside del ns lines bin untracked="" o links
@@ -211,7 +211,7 @@ check_template_gate_parity() {  # the scaffolded gate must hold and size like th
   cp "$r/tests/validate.sh" "$d/tests/validate.sh" && cp "$t/tests/validate.sh" "$d/tests/template.sh" && git -C "$d" init -q && git -C "$d" add -A \
     && git -C "$d" -c user.name=parity -c user.email=parity@localhost -c commit.gpgsign=false -c core.hooksPath=/dev/null commit -qm base \
     || { why="cannot build the temp repo in $d"; rm -rf "$d"; return 1; }
-  for f in 'tests/validate.sh .githooks/x .github/workflows/a"b.yml' handoffs/x.md; do   # every hold alternative + a name git quotes, then a light path
+  for f in 'tests/validate.sh .githooks/x .github/workflows/a"b.yml' handoffs/x.md; do   # every shared hold alternative + a name git quotes, then a light path
     for p in $f; do mkdir -p "$d/${p%/*}"; printf '# x\n' >>"$d/$p"; git -C "$d" add "$p"; done
     a=$(bash "$d/tests/validate.sh" --lane | grep -E '^(lane|flagged):'); b=$(bash "$d/tests/template.sh" --lane | grep -E '^(lane|flagged):')
     [[ $a == *flagged:* ]] && [ "$a" = "$b" ] || { why="$f: main [${a//$'\n'/ | }] vs template [${b//$'\n'/ | }]"; rc=1; break; }
@@ -469,6 +469,8 @@ witness_run() {
                                                                         flag_expect yes 'mutation(tests/validate.sh held)' "$l" HEAD; lane_reset "$l"
   printf 'x\n' >> "$l/.github/workflows/gate.yml";                     flag_expect yes 'mutation(.github/workflows/ held)' "$l" HEAD; lane_reset "$l"
   printf 'x\n' >> "$l/.githooks/pre-commit";                           flag_expect yes 'mutation(.githooks/ held)' "$l" HEAD; lane_reset "$l"
+  printf 'x\n' >> "$l/plugin/templates/new-project/files/tests/validate.sh"; flag_expect yes 'mutation(template tests/validate.sh held — #128)' "$l" HEAD; lane_reset "$l"
+  printf 'x\n' >> "$l/plugin/templates/new-project/files/.github/workflows/gate.yml"; flag_expect yes 'mutation(template .github/workflows/ held — #128)' "$l" HEAD; lane_reset "$l"
   printf 'x\n' > "$l/.github/workflows/a\"b.yml";                      flag_expect yes 'mutation(untracked quoted workflow filename — #78)' "$l" HEAD
   git -C "$l" add '.github/workflows/a"b.yml';                         flag_expect yes 'mutation(staged quoted workflow filename — #78)' "$l" HEAD; lane_reset "$l"
   printf 'x\n' >> "$l/.github/workflows/gate.yml"; git -C "$l" add -A; git -C "$l" update-index --add --cacheinfo "100644,$(git -C "$l" hash-object -w --stdin <<<x),$(printf 'handoffs/a\377b.md')"

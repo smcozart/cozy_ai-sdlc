@@ -1,7 +1,8 @@
 # Auto-merge on green; only the files that check other files hold
 
 **Issue:** #39 · **Status:** accepted (approved by the operator on #39,
-2026-10-02) · **Intent:** the N-package, pi session 2026-09-28 (items 2, 3,
+2026-10-02; hold list amended by the operator on #128, 2026-10-18,
+to add the consumer gate) · **Intent:** the N-package, pi session 2026-09-28 (items 2, 3,
 5, 8, 10).
 
 Deploy §4 required a human checkoff, recorded in the thread, before any diff
@@ -15,7 +16,9 @@ pre-merge checkoff on every surface as a rubber stamp.
 **Decision.** Auto-merge on green is written policy.
 
 - **Hold list (a human merges):** `tests/validate.sh`,
-  `.github/workflows/**`, `.githooks/**` — the files that check other files.
+  `.github/workflows/**`, `.githooks/**`, `plugin/templates/new-project/files/tests/validate.sh`,
+  `plugin/templates/new-project/files/.github/workflows/**`, `plugin/templates/new-project/scaffold.sh`
+  — the files that check other files.
   A PR may not weaken its own gate and merge itself. The one
   machine-readable source is the `flagged:` line of
   `tests/validate.sh --lane <range>` (ADR 0003): `flagged: yes` means held.
