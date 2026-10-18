@@ -69,7 +69,7 @@ own — each of them replaced by `-` — in the one question; on a refusal, stop
 A name the developer types is never used.
 
 Scaffold script: `<directory of this SKILL.md>/../../templates/new-project/scaffold.sh`;
-in cozyharness's own `.claude/skills/` copy, `plugin/templates/new-project/scaffold.sh`
+in cozyharness's own `.claude/skills/` symlink to `plugin/skills/`, `plugin/templates/new-project/scaffold.sh`
 from the repo root. Neither exists: say so and stop.
 
 ## Move 2 — Ask (only without `origin`; at most one question)

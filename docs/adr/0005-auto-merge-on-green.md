@@ -2,7 +2,8 @@
 
 **Issue:** #39 · **Status:** accepted (approved by the operator on #39,
 2026-10-02; hold list amended by the operator on #128, 2026-10-18,
-to add the consumer gate) · **Intent:** the N-package, pi session 2026-09-28 (items 2, 3,
+to add the consumer gate; amended on #132, 2026-10-18, to keep the
+list in one place) · **Intent:** the N-package, pi session 2026-09-28 (items 2, 3,
 5, 8, 10).
 
 Deploy §4 required a human checkoff, recorded in the thread, before any diff
@@ -15,16 +16,13 @@ pre-merge checkoff on every surface as a rubber stamp.
 
 **Decision.** Auto-merge on green is written policy.
 
-- **Hold list (a human merges):** `tests/validate.sh`,
-  `.github/workflows/**`, `.githooks/**`, `plugin/templates/new-project/files/tests/validate.sh`,
-  `plugin/templates/new-project/files/.github/workflows/**`, `plugin/templates/new-project/scaffold.sh`
-  — the files that check other files.
-  A PR may not weaken its own gate and merge itself. The one
-  machine-readable source is the `flagged:` line of
-  `tests/validate.sh --lane <range>` (ADR 0003): `flagged: yes` means held.
-  This list and that line are the same list; if they differ, the script is
-  wrong. A held diff merges only after a named human checkoff recorded in
-  the thread, or a recorded operator delegation. The tracker marks it with
+- **Hold list (a human merges):** the files that check other files. The
+  one list is `LANE_HOLD` in `tests/validate.sh`.
+  A PR may not weaken its own gate and merge itself. The
+  `flagged:` line of `tests/validate.sh --lane <range>` (ADR 0003) reads
+  that list: `flagged: yes` means held. A held diff merges only after a
+  named human checkoff recorded in the thread, or a recorded operator
+  delegation. The tracker marks it with
   the `flagged-risk` label.
 - **Post-hoc review list (an agent may land on green):** everything else,
   including `AGENTS.md`, the synced trio, ADRs, `CONTEXT.md` and the skills.
@@ -45,6 +43,14 @@ pre-merge checkoff on every surface as a rubber stamp.
 - **Two prohibitions:** no agent adds a pre-merge checkoff, and no agent
   drops the post-hoc review list or the ADR rule. Only an operator decision,
   recorded as an amendment to this ADR, changes either.
+
+**Amended on #132 (2026-10-18).** Before, the paths of the hold list were
+written out here and in about ten other documents, and the script was the
+judge when they differed; one change to the list touched 12 files (#131).
+Now `LANE_HOLD` in `tests/validate.sh` is the only list. This ADR and the
+other documents state the policy — the files that check other files hold —
+and point to `LANE_HOLD`; they do not copy the paths. A change to the list is
+a change to the script, so it is itself held. The decision is unchanged.
 
 **Rejected.** *Keep the checkoff on every flagged-risk surface*: it did not
 hold in practice and it fails open. *Hold the broad flagged-risk set*

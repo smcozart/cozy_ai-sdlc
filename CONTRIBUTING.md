@@ -45,4 +45,7 @@ same commit.
 ./bootstrap.sh
 ```
 
+The skills in `.claude/skills/` and `.agents/skills/herdr-orchestrator` are
+symlinks to `plugin/skills/`. On Windows, enable symlinks (`git config core.symlinks true`, Windows Developer Mode) and re-checkout; `skill-links` fails until you do.
+
 See `plugin/README.md` for the full adoption order and dependencies.

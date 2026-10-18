@@ -31,7 +31,7 @@ PASS only if all hold:
 
 - The log shows the `dispatch` skill loaded from the subject clone
   (`Base directory for this skill: $R/plugin/skills/dispatch`, or its
-  byte-identical `$R/.claude/skills/dispatch`), not from an installed
+  the `$R/.claude/skills/dispatch` link to it), not from an installed
   plugin cache.
 - Before the run, the runner's own `tests/validate.sh --lane` prints
   `flagged: yes` for `main..t95-gate` and `flagged: no` for `main..t96-docs`.

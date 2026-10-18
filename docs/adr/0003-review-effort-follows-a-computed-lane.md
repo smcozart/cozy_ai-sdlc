@@ -30,9 +30,8 @@ direction**: an agent may raise a computed lane, never lower it. Consumers
 extend the light set with the paths they will review on a bounded budget; a
 verbatim copy is safe. A repo without `--lane`, or a PARTIAL range, is T2.
 The same run prints a second line, `flagged: yes|no`: yes when the range
-touches the **merge hold list** of ADR 0005 — `tests/validate.sh`,
-`.github/workflows/**`, `.githooks/**`, `plugin/templates/new-project/files/tests/validate.sh`,
-`plugin/templates/new-project/files/.github/workflows/**`, `plugin/templates/new-project/scaffold.sh`, the files that enforce the gate — so
+touches the **merge hold list** of ADR 0005 — the files that enforce the
+gate; the list is `LANE_HOLD` in `tests/validate.sh` — so
 a human merges it. That line is the one machine-readable source for the hold;
 the broader flagged-risk set in Deploy §4 stays review guidance, not the hold.
 The classifier is a mode, not a check — it never turns a line red and is not
