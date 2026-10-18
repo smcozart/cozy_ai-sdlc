@@ -37,7 +37,8 @@ Frontier = open, labelled `ready-for-agent`, zero open `blocked_by`, not
 labelled `ready-for-human`, not `wontfix`. Fetch every page. Read each
 candidate's blocker summary (`gh api repos/{owner}/{repo}/issues/<n>`); missing
 or errored data means unknown, not zero — skip it this pass. Require the
-issue's intent file to exist and cite the issue; an uncommitted or missing
+issue's intent file to exist and cite the issue, committed on `<base>` or on
+`origin/t<n>-<slug>` (`intent-conversation` Move 2); an uncommitted or missing
 intent is not a worker brief. Re-check the frontier immediately before each
 launch, not just at the top of the move.
 
@@ -57,7 +58,9 @@ or overlapping, 0 new launches while any PR waits on a human gate. The
 developer can change this in plain language for the rest of the conversation.
 
 Reserve issue, branch, worktree path, Touches, base SHA (`git rev-parse
-origin/<base>` at reservation, `<base>` as in Move 5), worker/session id, PR
+origin/<base>` at reservation, `<base>` as in Move 5; when
+`origin/t<n>-<slug>` exists, `git merge-base origin/t<n>-<slug>
+origin/<base>`), worker/session id, PR
 and state under the repo's own ignored `.factory/` directory before launching.
 Reconcile against Git/worktrees/PRs before retrying or re-entering after a
 restart; never double-launch. This is local recovery state, not a second
@@ -65,7 +68,9 @@ tracker.
 
 ## Move 3 — Dispatch
 
-Branch name is always `t<n>-<slug>`. Detect and use, in this order: your
+Branch name is always `t<n>-<slug>`. When `origin/t<n>-<slug>` exists (it
+carries the intent), the worktree checks it out (`git worktree add <path>
+t<n>-<slug>`), never creates it with `-b`. Detect and use, in this order: your
 harness's own session-creation tool; else a child headless session in a
 worktree; else a sub-agent with worktree isolation. A sub-agent over a shared
 checkout is never a worker, whatever the host.
@@ -215,6 +220,8 @@ developer should never have to guess whether the loop is waiting on them.
 >
 > Before editing, verify `git rev-parse --show-toplevel` and `git branch
 > --show-current` land you in your own worktree on your own branch. If
+> `origin/t<n>-<slug>` exists, `git switch t<n>-<slug>` and continue on it;
+> never rename it, and never create it from `<sha>`. Otherwise, if
 > `git branch --show-current` is not `t<n>-<slug>`, rename it (your harness's
 > branch-rename tool, or `git branch -m`) or create it from `<sha>` before
 > editing. Never force an existing branch, write in the creator's checkout,

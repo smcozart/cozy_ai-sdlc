@@ -26,7 +26,8 @@ frontier is GitHub, nothing in a file outranks it.
 ## The per-ticket loop (the contract)
 
 1. **Orient:** `gh issue list --label ready-for-agent`. The frontier is any ticket
-   whose blockers are all closed.
+   whose blockers are all closed and whose intent is committed on `<base>` or on
+   `origin/t<n>-<slug>` (`intent-conversation` Move 2).
 2. **Dispatch:** everything the build creates on disk lives under `~/.factory/<repo>/`:
    worker clones `workers/w<n>`, the QC checkout `qc`, QC and witness logs `logs/`.
    Never inside the repo, never a sibling of it (a nested clone also loads the outer

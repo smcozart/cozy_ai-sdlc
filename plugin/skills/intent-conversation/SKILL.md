@@ -104,6 +104,18 @@ what the repo already tells you about the surface named; when you cannot
 bound it yet, leave it empty or omit it rather than guess — `dispatch` reads
 a missing or unbounded list as "unknown" and runs that ticket alone.
 
+**The intent's `**Type:**` picks where it lands.** `feature` or `bug`: `git
+fetch origin`, then `git worktree add .factory/worktrees/t<n>-<slug> -b
+t<n>-<slug> origin/<base>` (`<base>` as in Move 2b; never the developer's
+checkout), commit `intent/<n>-<slug>/intent.md` there and push the branch to
+`origin/t<n>-<slug>`, with no PR. Then `git worktree remove
+.factory/worktrees/t<n>-<slug> && git branch -D t<n>-<slug>`: git refuses a
+branch that another worktree holds, and the worker checks it out. The worker continues on that branch, so the
+intent and the code land in one PR, and its QC reviews the intent first: a
+HIGH defect in the intent is fixed first, then the code, in that same PR.
+`system-change`: the intent goes in the records PR (Move 2b), which merges
+before "go".
+
 **An issue never stands without its intent.** If anything after the create
 fails (the folder exists, the write is denied, the session is cut), comment on
 the issue in one line saying the intent file is missing and must be written
@@ -115,10 +127,11 @@ disk.
 Do not name a lane: the gate computes it over the diff at close
 (`tests/validate.sh --lane`, escalate-only).
 
-Reply in **one sentence**: the issue number and the intent path. For example:
+Reply in **one sentence**: the issue number, the intent path and, for a
+`feature` or `bug`, its branch. For example:
 
 > Filed #47 — a fleet-utilisation column on the dashboard; intent is in
-> `intent/47-fleet-utilisation-column/intent.md`.
+> `intent/47-fleet-utilisation-column/intent.md` on `t47-fleet-utilisation-column`.
 
 Ask at most one question, and only if the repo cannot answer it.
 
@@ -150,7 +163,10 @@ Route it before the next question, in the same turn:
 | Detail that belongs to one ticket (columns, a saved view, a permitted action) | That issue's body |
 
 **Never switch the developer's own checkout** (`dispatch` Move 5's rule) to
-write a record. On first use this conversation: `git fetch origin`, then
+write a record. A record for one ticket that is not in flight and whose
+`origin/t<n>-<slug>` exists (Move 2) goes on that branch, the Move 2 way
+(`git worktree add .factory/worktrees/t<n>-<slug> t<n>-<slug>`, commit,
+push, remove), with no records PR. Every other record: on first use this conversation: `git fetch origin`, then
 create one per-conversation records worktree: `git worktree add
 .factory/records/<YYYY-MM-DD> -b records-<YYYY-MM-DD> origin/<base>`, where
 `<base>` is the base branch named in `AGENTS.md` (`**Base branch:**`, default
@@ -193,7 +209,8 @@ A batch update is filed only when the developer asks for one.
 
 Trigger: "go", "build it", "do it", "yes, go ahead".
 
-Before anything: the intent file exists and cites this issue, and the issue has
+Before anything: the intent file is on `<base>`, or on `origin/t<n>-<slug>`
+(Move 2), and cites this issue, and the issue has
 no open blockers (`gh issue view <n>` — a `Blocked by:` line names them), and it
 is neither closed nor labelled `wontfix` — if it is, someone took it off the
 frontier deliberately; say so in one line and do not label. **No open records

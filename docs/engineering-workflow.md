@@ -44,7 +44,9 @@ Formalized in issue [#2](https://github.com/smcozart/cozyharness/issues/2).
    `intent/<issue-number>-<slug>/intent.md` (start from
    [`intent/TEMPLATE.md`](../intent/TEMPLATE.md)). The issue number is the join
    key: it ties the intent to the issue, later branch, run, PR, and pasted
-   proof.
+   proof. A `feature` or `bug` intent rides its ticket branch into the work
+   PR; a `system-change` intent merges first in a records PR
+   (`intent-conversation` Move 2).
 4. **System-intent alignment.** Greenfield work starts from
    [`SYSTEM-INTENT.md`](../SYSTEM-INTENT.md); every work-item intent is checked
    against it. Conflicts either amend SYSTEM-INTENT.md deliberately or rewrite
