@@ -17,10 +17,9 @@ unset GIT_DIR GIT_WORK_TREE  # #45: a hook-exported GIT_DIR makes rev-parse retu
 cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)" || exit 2
 
 FO=plugin/skills/herdr-orchestrator/SKILL.md
-FO_OLD=plugin/skills/factory-orchestrator/SKILL.md  # the t1-* sha witnesses predate the rename (#97)
 DOC=docs/engineering-workflow.md
 SK=plugin/skills/engineering-workflow/SKILL.md
-CHECKS="sync-rule stage-parity intent-layout adr-numbering adr-refs hooks-json skill-frontmatter skill-links template-gate-parity agents-commands t1-trust-wording t1-log-clobber t1-spawn-session t3-label-drift t3-precedence dispatch-hold herdr-retire pr-adr-line"
+CHECKS="sync-rule stage-parity intent-layout adr-numbering adr-refs hooks-json skill-frontmatter skill-links template-gate-parity agents-commands dispatch-hold herdr-retire pr-adr-line"
 
 fail=0; why=""
 list_checks() { printf '%s\n' $CHECKS; }
@@ -228,30 +227,6 @@ check_agents_commands() {
   [ "$have" = "$want" ] || { why="AGENTS.md ## Commands names != --list; missing:[$(comm -13 <(echo "$have") <(echo "$want") | tr '\n' ' ')] extra:[$(comm -23 <(echo "$have") <(echo "$want") | tr '\n' ' ')]"; return 1; }
 }
 
-# ---------- regression half (#8 corpus): check_<name> <file>, never stdin ----------
-# t1-trust-wording  FO  bad 7e8a195 ("skips"), da9eb33 (REFUSES)  good 4e9b547
-check_t1_trust_wording() {
-  grep -q 'trust dialog is SKIPPED' "$1" && ! grep -qw REFUSES "$1" \
-    || { why="$1: expected 'trust dialog is SKIPPED' and no REFUSES"; return 1; }
-}
-# t1-log-clobber  FO  bad da9eb33  good 4e9b547
-check_t1_log_clobber() {
-  ! grep -qE '>log[[:space:]]' "$1" || { why="$1: bare '>log ' redirect clobbers the shared log"; return 1; }
-}
-# t1-spawn-session  FO  bad 7e8a195, da9eb33  good 4e9b547
-check_t1_spawn_session() {
-  grep -qE '^- Spawn:.*--output-format' "$1" || { why="$1: Spawn line does not capture a session id (--output-format)"; return 1; }
-}
-# t3-label-drift  AGENTS.md  bad 43b63dc  good 92e6a25
-check_t3_label_drift() {
-  grep -qF 'does NOT apply `ready-for-agent` at spec time' "$1" && ! grep -qF 'never auto-apply labels' "$1" \
-    || { why="$1: expected 'does NOT apply \`ready-for-agent\` at spec time' and no 'never auto-apply labels'"; return 1; }
-}
-# t3-precedence  AGENTS.md  bad 43b63dc  good 92e6a25
-check_t3_precedence() {
-  grep -qF 'Overrides to the vendored skill:' "$1" || { why="$1: missing 'Overrides to the vendored skill:'"; return 1; }
-}
-
 # dispatch-hold  plugin dispatch skill (#42, ADR 0005): the merge step ties to `flagged: no`; the old fail-open line is gone  witness: mutation rows
 check_dispatch_hold() {  # whitespace-joined, so a reflow neither hides the old line nor breaks the tie
   local t; t=$(tr -s '[:space:]' ' ' <"$1")
@@ -291,8 +266,6 @@ default_run() {
   fi
   run sync-rule "$range"
   for c in stage-parity intent-layout adr-numbering adr-refs hooks-json skill-frontmatter skill-links template-gate-parity agents-commands; do run "$c" .; done
-  for c in t1-trust-wording t1-log-clobber t1-spawn-session; do run "$c" "$FO"; done
-  for c in t3-label-drift t3-precedence; do run "$c" AGENTS.md; done
   run dispatch-hold plugin/skills/dispatch/SKILL.md
   run herdr-retire "$FO"
   if [ -n "$body" ]; then run pr-adr-line "$body"; else echo "skipped: pr-adr-line — no PR body file given (CI passes one)"; fi
@@ -319,13 +292,12 @@ showfile() {  # showfile <sha> <path> -> sets T (no subshell: a failed git show 
   T=$BASE/$1-${2##*/}
   git show "$1:$2" >"$T" 2>/dev/null || { echo "!! git show $1:$2 failed"; exit 2; }
 }
-sha_row() { showfile "$2" "$4"; expect "$1" "$2" "$3" "$T"; }  # sha_row <ok|FAIL> <sha> <check> <path>
 reset_wt() { git -C "$1" checkout --quiet -- . && git -C "$1" clean -fdq; }
 
 witness_run() {
   [ "$(git rev-parse --is-shallow-repository)" = false ] || { echo "!! shallow clone: run 'git fetch --unshallow' first"; exit 2; }
   BASE=$(mktemp -d "${TMPDIR:-/tmp}/validate.XXXXXX"); trap cleanup EXIT
-  for s in a6519a9 571afe4 1b41a31 7e8a195 da9eb33 4e9b547 43b63dc 92e6a25; do have_sha "$s" || exit 2; done
+  for s in a6519a9 571afe4 1b41a31; do have_sha "$s" || exit 2; done
 
   # sha witnesses — static
   expect FAIL a6519a9 sync-rule 'a6519a9~1..a6519a9'
@@ -403,23 +375,6 @@ witness_run() {
   commands_block 1d > "$m/AGENTS.tmp" && mv "$m/AGENTS.tmp" "$m/AGENTS.md"
   expect FAIL 'mutation(one name deleted)' agents-commands "$m"; reset_wt "$m"
 
-  # sha witnesses — regression (single file via git show)
-  for s in 7e8a195 da9eb33; do sha_row FAIL "$s" t1-trust-wording $FO_OLD; done
-  sha_row ok   4e9b547 t1-trust-wording $FO_OLD
-  sha_row FAIL da9eb33 t1-log-clobber $FO_OLD
-  sha_row ok   4e9b547 t1-log-clobber $FO_OLD
-  for s in 7e8a195 da9eb33; do sha_row FAIL "$s" t1-spawn-session $FO_OLD; done
-  sha_row ok   4e9b547 t1-spawn-session $FO_OLD
-  sha_row FAIL 43b63dc t3-label-drift AGENTS.md
-  sha_row ok   92e6a25 t3-label-drift AGENTS.md
-  sha_row FAIL 43b63dc t3-precedence AGENTS.md
-  sha_row ok   92e6a25 t3-precedence AGENTS.md
-
-  # per-clause mutations on the good-sha copy
-  showfile 4e9b547 $FO_OLD; echo REFUSES >>"$T";                                          expect FAIL 'mutation(+REFUSES)' t1-trust-wording "$T"
-  showfile 4e9b547 $FO_OLD; sed -i.bak 's/trust dialog is SKIPPED/trust dialog is shown/' "$T"; expect FAIL 'mutation(SKIPPED→shown)' t1-trust-wording "$T"
-  showfile 92e6a25 AGENTS.md; echo 'never auto-apply labels' >>"$T";                  expect FAIL 'mutation(+never auto-apply labels)' t3-label-drift "$T"
-  showfile 92e6a25 AGENTS.md; sed -i.bak 's/does NOT apply/does not apply/' "$T";     expect FAIL 'mutation(NOT→not)' t3-label-drift "$T"
   showfile HEAD plugin/skills/dispatch/SKILL.md;                                      expect ok baseline dispatch-hold "$T"
   sed -i.bak 's/flagged: no/flagged: maybe/' "$T";                                    expect FAIL 'mutation(-flagged: no tie)' dispatch-hold "$T"
   showfile HEAD plugin/skills/dispatch/SKILL.md; echo 'Green `validate` plus this one QC check merges — no' >>"$T"; expect FAIL 'mutation(+f467444 merge line)' dispatch-hold "$T"

@@ -44,12 +44,12 @@ events.
 |---|---|---|
 | T1 HIGH: HANDOFF grep fallback on every spawn path | left on #8 | Text in the FO skill, already fixed. A check is admitted on recurrence (Test §2). |
 | T1 MED: `-p` "no mid-run stdin" false | left on #8 | Text fact about the CLI, fixed. Check on recurrence. |
-| T1 MED: trust dialog misstated | `t1-trust-wording` check | Text; the check stays. |
-| T1 MED: Spawn without session id | `t1-spawn-session` check | Text; the check stays. |
-| T1 LOW: `>log` clobber | `t1-log-clobber` check | Text; the check stays. |
+| T1 MED: trust dialog misstated | `t1-trust-wording` check | Text; check cut by #133 (0 real FAILs). |
+| T1 MED: Spawn without session id | `t1-spawn-session` check | Text; check cut by #133 (0 real FAILs). |
+| T1 LOW: `>log` clobber | `t1-log-clobber` check | Text; check cut by #133 (0 real FAILs). |
 | T1 LOW: Codex hedge; "Poll reads the log" | left on #8 | Text, LOW, fixed. Check on recurrence. |
-| T3 MED: label wording drift | `t3-label-drift` check | Text; the check stays. |
-| T3 MED: no precedence framing | `t3-precedence` check | Text; the check stays. |
+| T3 MED: label wording drift | `t3-label-drift` check | Text; check cut by #133 (0 real FAILs). |
+| T3 MED: no precedence framing | `t3-precedence` check | Text; check cut by #133 (0 real FAILs). |
 | T3 MED/LOW: no canonical pointer; vague vocabulary; ADR 0001 dropped | left on #8 | Text, fixed in AGENTS.md. Check on recurrence. |
 | Meta-lesson: pin exact wording in acceptance criteria | `intent-conversation.md` (not yet written) | Ticket-authoring behavior. Write at the intent-conversation adoption PR (#35). |
 | Sync-content drift (prose parity of the trio) | left on #8 | Text; it needs a check, not a behavior file. |
