@@ -41,7 +41,8 @@ evasion in `--witness`, because a wrong lane is a wrong review budget.
 **Amended on #135 (2026-10-18).** A release PR that changes only the
 `"version"` line of `plugin/.claude-plugin/plugin.json` is T1, not T2: the
 light-set rule ignores that file when its diff is one removed and one added
-line, both a semver `"version"` line, and every other rule still applies. It
+line in one hunk, both a semver `"version"` line, and the same line, only the
+version number changes. Every other rule still applies. It
 is never T0, so a release still gets one bounded pass.
 
 **Rejected.** *Keep "adversary on everything"*: correct when it caught 13

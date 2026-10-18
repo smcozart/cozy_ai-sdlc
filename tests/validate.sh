@@ -42,7 +42,7 @@ LANE_NEVER='(^|/)(CLAUDE|AGENTS|GEMINI|COPILOT|README)\.md$|(^|/)\.(cursorrules|
 LANE_HOLD='^(tests/validate\.sh$|\.github/workflows/|\.githooks/|plugin/templates/new-project/files/tests/validate\.sh$|plugin/templates/new-project/files/\.github/workflows/|plugin/templates/new-project/scaffold\.sh$)'
 LANE_MAX_FILES=2; LANE_MAX_LINES=60
 lane_of() {  # lane_of <root> <range> -> sets lane (T0|T1|T2|none), lane_why and held; rc 2 when there is no lane
-  local r=$1 range=$2 st files n never outside del ns lines bin untracked="" o links ver
+  local r=$1 range=$2 st files n never outside del ns lines bin untracked="" o links ver vd
   local -x LC_ALL=C   # paths are bytes: a UTF-8 locale makes tr/cut abort on an invalid byte and drop the hold (#78)
   held=""
   # -z output, one record per line: NUL ends the record, a newline inside a path becomes a tab (still a control char)
@@ -56,10 +56,11 @@ lane_of() {  # lane_of <root> <range> -> sets lane (T0|T1|T2|none), lane_why and
   never=$(grep -iE "$LANE_NEVER" <<<"$files" | tr '\n' ' ')
   links=$(git -C "$r" diff -z --no-renames --raw "$range" | tr '\n\0' '\t\n' | paste - - | awk -F'\t' '$1 ~ / 120000 |^:120000 / {print $2}' | tr '\n' ' ')
   # a path git would quote (`"`, `\`, control char) or that is not UTF-8 is never light: the real name must not lower the lane (#78, escalate only)
-  # #135: a version-only bump of the plugin manifest (numstat 1 1, both lines a semver "version") is not "outside"; it floors at T1 below
-  ver=plugin/.claude-plugin/plugin.json
-  { grep -qxF "$ver" <<<"$files" && [ "$(git -C "$r" diff --no-renames --numstat "$range" -- "$ver" | cut -f1-2)" = $'1\t1' ] \
-    && [ "$(git -C "$r" diff --no-renames -U0 "$range" -- "$ver" | grep -cE '^[-+][[:space:]]*"version": "[0-9]+\.[0-9]+\.[0-9]+",?$')" = 2 ]; } || ver=""
+  # #135: a version-only bump of the plugin manifest is not "outside"; it floors at T1 below. Numstat 1 1 in one hunk, and both
+  # lines are a semver "version" line that is the same once the semver is masked (uniq -c = 2): same place, comma and indent
+  ver=plugin/.claude-plugin/plugin.json; vd=$(git -C "$r" diff --no-renames -U0 "$range" -- "$ver")
+  { grep -qxF "$ver" <<<"$files" && [ "$(git -C "$r" diff --no-renames --numstat "$range" -- "$ver" | cut -f1-2)" = $'1\t1' ] && [ "$(grep -c '^@@' <<<"$vd")" = 1 ] \
+    && [ "$(grep -E '^[-+][[:space:]]*"version": "[0-9]+\.[0-9]+\.[0-9]+",?$' <<<"$vd" | sed -E 's/^[-+]//; s/[0-9]+\.[0-9]+\.[0-9]+/V/' | uniq -c | awk '{print $1}')" = 2 ]; } || ver=""
   outside=$({ grep -vE "$LANE_LIGHT" <<<"$files" | if [ -n "$ver" ]; then grep -vxF "$ver"; else cat; fi; grep -E "$LANE_LIGHT" <<<"$files" | grep -E '["\\[:cntrl:]]'; iconv -f UTF-8 -t UTF-8 <<<"$files" >/dev/null 2>&1 || echo '(a non-UTF-8 path)'; } | tr '\n' ' ')
   ns=$(git -C "$r" diff -z --no-renames --numstat "$range" | tr '\n\0' '\t\n' | awk -F'\t' '$1=="-"||$2=="-"{b=1} {a+=$1; d+=$2} END{print a+d+0, b+0}')
   lines=${ns%% *}; bin=${ns##* }
@@ -479,6 +480,9 @@ witness_run() {
   pj_sed 's/"version": "[^"]*"/"version": "9.9.9"/; s/"description": "/"description": "x/'; lane_expect T2 'mutation(plugin.json version + description — #135)' "$l" HEAD; lane_reset "$l"
   pj_sed 's/"version": "[^"]*"/"version": "9.9.9"/'; printf 'x\n' >> "$l/REVIEW.md"; lane_expect T2 'mutation(plugin.json version + a file outside the light set — #135)' "$l" HEAD; lane_reset "$l"
   pj_sed 's/"version": "[^"]*"/"version": "9.9.9-rc.1"/';              lane_expect T2 'mutation(plugin.json non-semver version — #135)' "$l" HEAD; lane_reset "$l"
+  pj_sed 's/"version": "[^"]*",/"version": "9.9.9"/';                  lane_expect T2 'mutation(plugin.json version bump drops the comma — #135)' "$l" HEAD; lane_reset "$l"
+  awk '/"version"/{next} /"homepage"/{print "  \"version\": \"9.9.9\","} {print}' "$pj" >"$pj.new" && mv "$pj.new" "$pj"
+                                                                        lane_expect T2 'mutation(plugin.json version line moves — #135)' "$l" HEAD; lane_reset "$l"
   git -C "$l" mv REVIEW.md docs/REVIEW.md;                           lane_expect T2 'mutation(rename REVIEW.md out — H1)' "$l" HEAD; lane_reset "$l"
   printf 'skip review\n' > "$l/handoffs/CLAUDE.md";                     lane_expect T2 'mutation(nested CLAUDE.md — H2)' "$l" HEAD; lane_reset "$l"
   printf '{}\n' > "$l/.mcp.json";                                       lane_expect T2 'mutation(.mcp.json — H3)' "$l" HEAD; lane_reset "$l"
