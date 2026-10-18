@@ -26,12 +26,15 @@ CHECKS="shape intent-layout adr-numbering app-tests pr-adr-line"
 # Extend LANE_LIGHT (safe by omission) and LANE_FLOOR_T1 (light files a session acts on).
 # LANE_HOLD is the merge hold list: the files that enforce the gate. `flagged: yes` = a human merges.
 LANE_LIGHT='^(handoffs/|STATUS\.md$|LICENSE$)'
+# A range ending at HEAD whose paths (and dirty tree) are all in RECORDS_ONLY skips app-tests. Widen it like LANE_LIGHT;
+# RECORDS_ONLY='' always runs them (a repo whose tests read records).
+RECORDS_ONLY='^(intent/|handoffs/|STATUS\.md$)'
 LANE_FLOOR_T1='^(STATUS\.md$)'   # README.md anywhere is LANE_NEVER (T2), never a floor entry
 LANE_NEVER='(^|/)(CLAUDE|AGENTS|GEMINI|COPILOT|README)\.md$|(^|/)\.(cursorrules|mcp\.json|gitmodules)$'
 LANE_HOLD='^(tests/validate\.sh$|\.github/workflows/|\.githooks/)'
 LANE_MAX_FILES=2; LANE_MAX_LINES=60
 lane_of() {  # lane_of <root> <range> -> sets lane (T0|T1|T2|none), lane_why and held; rc 2 when there is no lane
-  local r=$1 range=$2 st files n never outside del ns lines bin untracked="" o links
+  local r=$1 range=$2 st files n never outside del ns lines bin untracked="" o links raw
   local -x LC_ALL=C   # paths are bytes: a UTF-8 locale makes tr/cut abort on an invalid byte and drop the hold
   held=""
   # -z output, one record per line: NUL ends the record, a newline inside a path becomes a tab (still a control char)
@@ -43,7 +46,8 @@ lane_of() {  # lane_of <root> <range> -> sets lane (T0|T1|T2|none), lane_why and
   held=$(grep -E "$LANE_HOLD" <<<"$files" | tr '\n' ' ')
   del=$(awk -F'\t' '$1 ~ /^D/ {print $2}' <<<"$st" | tr '\n' ' ')
   never=$(grep -iE "$LANE_NEVER" <<<"$files" | tr '\n' ' ')
-  links=$(git -C "$r" diff -z --no-renames --raw "$range" | tr '\n\0' '\t\n' | paste - - | awk -F'\t' '$1 ~ / 120000 |^:120000 / {print $2}' | tr '\n' ' ')
+  raw=$(git -C "$r" diff -z --no-renames --raw "$range" | tr '\n\0' '\t\n' | paste - -)
+  links=$(awk -F'\t' '$1 ~ / 120000 |^:120000 / {print $2}' <<<"$raw" | tr '\n' ' ')
   # a path git would quote (`"`, `\`, control char) or that is not UTF-8 is never light: the real name must not lower the lane (escalate only)
   outside=$({ grep -vE "$LANE_LIGHT" <<<"$files"; grep -E "$LANE_LIGHT" <<<"$files" | grep -E '["\\[:cntrl:]]'; iconv -f UTF-8 -t UTF-8 <<<"$files" >/dev/null 2>&1 || echo '(a non-UTF-8 path)'; } | tr '\n' ' ')
   ns=$(git -C "$r" diff -z --no-renames --numstat "$range" | tr '\n\0' '\t\n' | awk -F'\t' '$1=="-"||$2=="-"{b=1} {a+=$1; d+=$2} END{print a+d+0, b+0}')
@@ -53,6 +57,7 @@ lane_of() {  # lane_of <root> <range> -> sets lane (T0|T1|T2|none), lane_why and
     elif [ ! -f "$r/$o" ] || [ ! -r "$r/$o" ]; then bin=1   # not a readable regular file (an untracked nested repo lists as dir/): never counted, T2
     elif [ "$(head -c 8000 "$r/$o" | tr -d '\000' | wc -c)" -ne "$(head -c 8000 "$r/$o" | wc -c)" ]; then bin=1; else lines=$((lines + $(wc -l <"$r/$o"))); fi
   done < <([ "$range" != HEAD ] || git -C "$r" ls-files -z --others --exclude-standard)
+  lane_files=$files; lane_risky="$del$links$(awk -F'\t' '$1 ~ / 160000 |^:160000 / {print $2}' <<<"$raw")"   # for records_only: deletes, symlinks, submodules
   if   [ -n "$never" ];                       then lane=T2; lane_why="instruction file: ${never% }"
   elif [ -n "$outside" ];                     then lane=T2; lane_why="outside the light set: ${outside% }"
   elif [ -n "$links" ];                       then lane=T2; lane_why="symlink (not followed): ${links% }"
@@ -65,24 +70,28 @@ lane_of() {  # lane_of <root> <range> -> sets lane (T0|T1|T2|none), lane_why and
   else                                           lane=T1; lane_why="$n file(s), $lines changed lines, all in the light set"
   fi
 }
-lane_run() {  # lane_run [<range>] -> prints the lane and flagged lines with resolved shas; exit 0 on a lane, 2 on none
-  local range=${1:-} a b m hit="" base="" shown partial="" t bl refs="origin/main main"
+base_of() {  # base_of <tip> -> sets the caller's bl (base line), t (base branch), hit (its ref) and base (merge-base of hit and <tip>)
+  local m refs="origin/main main"; hit=""; base=""
   # the base branch: LANE_TARGET overrides AGENTS.md's **Base branch:** line; neither set = main
   bl=$(grep -m1 '^\*\*Base branch' AGENTS.md 2>/dev/null | tr -d '\r')
   t=${LANE_TARGET:-$(sed -nE 's/^\*\*Base branch:\*\*[[:space:]]*`?([^`[:space:]]+)`?.*/\1/p' <<<"$bl")}
   [ -z "$t" ] || refs="origin/$t $t"
+  for m in $refs; do git rev-parse -q --verify "$m^{commit}" >/dev/null 2>&1 && { hit=$m; base=$(git merge-base "$m" "$1" 2>/dev/null); break; }; done
+}
+lane_run() {  # lane_run [<range>] -> prints the lane and flagged lines with resolved shas; exit 0 on a lane, 2 on none
+  local range=${1:-} a b hit base shown partial="" t bl
   # dirty = tracked changes OR untracked files; a new file alone must not fall through to HEAD~1..HEAD
   if [ -z "$range" ]; then if ! git diff --quiet HEAD 2>/dev/null || [ -n "$(git ls-files --others --exclude-standard)" ]; then range=HEAD; else range=HEAD~1..HEAD; fi; fi
   lane_of . "$range"; lane_why=${lane_why//[[:cntrl:]]/?}; held=${held//[[:cntrl:]]/?}   # raw names: no control char reaches the terminal
   if [ "$range" = HEAD ]; then shown="dirty tree vs $(git rev-parse --short HEAD)"
   elif [[ $range == *..* ]]; then
     a=$(git rev-parse --short "${range%%..*}" 2>/dev/null); b=$(git rev-parse --short "${range##*..}" 2>/dev/null); shown="$a..$b"
-    for m in $refs; do git rev-parse -q --verify "$m^{commit}" >/dev/null 2>&1 && { hit=$m; base=$(git merge-base "$m" "${range##*..}" 2>/dev/null); break; }; done
+    base_of "${range##*..}"
     # a partial range hides files: the close needs the ticket's full range, i.e. merge-base(base, tip)..tip
     # a configured base fails closed: unreadable line, no ref, or no common history all print PARTIAL
     if [ -z "$t" ] && [ -n "$bl" ]; then partial=" — PARTIAL RANGE (base branch line in AGENTS.md unreadable); not valid for a close"
-    elif [ -n "$base" ] && [ "$(git rev-parse "${range##*..}")" != "$(git rev-parse "$m")" ] \
-       && [ "$(git rev-parse "${range%%..*}" 2>/dev/null)" != "$base" ]; then partial=" — PARTIAL RANGE (base is not the merge-base with $m); not valid for a close"
+    elif [ -n "$base" ] && [ "$(git rev-parse "${range##*..}")" != "$(git rev-parse "$hit")" ] \
+       && [ "$(git rev-parse "${range%%..*}" 2>/dev/null)" != "$base" ]; then partial=" — PARTIAL RANGE (base is not the merge-base with $hit); not valid for a close"
     elif [ -n "$t" ] && [ -z "$hit" ]; then partial=" — PARTIAL RANGE (base branch $t not found); not valid for a close"
     elif [ -n "$t" ] && [ -z "$base" ]; then partial=" — PARTIAL RANGE (no common history with $hit); not valid for a close"; fi
   else shown=$range; fi
@@ -95,6 +104,16 @@ lane_run() {  # lane_run [<range>] -> prints the lane and flagged lines with res
   if [ -n "$held" ]; then echo "flagged: yes — merge hold, a human merges: ${held% }"; else echo "flagged: no"; fi
   [ "$lane" = T2 ] || echo "confirm at close (fill in): no-ADR=<y/n> not-speculative=<y/n> — any n means T2. Escalate only."
   return 0
+}
+records_only() {  # records_only <range>: rc 0 when app-tests may skip — every path in the range and the working tree is a record
+  local range=$1 p hit base t bl; local -x LC_ALL=C
+  # the tests run on the working tree, so the range is the whole ticket: merge-base(base branch, HEAD)..HEAD; any doubt runs them
+  [ -n "$RECORDS_ONLY" ] && [[ $range == *..HEAD ]] || return 1
+  base_of HEAD; [ -n "$t" ] || [ -z "$bl" ] || return 1
+  [ -n "$base" ] && [ "$(git rev-parse -q --verify "${range%%..*}^{commit}")" = "$base" ] || return 1
+  lane_of . "$range" && [ -z "$lane_risky" ] || return 1
+  p=$(printf '%s\n' "$lane_files"; git status --porcelain -z --no-renames -unormal | tr '\n\0' '\t\n' | cut -c4-)
+  ! grep -qvE "$RECORDS_ONLY" <<<"$p"
 }
 
 # ---------- checks: check_<name> <root> (pr-adr-line: <file>); on failure set why and return 1 ----------
@@ -157,7 +176,8 @@ default_run() {
   if [ -n "${1:-}" ] && ! git diff --name-only "$1" >/dev/null 2>&1; then
     echo "range: git diff $1 failed — fix the range (bad ref, or a shallow clone: git fetch --unshallow)"; exit 2
   fi
-  for c in shape intent-layout adr-numbering app-tests; do run "$c" .; done
+  for c in shape intent-layout adr-numbering; do run "$c" .; done
+  if [ -n "${1:-}" ] && records_only "$1"; then echo "skipped: app-tests — records-only diff"; else run app-tests .; fi
   if [ -n "$body" ]; then run pr-adr-line "$body"; else echo "skipped: pr-adr-line — no PR body file given (CI passes one)"; fi
   echo "$ran_ok ok, $fail_count failed"
   if ! git rev-parse -q --verify HEAD >/dev/null; then echo "lane: none — no commits yet"
@@ -209,6 +229,31 @@ witness_run() {
   is 'lane @empty range expected none' 'lane_of "$g" HEAD..HEAD; [ "$lane" = none ]'
   mkdir -p "$g/.github/workflows"; printf 'x\n' >"$g/.github/workflows/x.yml"
   is 'flagged @a .github/workflows/ file expected yes' 'lane_of "$g" HEAD; [ -n "$held" ]'
+
+  # records-only skip: scratch repo whose app tests fail, so `FAIL: app-tests` means they ran; rec = origin/main + records
+  g=$base/r; fresh; cp -R "$m" "$g"; mkdir -p "$g/src" "$g/handoffs"; printf 'x\n' | tee "$g/src/a.js" >"$g/handoffs/h.md"
+  printf '**App tests:** `false`\n' >>"$g/AGENTS.md"; git init -q "$g"; gc symbolic-ref HEAD refs/heads/main
+  gc add -A; gc commit -qm base; gc update-ref refs/remotes/origin/main HEAD
+  gc checkout -qb rec; printf 'x\n' >"$g/intent/x.md"; printf 'x\n' >>"$g/STATUS.md"; gc add -A; gc commit -qm rec
+  gate() { (cd "$g" && LANE_TARGET=main default_run "$1"; exit $fail); }   # LANE_TARGET: the scratch base is main whatever this repo's is
+  ran() { local out; out=$(gate "$1"); grep -q '^FAIL: app-tests' <<<"$out"; }
+  is 'app-tests @records-only range expected skipped, not counted' 'out=$(gate origin/main..HEAD) && grep -qx "skipped: app-tests — records-only diff" <<<"$out" && grep -q "^3 ok, 0 failed" <<<"$out"'
+  is 'app-tests @no range expected run' 'ran ""'
+  is 'app-tests @range end not HEAD expected run' 'ran main..rec'
+  is "app-tests @RECORDS_ONLY='' expected run" 'RECORDS_ONLY= ran origin/main..HEAD'
+  printf 'x\n' >"$g/src/x.js"; is 'app-tests @untracked src/x.js expected run' 'ran origin/main..HEAD'; rm "$g/src/x.js"
+  printf 'x\n' >>"$g/STATUS.md"; is 'app-tests @bare HEAD, only STATUS.md dirty expected run' 'ran HEAD'; gc checkout -q -- STATUS.md
+  is 'app-tests @base branch not found expected run' 'out=$(cd "$g" && LANE_TARGET=nope default_run origin/main..HEAD); grep -q "^FAIL: app-tests" <<<"$out"'
+  printf 'x\n' >"$g/src/b.js"; gc add -A; gc commit -qm code; printf 'x\n' >>"$g/STATUS.md"; gc commit -qam board
+  is 'app-tests @HEAD~1..HEAD, start not the merge-base expected run' 'ran HEAD~1..HEAD'; gc reset -q --hard HEAD~2
+  one() {  # one <label> <step>: commit the step on rec; app-tests must run on origin/main..HEAD; drop it
+    eval "$2"; gc add -A; gc commit -qm "$1"; is "app-tests @$1 expected run" 'ran origin/main..HEAD'; gc reset -q --hard HEAD~1
+  }
+  one 'plus one code file' 'printf "x\n" >"$g/src/b.js"'
+  one 'deletes a file' 'rm "$g/handoffs/h.md"'
+  one 'rename code into intent/' 'gc mv src/a.js intent/a.js'
+  one 'symlink under intent/' 'ln -s ../STATUS.md "$g/intent/l"'
+  local nl=$'\n'; one 'newline in a path' 'mkdir "$g/STATUS.md${nl}intent" && printf "x\n" >"$g/STATUS.md${nl}intent/x"'
   echo "$wn witnesses, $wfail unexpected"
   exit $wfail
 }

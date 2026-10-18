@@ -67,4 +67,7 @@ A ticket with a missing spec or link goes back to Design.
   with none prints `skipped:`).
 - App tests: when the stack ADR lands, add a line that starts with
   `**App tests:**` and names the command in backticks; the `app-tests` check
-  runs it.
+  runs it. The ticket range (`origin/{{BASE}}..HEAD`, from the merge-base)
+  skips them when it and the working tree touch only records: `RECORDS_ONLY`
+  in `tests/validate.sh` (`intent/`, `handoffs/`, `STATUS.md`); widen it to
+  add a path, or set `RECORDS_ONLY=''` when a test reads records.
