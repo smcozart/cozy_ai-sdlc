@@ -2,7 +2,7 @@
 
 **Issue:** #125 · **Status:** approved · **Type:** system-change
 
-**Touches:** `["plugin/templates/new-project/files/tests/validate.sh", "plugin/templates/new-project/files/AGENTS.md"]`
+**Touches:** `["plugin/templates/new-project/files/tests/validate.sh", "plugin/templates/new-project/files/AGENTS.md", "intent/125-records-only-app-tests/intent.md"]`
 
 Reported by the cozystudio session, 2026-10-18. The developer approved on 2026-10-18 ("Yes to 1 and 2") after the evidence below. Evidence for #123.
 
@@ -30,13 +30,14 @@ When the gate is given a range and every path in it matches the records set, it 
 - One records rule in the template gate: `RECORDS_ONLY='^(intent/|handoffs/|STATUS\.md$)'`. A repo widens it the same way it extends `LANE_LIGHT`. `RECORDS_ONLY=''` turns the skip off, for a repo whose tests read records. The default is not empty, so the template `AGENTS.md` says this in one line.
 - The skip applies only to `app-tests`. `shape`, `intent-layout`, `adr-numbering` and `pr-adr-line` always run.
 - The skip is about the code that the tests run on, which is the working tree. So:
-  - it applies only when the range's end is `HEAD` (`A..HEAD`, `A...HEAD`, or `HEAD`). For `A...HEAD` it compares the merge-base, as git does;
+  - it applies only when the range is `A..HEAD` or `A...HEAD` and `A` resolves to merge-base(<base>, `HEAD`), so the range is the whole ticket. `<base>` is resolved as `lane_run` resolves it: `LANE_TARGET`, then the `**Base branch:**` line, then `origin/main` / `main`. A bare `HEAD` never skips (QC on #127: a bare `HEAD` or a later start hides committed code);
   - the working tree must also be clean apart from records paths. The check reads `git status --porcelain -z`, so a dirty or untracked code file runs the tests under `origin/main..HEAD` too.
 - The path list reuses `lane_of`'s listing (`-z`, `--no-renames`, no quoting), with its delete and symlink results. It does not run a second `git diff --name-only`. That listing must run before `app-tests`.
 - `app-tests` runs when:
   - no range is given;
   - the range is empty or git cannot read it;
-  - the range's end is not `HEAD`;
+  - the range's end is not `HEAD`, or the range is a bare `HEAD`;
+  - the range's start is not merge-base(<base>, `HEAD`), the base branch cannot be found, or the `**Base branch:**` line is unreadable;
   - any path in the range or the working tree is outside the set;
   - the range deletes a file;
   - any entry is a symlink or a submodule (mode `160000`).
@@ -61,6 +62,9 @@ When the gate is given a range and every path in it matches the records set, it 
   - a symlink under `intent/`: `app-tests` runs;
   - `origin/main..HEAD` records-only, with an untracked `src/x.js` in the working tree: `app-tests` runs;
   - a records-only range whose end is not `HEAD` (for example `HEAD~2..HEAD~1`, or `main..<records-branch>` while on another branch): `app-tests` runs;
+  - a bare `HEAD` with only `STATUS.md` dirty: `app-tests` runs;
+  - a records-only `HEAD~1..HEAD` whose start is not the merge-base (a code commit sits before it): `app-tests` runs;
+  - the base branch not found (`LANE_TARGET=nope`): `app-tests` runs;
   - a path with a newline in its name (`STATUS.md\nintent/x`): `app-tests` runs;
   - `RECORDS_ONLY=''` on a records-only range: `app-tests` runs.
 - A `skipped: app-tests` line does not count toward `N ok` (the root gate's scaffolded-summary witness counts `ok:` lines).

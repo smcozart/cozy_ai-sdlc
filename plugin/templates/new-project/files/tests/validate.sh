@@ -70,24 +70,28 @@ lane_of() {  # lane_of <root> <range> -> sets lane (T0|T1|T2|none), lane_why and
   else                                           lane=T1; lane_why="$n file(s), $lines changed lines, all in the light set"
   fi
 }
-lane_run() {  # lane_run [<range>] -> prints the lane and flagged lines with resolved shas; exit 0 on a lane, 2 on none
-  local range=${1:-} a b m hit="" base="" shown partial="" t bl refs="origin/main main"
+base_of() {  # base_of <tip> -> sets the caller's bl (base line), t (base branch), hit (its ref) and base (merge-base of hit and <tip>)
+  local m refs="origin/main main"; hit=""; base=""
   # the base branch: LANE_TARGET overrides AGENTS.md's **Base branch:** line; neither set = main
   bl=$(grep -m1 '^\*\*Base branch' AGENTS.md 2>/dev/null | tr -d '\r')
   t=${LANE_TARGET:-$(sed -nE 's/^\*\*Base branch:\*\*[[:space:]]*`?([^`[:space:]]+)`?.*/\1/p' <<<"$bl")}
   [ -z "$t" ] || refs="origin/$t $t"
+  for m in $refs; do git rev-parse -q --verify "$m^{commit}" >/dev/null 2>&1 && { hit=$m; base=$(git merge-base "$m" "$1" 2>/dev/null); break; }; done
+}
+lane_run() {  # lane_run [<range>] -> prints the lane and flagged lines with resolved shas; exit 0 on a lane, 2 on none
+  local range=${1:-} a b hit base shown partial="" t bl
   # dirty = tracked changes OR untracked files; a new file alone must not fall through to HEAD~1..HEAD
   if [ -z "$range" ]; then if ! git diff --quiet HEAD 2>/dev/null || [ -n "$(git ls-files --others --exclude-standard)" ]; then range=HEAD; else range=HEAD~1..HEAD; fi; fi
   lane_of . "$range"; lane_why=${lane_why//[[:cntrl:]]/?}; held=${held//[[:cntrl:]]/?}   # raw names: no control char reaches the terminal
   if [ "$range" = HEAD ]; then shown="dirty tree vs $(git rev-parse --short HEAD)"
   elif [[ $range == *..* ]]; then
     a=$(git rev-parse --short "${range%%..*}" 2>/dev/null); b=$(git rev-parse --short "${range##*..}" 2>/dev/null); shown="$a..$b"
-    for m in $refs; do git rev-parse -q --verify "$m^{commit}" >/dev/null 2>&1 && { hit=$m; base=$(git merge-base "$m" "${range##*..}" 2>/dev/null); break; }; done
+    base_of "${range##*..}"
     # a partial range hides files: the close needs the ticket's full range, i.e. merge-base(base, tip)..tip
     # a configured base fails closed: unreadable line, no ref, or no common history all print PARTIAL
     if [ -z "$t" ] && [ -n "$bl" ]; then partial=" — PARTIAL RANGE (base branch line in AGENTS.md unreadable); not valid for a close"
-    elif [ -n "$base" ] && [ "$(git rev-parse "${range##*..}")" != "$(git rev-parse "$m")" ] \
-       && [ "$(git rev-parse "${range%%..*}" 2>/dev/null)" != "$base" ]; then partial=" — PARTIAL RANGE (base is not the merge-base with $m); not valid for a close"
+    elif [ -n "$base" ] && [ "$(git rev-parse "${range##*..}")" != "$(git rev-parse "$hit")" ] \
+       && [ "$(git rev-parse "${range%%..*}" 2>/dev/null)" != "$base" ]; then partial=" — PARTIAL RANGE (base is not the merge-base with $hit); not valid for a close"
     elif [ -n "$t" ] && [ -z "$hit" ]; then partial=" — PARTIAL RANGE (base branch $t not found); not valid for a close"
     elif [ -n "$t" ] && [ -z "$base" ]; then partial=" — PARTIAL RANGE (no common history with $hit); not valid for a close"; fi
   else shown=$range; fi
@@ -102,8 +106,11 @@ lane_run() {  # lane_run [<range>] -> prints the lane and flagged lines with res
   return 0
 }
 records_only() {  # records_only <range>: rc 0 when app-tests may skip — every path in the range and the working tree is a record
-  local range=$1 p; local -x LC_ALL=C
-  [ -n "$RECORDS_ONLY" ] && [[ $range == HEAD || $range == *..HEAD ]] || return 1   # the tests run on the working tree: the range must end at it
+  local range=$1 p hit base t bl; local -x LC_ALL=C
+  # the tests run on the working tree, so the range is the whole ticket: merge-base(base branch, HEAD)..HEAD; any doubt runs them
+  [ -n "$RECORDS_ONLY" ] && [[ $range == *..HEAD ]] || return 1
+  base_of HEAD; [ -n "$t" ] || [ -z "$bl" ] || return 1
+  [ -n "$base" ] && [ "$(git rev-parse -q --verify "${range%%..*}^{commit}")" = "$base" ] || return 1
   lane_of . "$range" && [ -z "$lane_risky" ] || return 1
   p=$(printf '%s\n' "$lane_files"; git status --porcelain -z --no-renames -unormal | tr '\n\0' '\t\n' | cut -c4-)
   ! grep -qvE "$RECORDS_ONLY" <<<"$p"
@@ -228,13 +235,17 @@ witness_run() {
   printf '**App tests:** `false`\n' >>"$g/AGENTS.md"; git init -q "$g"; gc symbolic-ref HEAD refs/heads/main
   gc add -A; gc commit -qm base; gc update-ref refs/remotes/origin/main HEAD
   gc checkout -qb rec; printf 'x\n' >"$g/intent/x.md"; printf 'x\n' >>"$g/STATUS.md"; gc add -A; gc commit -qm rec
-  gate() { (cd "$g" && default_run "$1"; exit $fail); }
+  gate() { (cd "$g" && LANE_TARGET=main default_run "$1"; exit $fail); }   # LANE_TARGET: the scratch base is main whatever this repo's is
   ran() { local out; out=$(gate "$1"); grep -q '^FAIL: app-tests' <<<"$out"; }
   is 'app-tests @records-only range expected skipped, not counted' 'out=$(gate origin/main..HEAD) && grep -qx "skipped: app-tests — records-only diff" <<<"$out" && grep -q "^3 ok, 0 failed" <<<"$out"'
   is 'app-tests @no range expected run' 'ran ""'
   is 'app-tests @range end not HEAD expected run' 'ran main..rec'
   is "app-tests @RECORDS_ONLY='' expected run" 'RECORDS_ONLY= ran origin/main..HEAD'
   printf 'x\n' >"$g/src/x.js"; is 'app-tests @untracked src/x.js expected run' 'ran origin/main..HEAD'; rm "$g/src/x.js"
+  printf 'x\n' >>"$g/STATUS.md"; is 'app-tests @bare HEAD, only STATUS.md dirty expected run' 'ran HEAD'; gc checkout -q -- STATUS.md
+  is 'app-tests @base branch not found expected run' 'out=$(cd "$g" && LANE_TARGET=nope default_run origin/main..HEAD); grep -q "^FAIL: app-tests" <<<"$out"'
+  printf 'x\n' >"$g/src/b.js"; gc add -A; gc commit -qm code; printf 'x\n' >>"$g/STATUS.md"; gc commit -qam board
+  is 'app-tests @HEAD~1..HEAD, start not the merge-base expected run' 'ran HEAD~1..HEAD'; gc reset -q --hard HEAD~2
   one() {  # one <label> <step>: commit the step on rec; app-tests must run on origin/main..HEAD; drop it
     eval "$2"; gc add -A; gc commit -qm "$1"; is "app-tests @$1 expected run" 'ran origin/main..HEAD'; gc reset -q --hard HEAD~1
   }
