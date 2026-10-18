@@ -44,7 +44,9 @@ Formalized in issue [#2](https://github.com/smcozart/cozyharness/issues/2).
    `intent/<issue-number>-<slug>/intent.md` (start from
    [`intent/TEMPLATE.md`](../intent/TEMPLATE.md)). The issue number is the join
    key: it ties the intent to the issue, later branch, run, PR, and pasted
-   proof.
+   proof. A `feature` or `bug` intent rides its ticket branch into the work
+   PR; a `system-change` intent merges first in a records PR
+   (`intent-conversation` Move 2).
 4. **System-intent alignment.** Greenfield work starts from
    [`SYSTEM-INTENT.md`](../SYSTEM-INTENT.md); every work-item intent is checked
    against it. Conflicts either amend SYSTEM-INTENT.md deliberately or rewrite
@@ -222,7 +224,10 @@ surface or a multi-ticket effort, and the classifier makes that mechanical.
 **Light vs heavy, worked.** Fixing a typo in an archival
 `handoffs/design-stage-handoff.md` is **T0**: one file, docs-only, in the
 light set — `--lane` says so, a two-line `intent.md`, the gate run, land on
-green, human review after merge; no adversary pass. Fixing a typo in
+green, human review after merge; no adversary pass. A `feature` or `bug`
+intent that rides its work PR lifts that PR to T2 (`intent/` is outside the
+light set): one full review, in place of a T2 records PR plus a lighter work
+review. Fixing a typo in
 `docs/training/onboarding-runbook.md` is **T1**: the runbook's fenced blocks
 are what a new human runs verbatim, so it floors at T1 and owes one bounded
 pass even at one line; refreshing the board is T1 for the same reason —

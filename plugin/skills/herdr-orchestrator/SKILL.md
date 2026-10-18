@@ -26,7 +26,8 @@ frontier is GitHub, nothing in a file outranks it.
 ## The per-ticket loop (the contract)
 
 1. **Orient:** `gh issue list --label ready-for-agent`. The frontier is any ticket
-   whose blockers are all closed.
+   whose blockers are all closed and whose intent is committed on `<base>` or on
+   `origin/t<n>-<slug>` (`intent-conversation` Move 2).
 2. **Dispatch:** everything the build creates on disk lives under `~/.factory/<repo>/`:
    worker clones `workers/w<n>`, the QC checkout `qc`, QC and witness logs `logs/`.
    Never inside the repo, never a sibling of it (a nested clone also loads the outer
@@ -119,8 +120,9 @@ not work.
 >    clone `~/.factory/<repo>/workers/w<n>` (never a worktree, never the
 >    orchestrator's checkout), on branch `t<n>-<slug>` from
 >    `origin/<base>` (`<base>` = the `**Base branch:**` line in `AGENTS.md`, default
->    `main`); verify `git branch --show-current` before editing. If `t<n>-<slug>` or a
->    PR for #N already exists, check it out and continue; never force-push.
+>    `main`); verify `git branch --show-current` before editing. If
+>    `origin/t<n>-<slug>` exists (it may carry the intent), `git checkout t<n>-<slug>`
+>    and continue; otherwise create it from `origin/<base>`. Never force-push.
 > 2. Test-first: one red-green slice at a time. **Every test must justify itself —
 >    if you can't say what behavior it guards that no other test covers, don't write it.**
 > 3. Lean: stdlib first, shortest working diff, no speculative abstractions, no config
@@ -155,8 +157,9 @@ not work.
 >    > `herdr agent list` (the focused orchestrator pane). If herdr isn't on PATH or the
 >    > prompt fails, the in-buffer line alone satisfies the contract.
 >
-> Note: if another worker is running in parallel, rebase onto `origin/<base>` on push
-> conflicts.
+> Note: if another worker is running in parallel, update onto `origin/<base>` on push
+> conflicts: on a branch that is already pushed, `git merge origin/<base>` instead of
+> rebasing (the PR squashes); rebase only a branch that was never pushed.
 
 ## Failure modes seen (and the counters)
 
