@@ -120,9 +120,9 @@ the full review loop. A range marked PARTIAL, a missing `--lane`, or no
 agent fills in two clauses at close — `no-ADR=<y/n> not-speculative=<y/n>` —
 and any `n` means T2. Escalate only; never lower a computed lane. Consumers
 extend the light set, never the heavy one. The same run prints `flagged: yes|no` —
-`yes` when the range touches the merge hold list (`tests/validate.sh`,
-`.github/workflows/**`, `.githooks/**`, `plugin/templates/new-project/files/tests/validate.sh`,
-`plugin/templates/new-project/files/.github/workflows/**`, `plugin/templates/new-project/scaffold.sh`; ADR 0005), so a human merges; it is
+`yes` when the range touches the merge hold list (the files that check other
+files hold; the list is `LANE_HOLD` in `tests/validate.sh`; ADR 0005), so a
+human merges; it is
 the hold list only, not the former Deploy flagged-risk set.
 
 Shape: a short `intent/<n>-<slug>/intent.md` only — problem, one-line outcome,
@@ -181,10 +181,9 @@ with an owner — never by silence). The merge gate pastes: review resolution,
 the adversary verdict the lane owes, the merge hold, preview proof for UI
 tickets, branch-protection proof for merge-path tickets, and an `ADR:` line in
 the PR body (`ADR: none` when there is no decision; check `pr-adr-line` in CI).
-**Merge policy (ADR 0005):** the hold list — `tests/validate.sh`,
-`.github/workflows/**`, `.githooks/**`, `plugin/templates/new-project/files/tests/validate.sh`,
-`plugin/templates/new-project/files/.github/workflows/**`, `plugin/templates/new-project/scaffold.sh`, the files that check other files,
-reported by `flagged: yes` — merges only on a named human checkoff recorded in
+**Merge policy (ADR 0005):** the files that check other files hold; the list
+is `LANE_HOLD` in `tests/validate.sh`, and `tests/validate.sh --lane` prints
+`flagged: yes` for them. A held diff merges only on a named human checkoff recorded in
 the thread or a recorded operator delegation (label `flagged-risk`).
 Everything else, including AGENTS.md, the synced trio and ADRs, an agent may
 land on green; a human reviews it after merge (`cmu` lists it as "review

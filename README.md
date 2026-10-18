@@ -40,11 +40,8 @@ Test ────► tests/validate.sh exits 0 (fail-first; checks and the conte
 Deploy ──► review loop per REVIEW.md; merge gate pasted (review resolution,
           validate.sh run, adversary verdict, preview proof for UI,
           branch-protection proof for merge path, `ADR:` line in the PR
-          body); merge policy (ADR 0005): the hold list (validate.sh,
-          .github/workflows/**, .githooks/**,
-          plugin/templates/new-project/files/tests/validate.sh,
-          plugin/templates/new-project/files/.github/workflows/**,
-          plugin/templates/new-project/scaffold.sh; `flagged: yes`) merges on a
+          body); merge policy (ADR 0005): the hold list (LANE_HOLD in tests/validate.sh;
+          `flagged: yes`) merges on a
           named human checkoff, everything else lands on green with review
           after merge; a 401 is not evidence of absence — authenticate first
 Maintain ─► intake: retros/incidents feed back through Plan; fixed incident classes → eval ledger (#8); a resuming session reads the delta first with /cmu
@@ -62,9 +59,8 @@ merge policy. The agent confirms two clauses the classifier cannot see (earns no
 ADR, not speculative) and may only escalate. A defined lane, not a loophole;
 nothing about the close gate relaxes. Detail: `docs/engineering-workflow.md`,
 ADR 0003. The same run prints `flagged: yes|no` — `yes` when the range touches
-the merge hold list (`tests/validate.sh`, `.github/workflows/**`,
-`.githooks/**`, `plugin/templates/new-project/files/tests/validate.sh`,
-`plugin/templates/new-project/files/.github/workflows/**`, `plugin/templates/new-project/scaffold.sh`; ADR 0005), so a human merges.
+the merge hold list (the files that check other files hold; the list is
+`LANE_HOLD` in `tests/validate.sh`; ADR 0005), so a human merges.
 
 ## Quick start
 
