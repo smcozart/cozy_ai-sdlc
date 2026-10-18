@@ -365,6 +365,7 @@ witness_run() {
   expect ok baseline skill-links "$m"
   rm "$m/.claude/skills/cmu"; git -C "$m" -c core.symlinks=false checkout -- .claude/skills/cmu
   expect FAIL 'mutation(link checked out as a text file)' skill-links "$m"; reset_wt "$m"
+  [[ $why == *'enable symlinks'* ]] || { echo "witness FAIL: skill-links @mutation(link checked out as a text file) expected the message to name the fix (enable symlinks), got: $why"; wfail=1; }
   ln -sfn ../../plugin/skills/dispatch "$m/.claude/skills/cmu"
   expect FAIL 'mutation(link to the wrong skill)' skill-links "$m"; reset_wt "$m"
   rm -rf "$m/plugin/skills/cmu"
