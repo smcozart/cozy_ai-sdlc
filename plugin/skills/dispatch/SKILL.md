@@ -1,13 +1,15 @@
 ---
 name: dispatch
 description: >
-  Dispatch approved work from this conversation: start one fresh,
-  worktree-isolated worker per ready-for-agent issue, respect blockers and
+  Dispatch approved work from this conversation: start one fresh, isolated
+  worker per ready-for-agent issue (a herdr pane over its own clone when
+  herdr runs, else a worktree), respect blockers and
   overlapping files, and own progress, QC, lane-sized adversary, merge gates,
   and retirement. Dispatch is automatic — it fires whenever
   the live frontier is non-empty, immediately after any approval that leaves
   ready-for-agent work, and on every worker idle notification or QC
-  completion, never by background polling. Also use when the developer says
+  completion, never by background polling (on herdr, `herdr agent wait` and
+  `herdr agent list` are the idle notification). Also use when the developer says
   "go", "dispatch", "work the issues", "start the swarm", or "knock out the
   backlog". Record any missing approval through intent-conversation first.
   The orchestrator coordinates; it does not implement tickets.
@@ -57,7 +59,7 @@ Concurrency: 2 workers by default, 1 when any candidate's Touches are unknown
 or overlapping, 0 new launches while any PR waits on a human gate. The
 developer can change this in plain language for the rest of the conversation.
 
-Reserve issue, branch, worktree path, Touches, base SHA (`git rev-parse
+Reserve issue, branch, worktree or clone path, Touches, base SHA (`git rev-parse
 origin/<base>` at reservation, `<base>` as in Move 5; when
 `origin/t<n>-<slug>` exists, `git merge-base origin/t<n>-<slug>
 origin/<base>`), worker/session id, PR
@@ -71,18 +73,25 @@ tracker.
 Branch name is always `t<n>-<slug>`. When `origin/t<n>-<slug>` exists (it
 carries the intent), the worktree checks it out (`git worktree add <path>
 t<n>-<slug>`), never creates it with `-b`; that one worktree is the worker's,
-and a harness worktree is never made beside it. Detect and use, in this order: your
-harness's own session-creation tool; else a child headless session in a
-worktree; else a sub-agent with worktree isolation. A sub-agent over a shared
-checkout is never a worker, whatever the host.
+and a harness worktree is never made beside it. On herdr there is no
+worktree: the worker's own clone checks the branch out instead. Detect and
+use, in this order:
+
+1. **herdr**, when `HERDR_PANE_ID` is set and `herdr` is on `PATH`;
+2. your harness's own session-creation tool;
+3. a sub-agent with worktree isolation;
+4. a child headless session in a worktree.
+
+A sub-agent over a shared checkout is never a worker, whatever the host.
 
 ### Mechanics by capability
 
 | Capability | Launch | Watch / steer |
 |---|---|---|
+| herdr (`HERDR_PANE_ID` set, `herdr` on `PATH`) | One full clone per ticket, never a worktree: `git clone <url> ~/.factory/<repo>/workers/w<n>` (never inside the repo or beside it), then `git checkout t<n>-<slug>` when `origin/t<n>-<slug>` exists. `herdr tab create --cwd ~/.factory/<repo>/workers/w<n>` → note the pane id → `herdr agent start <name> --kind <worker kind from AGENTS.md (default claude)> --pane <id>` → `herdr agent prompt <id> "$(cat ~/.factory/<repo>/logs/w<n>-prompt.md)"` carrying the herdr brief below. Accept the folder-trust prompt in the new pane only for a fresh clone of this repo itself (#106). | `herdr agent list` (pane id and status) and `herdr agent wait <id>`; `herdr agent read <id>` on idle or a long stall; steer with `herdr agent prompt <id> "…"`. The worker pings back with `herdr agent prompt <ORCH_PANE_ID> "HANDOFF: …"`; `ORCH_PANE_ID` is your own `HERDR_PANE_ID`. |
 | Desktop app with a session-creation tool (`create_session`) | Worktree workspace, autopilot kickoff carrying the worker brief below, coordinated with the creator, notified on idle; title it `#<n> <slug> worker` when the tool takes one, so the sidebar reads as a board. The worker renames its own branch to `t<n>-<slug>`, unless `origin/t<n>-<slug>` exists; then it checks it out. | Idle notification; its own session-inspect/session-message tools; keep the returned session id. |
-| CLI with headless child sessions (`--worktree`) | A child headless session in its own worktree on branch `t<n>-<slug>` (verify: sibling worktree, exact branch). A shared-checkout sub-agent is not a worktree and may be used only after you have created the worktree yourself, or not at all. | Process completion and structured output; resume the exact session id, not an ambiguous "continue latest". |
 | Harness with a worktree-isolating sub-agent tool (its own worktree option) | Its documented worktree-isolation and background-completion mode; the worker checks out or creates `t<n>-<slug>`. | Its native completion/message/resume tools; keep the returned identifier. |
+| CLI with headless child sessions (`--worktree`) | A child headless session in its own worktree on branch `t<n>-<slug>` (verify: sibling worktree, exact branch). A shared-checkout sub-agent is not a worktree and may be used only after you have created the worktree yourself, or not at all. | Process completion and structured output; resume the exact session id, not an ambiguous "continue latest". |
 
 Before real unattended work, confirm in that exact worktree — never infer from
 the parent — that a guardrail source is verifiably loaded: the plugin's own
@@ -91,12 +100,18 @@ denial: the worker's first turn runs one infra-flavoured command (for example,
 a cloud CLI read like `az account show` or a destructive-looking dry run) that
 a loaded guardrail must deny. If nothing denies it, that issue runs serially in
 the supervised parent instead of unattended — do not relax this to get a
-worker running.
+worker running. **herdr row only:** a worker in a herdr pane counts as
+supervised, because the developer can see the pane, read it and step into it.
+It runs in its normal permission mode, never a bypass mode. The probe still
+runs; the worker reports its result as `herdr pane: supervised` and continues.
+No other host is supervised this way: on every other host, an undenied probe
+means the issue runs serially in the parent.
 
 ## Move 4 — Watch
 
 Report launches, blocked/stalled workers, PR handoffs, gate results and
-retirements in this conversation as they happen. An idle worker with no
+retirements in this conversation as they happen. On herdr, watch with
+`herdr agent list` and `herdr agent wait <id>`, never a sleep loop. An idle worker with no
 `HANDOFF:` line is not success — send it a concrete same-ticket correction,
 never a new issue for the same scope.
 
@@ -172,7 +187,15 @@ not a checkoff.
 ## Move 6 — Retire
 
 Confirm `gh pr view <pr> --json state` is `MERGED` and the worktree has
-nothing uncommitted or unpushed. CLI/other-host worktrees: `git worktree
+nothing uncommitted or unpushed. herdr clones: after the PR is merged, close
+the pane (`herdr tab close <tab>`), then remove the worker's clone (`rm -rf
+<clone>`) only if `git -C <clone> status --porcelain` is empty, `git -C
+<clone> stash list` is empty, `git -C <clone> log --oneline --branches --not
+--remotes HEAD` is empty, `gh pr view <pr> --json state,headRefOid` says
+`MERGED` and `git -C <clone> rev-parse HEAD` equals its `headRefOid` — what QC
+checked and was merged is all the clone holds. Otherwise keep it and name it,
+with the reason, on the roster. Never delete anything the build did not
+create. CLI/other-host worktrees: `git worktree
 remove <path> && git branch -D <branch>`. **Close the worker session** with
 your harness's own session close/archive tool when it has one (then remove
 its worktree and branch the same way, so nothing stale is left for the next
@@ -257,3 +280,16 @@ developer should never have to guess whether the loop is waiting on them.
 > Do not idle silently and do not start anything else. The orchestrator sends
 > QC or adversary corrections to this same session by its id if any are
 > needed, and closes the session after the merge.
+
+**herdr brief.** On the herdr row, send the brief above with three changes:
+
+- The first line names the clone, not a worktree: `clone
+  ~/.factory/<repo>/workers/w<n> (never a worktree)`, plus
+  `ORCH_PANE_ID=<your HERDR_PANE_ID>`. Read "worktree" as that clone
+  everywhere else in the brief.
+- The probe line reads: "If it is not denied, say so in your first message
+  and continue — your pane is supervised." Report it as `herdr pane:
+  supervised` with the probe result.
+- The handoff adds: after the `HANDOFF:` line, also run `herdr agent prompt
+  <ORCH_PANE_ID> "<the same HANDOFF: line>"`. If `herdr` fails, the in-buffer
+  line alone satisfies the handoff.
