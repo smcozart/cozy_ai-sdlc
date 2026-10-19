@@ -18,7 +18,7 @@ cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)" || exit 2
 
 FO=plugin/skills/dispatch/SKILL.md
 DOC=docs/engineering-workflow.md
-CHECKS="sync-rule stage-parity intent-layout adr-numbering adr-refs hooks-json skill-frontmatter skill-links template-gate-parity agents-commands dispatch-hold herdr-retire pr-adr-line"
+CHECKS="sync-rule stage-parity intent-layout adr-numbering adr-refs skill-frontmatter skill-links template-gate-parity agents-commands dispatch-hold herdr-retire pr-adr-line"
 
 fail=0; why=""
 list_checks() { printf '%s\n' $CHECKS; }
@@ -169,13 +169,6 @@ check_adr_refs() {
   [ -z "$bad" ] || { why="no docs/adr/NNNN-*.md for:$bad"; return 1; }
 }
 
-check_hooks_json() {
-  local f=$1/plugin/hooks/hooks.json
-  [ -f "$f" ] || { why="plugin/hooks/hooks.json missing"; return 1; }
-  python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); assert list(d)==["hooks"]; [ (h["type"],h["command"]) for ev in d["hooks"].values() for m in ev for h in m["hooks"] ]' "$f" 2>/dev/null \
-    || { why="plugin/hooks/hooks.json: expected sole key hooks + type/command per entry; python3 rejected it"; return 1; }
-}
-
 check_skill_frontmatter() {
   local r=$1 f d files
   files=$(git -C "$r" ls-files '*/skills/*/SKILL.md')
@@ -261,7 +254,7 @@ default_run() {
     if ! git diff --quiet HEAD 2>/dev/null; then range=HEAD; else range=HEAD~1..HEAD; fi
   fi
   run sync-rule "$range"
-  for c in stage-parity intent-layout adr-numbering adr-refs hooks-json skill-frontmatter skill-links template-gate-parity agents-commands; do run "$c" .; done
+  for c in stage-parity intent-layout adr-numbering adr-refs skill-frontmatter skill-links template-gate-parity agents-commands; do run "$c" .; done
   run dispatch-hold plugin/skills/dispatch/SKILL.md
   run herdr-retire "$FO"
   if [ -n "$body" ]; then run pr-adr-line "$body"; else echo "skipped: pr-adr-line — no PR body file given (CI passes one)"; fi
@@ -331,8 +324,6 @@ witness_run() {
   expect FAIL mutation intent-layout "$m"; reset_wt "$m"
   : >"$m/docs/adr/0009-x.md"
   expect FAIL mutation adr-numbering "$m"; reset_wt "$m"
-  python3 -c "import sys;p=sys.argv[1];s=open(p).read();i=s.rstrip().rfind('}');open(p,'w').write(s[:i]+','+s[i:])" "$m/plugin/hooks/hooks.json"
-  expect FAIL mutation hooks-json "$m"; reset_wt "$m"
   (cd "$m" && grep -v '^name:' $FO > t && mv t $FO)
   expect FAIL mutation skill-frontmatter "$m"; reset_wt "$m"
   # skill-links: a good tree, then the three ways a link breaks; the first is a real core.symlinks=false checkout (Windows)

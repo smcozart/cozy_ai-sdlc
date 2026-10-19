@@ -89,7 +89,7 @@ labels and ADR layout. Full detail: `plugin/README.md` and
 | `CONTEXT.md` | Shared domain vocabulary — the glossary every artifact uses |
 | `intent/` | Work-item intents (`TEMPLATE.md`) and specs (`TEMPLATE-spec.md`) |
 | `docs/agents/` | Per-repo agent config (tracker, labels, domain docs) |
-| `plugin/` | Claude Code plugin (skills + session hook) |
+| `plugin/` | Claude Code plugin (skills) |
 | `bootstrap.sh` | One-command setup on any machine |
 | `skills-lock.json` | Pinned manifest of third-party skills |
 

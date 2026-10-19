@@ -1,7 +1,7 @@
 # AI SDLC Plugin (`ai-sdlc`, Claude Code)
 
 Packages the repo's engineering process as a Claude Code plugin: skills,
-session-start hook, no external deps beyond `gh` and the `mattpocock-skills`
+no external deps beyond `gh` and the `mattpocock-skills`
 plugin it declares as a dependency.
 
 ## Adoption order (canonical — one command on a new machine)
@@ -46,8 +46,8 @@ claude plugin add /path/to/repo/plugin
 Or host a marketplace later by adding `.claude-plugin/marketplace.json` at repo
 root and pointing other machines at the GitHub URL.
 
-After install, verify: `/plugin` shows `ai-sdlc`; a new session
-prints the workflow reminder; the `dispatch` skill is available.
+After install, verify: `/plugin` shows `ai-sdlc`; the `dispatch` skill is
+available.
 
 ## Dependencies (not bundled — install per below)
 
@@ -72,7 +72,6 @@ outside it:
 
 - `skills/` — `intent-conversation`, `dispatch` (its first host row is herdr,
   which needs `herdr` on PATH), `cmu` and `new-project`
-- `hooks/hooks.json` — UserPromptSubmit reminder keeping the process in-context
 
 ## The replication pattern (how to do this for other harnesses)
 
@@ -82,7 +81,7 @@ The **repo is the source of truth**; plugins/adapters are build artifacts:
    process), `docs/adr/` (decisions), `.agents/skills/` (pi skills),
    `skills-lock.json` (third-party skill manifest).
 2. Each harness gets a thin adapter generated from that canon:
-   - **Claude Code**: this plugin (skills + hooks).
+   - **Claude Code**: this plugin (skills).
    - **GitHub Copilot**: `.github/copilot-instructions.md` (advisory pointer;
      enforcement comes from branch protection + the tracker).
    - **pi**: no adapter needed — `.agents/skills/`, `.pi/agents/`,
