@@ -289,8 +289,9 @@ developer should never have to guess whether the loop is waiting on them.
   `ORCH_PANE_ID=<your HERDR_PANE_ID>`. Read "worktree" as that clone
   everywhere else in the brief.
 - The probe line reads: "If it is not denied, say so in your first message
-  and continue — your pane is supervised." Report it as `herdr pane:
-  supervised` with the probe result.
+  and continue — your pane is supervised." The first message starts with
+  the line `herdr pane: supervised — probe <denied|not denied>: <what
+  happened>`, verbatim in that shape.
 - The handoff adds: after the `HANDOFF:` line, also run `herdr agent prompt
   <ORCH_PANE_ID> "<the same HANDOFF: line>"`. If `herdr` fails, the in-buffer
   line alone satisfies the handoff.
