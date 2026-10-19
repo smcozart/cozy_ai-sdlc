@@ -40,13 +40,14 @@ this up") — `cmu` never does that work itself.
 
 Use 1 when the developer gave it. Otherwise use the **newer** of 2 and 3 —
 a stale handoff folder must not hide a fresher review — and 4 only when
-neither resolves. Read 2 and 3 on the default branch after the fetch
-(`origin/<default>`), never the checked-out branch, so every run agrees:
+neither resolves. Read 2 and 3 on the base branch after the fetch
+(`origin/<base>`, `<base>` as defined under **Needs you**), never the
+checked-out branch, so every run agrees:
 
 1. **The developer's own words** — "since yesterday", "since Friday", "since I
    started the overnight run".
 2. **The newest commit date under `handoffs/`** —
-   `git log -1 --format=%cI origin/<default> -- handoffs/`. This is the same folder
+   `git log -1 --format=%cI origin/<base> -- handoffs/`. This is the same folder
    `pickup-handoff.md` already serves as the "entrance ramp" for (see
    `handoffs/README.md`); `cmu` reads its latest commit date rather than
    parsing file names, since this repo's own notes are nicknamed, not dated.
@@ -153,8 +154,15 @@ Next
   are not reviews, a merge is not a review, and the merger's account does
   not show who checked. The acknowledgement is the sha in a
   `reviewed through <40-hex sha> on <date>` line of `STATUS.md` on
-  `origin/<base>`. Here `<base>` is the `AGENTS.md` **Base branch:**, else
-  the default branch. Of the listed shas, take the first one that
+  `origin/<base>`. Here `<base>` is the branch that the
+  `AGENTS.md` **Base branch:** line names, or `main` when there is no such
+  line; a line that names no branch fails closed: say "no acknowledgement read; Base branch
+  line unreadable". A line counts only if the first-parent commit that
+  added it changes only `STATUS.md`:
+  `git log --first-parent --format=%H -S'<sha>' origin/<base> -- STATUS.md`,
+  then `git diff --name-only <commit>^1 <commit>` lists only `STATUS.md`. A
+  line added by any other commit acknowledges nothing. Of the shas in the
+  lines that count, take the first one that
   `git rev-list --first-parent origin/<base>` yields. A sha that is not on
   the first-parent history of `origin/<base>` acknowledges nothing, and
   neither does the position of the commit that adds the line. Review owed is

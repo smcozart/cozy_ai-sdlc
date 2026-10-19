@@ -21,9 +21,10 @@ A diff merges through a PR into `{{BASE}}`. Every PR runs the gate
 | Everything else | Merges on green; the review is owed after the merge and is not skipped |
 
 - A human acknowledges post-hoc review by appending
-  `reviewed through <sha> on <date>` to `STATUS.md` in a commit that changes
-  only that file. It covers exactly the `{{BASE}}` history up to `<sha>`,
-  never what merged while the line was in review.
+  `reviewed through <40-hex sha> on <date>` to `STATUS.md` in a commit that
+  changes only that file; a line added by any other commit acknowledges
+  nothing. It covers exactly the first-parent history of `{{BASE}}` up to
+  that sha, never what merged while the line was in review.
 - Every PR body carries an `ADR:` line (`ADR: none` when there is no
   decision); the gate's `pr-adr-line` check fails a body without it.
 - A tag is a release step, never part of a merge.

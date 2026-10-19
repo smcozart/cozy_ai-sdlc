@@ -30,9 +30,10 @@ pre-merge checkoff on every surface as a rubber stamp.
   It lands when the `gate` check is green and the merge-gate proof is
   pasted. A human reviews it after merge: `cmu` lists it as "review owed",
   and a human acknowledges post-hoc review by appending
-  `reviewed through <sha> on <date>` to `STATUS.md` in a commit that changes
-  only that file. It covers exactly the default-branch history up to
-  `<sha>`, never what merged while the line was in review. The behavior files in
+  `reviewed through <40-hex sha> on <date>` to `STATUS.md` in a commit that
+  changes only that file; a line added by any other commit acknowledges
+  nothing. It covers exactly the first-parent history of the base branch up
+  to that sha, never what merged while the line was in review. The behavior files in
   `docs/verify/` verify the agent side of this contract.
 - **ADRs stay required:** every PR body carries an `ADR:` line — the ADR
   ids the PR records or cites, or `ADR: none`. The gate check
@@ -59,7 +60,8 @@ only `STATUS.md` acknowledged review of everything merged before it. When
 merges overlapped, that marked an unreviewed merge as reviewed: an
 acknowledgement opened at X, a worker merged Y, then the acknowledgement
 merged as Z, and Y counted as reviewed. Now the acknowledgement is the sha
-written in the line, never the position of the commit that adds it, and
+written in the line, never the position of the commit that adds it; a line
+added by a commit that changes anything else acknowledges nothing; and
 `STATUS.md` is the review log only. The decision is unchanged.
 
 **Rejected.** *Keep the checkoff on every flagged-risk surface*: it did not

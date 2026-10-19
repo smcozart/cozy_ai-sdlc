@@ -365,9 +365,10 @@ seam: this repo's ticket close, or a consumer's PR.
    **Post-hoc review** (ADR 0005): a human reviews every diff that landed on
    green after merge, against `REVIEW.md`. `cmu` lists it as "review owed";
    a human acknowledges post-hoc review by appending
-   `reviewed through <sha> on <date>` to `STATUS.md` in a commit that changes
-   only that file. It covers exactly the default-branch history up to
-   `<sha>`, never what merged while the line was in review. The behavior files in `docs/verify/` verify the agent side.
+   `reviewed through <40-hex sha> on <date>` to `STATUS.md` in a commit that
+   changes only that file; a line added by any other commit acknowledges
+   nothing. It covers exactly the first-parent history of the base branch up
+   to that sha, never what merged while the line was in review. The behavior files in `docs/verify/` verify the agent side.
    The former flagged-risk set (suite-checked surfaces, `docs/agents/`,
    security/trust boundaries) is review guidance, not a hold. Auto-merge
    holds only while `gate` is a required check on `main`; otherwise every
