@@ -117,9 +117,9 @@ origin/<base>..HEAD` (`<base>`: the base branch named in `AGENTS.md`,
 code and lane line). Compare the actual diff's paths to its Touches; expansion pauses
 conflicting work for re-batching. Review against the ticket's spec and this
 repo's review policy. A fix needs fail-first evidence. On every QC head, and
-again right before the merge, run `git fetch origin && git merge-base
---is-ancestor origin/<base> <the head SHA QC ran on>`. A non-zero exit (a
-failed fetch too) means stale: the worker updates the branch (the brief's
+again right before the merge, run `git fetch origin &&
+git merge-base --is-ancestor origin/<base> <the head SHA QC ran on>`. A
+non-zero exit (a failed fetch too) means stale: the worker updates the branch (the brief's
 rebase-or-merge rule) and proof reruns before merge.
 
 This one check folds in the lane's review (ADR 0003): T2 one read-only

@@ -66,8 +66,8 @@ frontier is GitHub, nothing in a file outranks it.
    brittle gate specs (a gate that greps the wrong pattern) are not — they show up when
    idiomatic worker output diverges from an over-specific gate. Watch for both.
 
-   When QC passes, the orchestrator first runs `git fetch origin && git merge-base
-   --is-ancestor origin/<base> <the head SHA QC ran on>`; a non-zero exit (a failed
+   When QC passes, the orchestrator first runs `git fetch origin &&
+   git merge-base --is-ancestor origin/<base> <the head SHA QC ran on>`; a non-zero exit (a failed
    fetch too) means stale, so the worker updates the branch and QC reruns. Then it
    merges the PR under the merge hold below
    (`gh pr merge --squash --delete-branch --match-head-commit <the head SHA QC ran on> <pr>`
