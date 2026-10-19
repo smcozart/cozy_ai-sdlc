@@ -6,7 +6,7 @@
 
 This repo runs the six-stage loop of the `ai-sdlc` plugin
 (Plan → Design → Build → Test → Deploy → Maintain). The loop lives in the
-plugin's `engineering-workflow` skill; this repo's merge policy is
+plugin's skills (`intent-conversation`, `dispatch`, `cmu`); this repo's merge policy is
 `docs/engineering-workflow.md` Deploy.
 
 **Base branch:** `{{BASE}}`

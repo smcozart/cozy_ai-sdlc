@@ -1,6 +1,6 @@
 # {{NAME}}
 
-`{{OWNER}}/{{NAME}}` — created {{DATE}} with the `engineering-workflow`
+`{{OWNER}}/{{NAME}}` — created {{DATE}} with the `ai-sdlc`
 plugin, v{{PLUGIN_VERSION}}.
 
 - What the app is for: `SYSTEM-INTENT.md` (written in the first conversation).

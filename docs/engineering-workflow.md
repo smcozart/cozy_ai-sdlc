@@ -232,9 +232,9 @@ review. Fixing a typo in
 are what a new human runs verbatim, so it floors at T1 and owes one bounded
 pass even at one line; refreshing the board is T1 for the same reason —
 `STATUS.md` is the first file a session reads. Adding the light lane itself
-(#24), or this tiering (ADR 0003), is **T2**: it edits the synced trio and
+(#24), or this tiering (ADR 0003), is **T2**: it edits the synced pair and
 `tests/validate.sh`, which are outside the light set, so it owes the sync
-rule (three files, one commit), the full adversary pass and merge-path
+rule (both files, one commit), the full adversary pass and merge-path
 branch-protection proof — the path, not the size, forces the lane.
 
 ## Build — agents execute against the tracker
@@ -270,7 +270,7 @@ under pi, headless workers under Claude Code, etc.) under the same
 host-neutral rules — orchestrator never writes code, one ticket per worker,
 QC + adversarial review before blessing, workers end with a `HANDOFF:` ping,
 two consecutive QC failures halt the chain. Those rules live in the
-`herdr-orchestrator` skill; the hosts change, the contract doesn't.
+`dispatch` skill; the hosts change, the contract doesn't.
 
 ## Test — one command, fail-first, protected checks
 
@@ -360,7 +360,7 @@ seam: this repo's ticket close, or a consumer's PR.
    | Change class | Who merges |
    |---|---|
    | Hold list — `flagged: yes` from `tests/validate.sh --lane`: the files that check other files hold; the list is `LANE_HOLD` in `tests/validate.sh` | A named human checkoff, recorded in the thread, after a green gate — or a recorded operator delegation. The PR carries the `flagged-risk` label |
-   | Everything else, including AGENTS.md, the synced trio, ADRs, CONTEXT.md and the skills | Agent may land on green; the gate's pasted evidence is the record; post-hoc review follows |
+   | Everything else, including AGENTS.md, the synced pair, ADRs, CONTEXT.md and the skills | Agent may land on green; the gate's pasted evidence is the record; post-hoc review follows |
 
    **Post-hoc review** (ADR 0005): a human reviews every diff that landed on
    green after merge, against `REVIEW.md`. `cmu` lists it as "review owed";
@@ -423,15 +423,14 @@ tooling — waits on #1.
 
 ## Orchestration layer (multi-agent builds)
 
-**`herdr-orchestrator` skill + a host worker mechanism** — when tickets are
+**The `dispatch` skill + a host worker mechanism** — when tickets are
 parallelizable and you want workers, not a single session. The skill's rules
-are host-neutral; the mechanics below use herdr under pi as the reference
-host (swap in your host's equivalent — headless Claude Code workers, Codex
-sessions — keeping the same contract). Key rules (full detail in the skill):
+are host-neutral; herdr is the first host it detects (its herdr row), and the
+other hosts keep the same contract. Key rules (full detail in the skill):
 
 1. Orchestrator never writes code; it dispatches, watches, and runs QC itself.
 2. One ticket per worker session, fresh pane per ticket (`herdr tab create` →
-   `herdr agent start --kind pi` → prompt from the template in the skill).
+   `herdr agent start --kind pi` → the herdr brief in the skill).
 3. Orchestrator pre-answers the 2–3 ticket ambiguities **in the worker prompt**.
 4. GitHub is the claim; the orchestrator's terminal is the proof. Run acceptance
    criteria and the full suite yourself before blessing.
@@ -441,10 +440,9 @@ sessions — keeping the same contract). Key rules (full detail in the skill):
 7. No load-bearing sessions: any pane can die and work resumes from GitHub + pushed
    commits — the tracker and the remote are the only state.
 
-The full skill text lives at `.agents/skills/herdr-orchestrator/SKILL.md` in this repo
-(it's self-contained except for `.factory/design.md`, which is build-specific — replace
-that per project). Copy it into `.agents/skills/` (pi) or `.claude/skills/` (Claude Code)
-on the target machine, or let the repo's git checkout supply it.
+The full skill text lives at `plugin/skills/dispatch/SKILL.md`; Claude Code
+loads it from the plugin. pi loads no project skills from `.agents/skills/`
+(#137), so a pi orchestrator follows `dispatch`'s herdr row by hand.
 
 ## Non-negotiables (the parts that make it work)
 

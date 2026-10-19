@@ -47,7 +47,7 @@ Or host a marketplace later by adding `.claude-plugin/marketplace.json` at repo
 root and pointing other machines at the GitHub URL.
 
 After install, verify: `/plugin` shows `ai-sdlc`; a new session
-prints the workflow reminder; the `engineering-workflow` skill is available.
+prints the workflow reminder; the `dispatch` skill is available.
 
 ## Dependencies (not bundled — install per below)
 
@@ -61,20 +61,17 @@ outside it:
    upstream HEAD sha, printed at restore time).
 2. **Ponytail** (lean-code discipline, github.com/DietrichGebert/ponytail,
    MIT): forces stdlib-first, shortest-diff, no-speculative-abstraction coding.
-   The workflow skill encodes its core rules in the Build phase, but the full
+   `docs/engineering-workflow.md` Build §2 states its core rules, but the full
    skill (intensity modes, persistence) installs separately — in pi via its
    skill-git mechanism; in Claude Code, vendor `SKILL.md` into
    `~/.claude/skills/ponytail/` if you want the complete version.
 3. **CLIs**: `gh` (authenticated — the tracker depends on it) always; `herdr`
-   only for parallel orchestrated builds (herdr-orchestrator skill).
+   only for parallel orchestrated builds (`dispatch`'s herdr row).
 
 ## What's inside
 
-- `skills/engineering-workflow/` — the six-phase process (plan intent → design
-  tickets+ADRs → build → test proof → deploy → maintain intake)
-- `skills/herdr-orchestrator/` — herdr multi-agent orchestration (only used
-  when doing parallel builds; needs `herdr` on PATH). `factory-orchestrator` is
-  now `herdr-orchestrator`.
+- `skills/` — `intent-conversation`, `dispatch` (its first host row is herdr,
+  which needs `herdr` on PATH), `cmu` and `new-project`
 - `hooks/hooks.json` — UserPromptSubmit reminder keeping the process in-context
 
 ## The replication pattern (how to do this for other harnesses)
@@ -92,8 +89,7 @@ The **repo is the source of truth**; plugins/adapters are build artifacts:
      `.pi/prompts/` ARE its plugin format, restored by `git clone`.
 3. Never fork the process text. Adapters point at or are generated from the
    canonical doc; when the process changes, it changes in `docs/`, and each
-   adapter is regenerated (or, where it embeds a copy like the skill above,
-   updated in the same commit).
+   adapter is regenerated.
 
 Rule of thumb: *if a harness can read the repo, it needs only a pointer; if it
 can't, it gets a generated bundle from the canonical source.*

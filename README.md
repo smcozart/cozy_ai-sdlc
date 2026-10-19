@@ -35,7 +35,7 @@ Design ──► spec.md beside the intent; ADRs over the bar; vertical-slice
 Build ───► one ticket per agent session; workers cite ADRs, write ADRs
           (optional plan.md sequences tickets for multi-ticket builds — not
           the agent's per-session plan-before-code); parallel builds: the
-          `herdr-orchestrator` skill
+          `dispatch` skill
 Test ────► tests/validate.sh exits 0 (fail-first; checks and the content
           they guard protected) — run + acceptance output (+ pair for fixes)
           pasted at close; CI runs it on every PR (check `gate`)
@@ -105,4 +105,4 @@ repo, not the tool.
 
 This repo dogfoods its own process — see `CONTRIBUTING.md`. Process changes
 land as PRs with an ADR when the change is a real decision; the workflow doc
-and the plugin skill are updated in the same commit so they never drift.
+and this README are updated in the same commit so they never drift.
