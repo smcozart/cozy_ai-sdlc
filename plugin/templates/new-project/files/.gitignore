@@ -1,4 +1,4 @@
-# local orchestration state (dispatch, herdr-orchestrator)
+# local orchestration state (dispatch)
 .factory/
 # secrets
 .env*

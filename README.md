@@ -35,7 +35,7 @@ Design ──► spec.md beside the intent; ADRs over the bar; vertical-slice
 Build ───► one ticket per agent session; workers cite ADRs, write ADRs
           (optional plan.md sequences tickets for multi-ticket builds — not
           the agent's per-session plan-before-code); parallel builds: the
-          `herdr-orchestrator` skill
+          `dispatch` skill
 Test ────► tests/validate.sh exits 0 (fail-first; checks and the content
           they guard protected) — run + acceptance output (+ pair for fixes)
           pasted at close; CI runs it on every PR (check `gate`)
@@ -89,7 +89,7 @@ labels and ADR layout. Full detail: `plugin/README.md` and
 | `CONTEXT.md` | Shared domain vocabulary — the glossary every artifact uses |
 | `intent/` | Work-item intents (`TEMPLATE.md`) and specs (`TEMPLATE-spec.md`) |
 | `docs/agents/` | Per-repo agent config (tracker, labels, domain docs) |
-| `plugin/` | Claude Code plugin (skills + session hook) |
+| `plugin/` | Claude Code plugin (skills) |
 | `bootstrap.sh` | One-command setup on any machine |
 | `skills-lock.json` | Pinned manifest of third-party skills |
 
@@ -105,4 +105,4 @@ repo, not the tool.
 
 This repo dogfoods its own process — see `CONTRIBUTING.md`. Process changes
 land as PRs with an ADR when the change is a real decision; the workflow doc
-and the plugin skill are updated in the same commit so they never drift.
+and this README are updated in the same commit so they never drift.

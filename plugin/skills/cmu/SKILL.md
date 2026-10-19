@@ -192,8 +192,8 @@ only ever reports, and the developer's own "go" is what starts dispatch.
 `intent-conversation` Move 4 writes `#handoff` deliberately, at the end of a
 session; when no such note exists, `/cmu` reconstructs the same pickup from
 the tracker and git instead of leaving the developer to do it by hand.
-`herdr-orchestrator` answers "where are we" on a whole build across worker
-panes; for a read-only delta since you last looked, use `cmu` instead.
+`dispatch` answers "where are we" on a running build with its worker roster;
+for a read-only delta since you last looked, use `cmu` instead.
 
 ## Not in scope
 

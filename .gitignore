@@ -5,5 +5,4 @@
 __pycache__/
 .agents/skills/*
 !.agents/skills/ponytail/
-!.agents/skills/herdr-orchestrator
 .factory/

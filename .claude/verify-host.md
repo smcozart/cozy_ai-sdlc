@@ -30,8 +30,7 @@ answers without read evidence = FAIL.
 ## 4. Execution mechanics (pinned)
 
 The ORCHESTRATOR (not the T1 worker) executes the run AFTER the landing sha is
-on main, per the herdr-orchestrator appendix §"Claude Code headless"
-mechanics (fresh tmux window, `claude -p --output-format stream-json` with
+on main, with these mechanics (fresh tmux window, `claude -p --output-format stream-json` with
 output redirected to a per-run log file under `~/.factory/<repo>/logs/` —
 append-safe, per the t1-log-clobber contract), and pastes the transcript on #19. T1's close does NOT paste the
 transcript; T1's acceptance criterion is that the run file exists and the

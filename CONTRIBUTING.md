@@ -34,10 +34,9 @@ system.
 
 ## The sync rule (non-negotiable)
 
-The process lives in three places that must never drift: `docs/engineering-workflow.md`
-(canonical), `plugin/skills/engineering-workflow/SKILL.md` (Claude bundle), and
-`README.md` (the pitch). A PR that changes the process updates all three in the
-same commit.
+The process lives in two places that must never drift: `docs/engineering-workflow.md`
+(canonical) and `README.md` (the pitch). A PR that changes the process updates
+both in the same commit.
 
 ## Local setup
 
@@ -45,7 +44,7 @@ same commit.
 ./bootstrap.sh
 ```
 
-The skills in `.claude/skills/` and `.agents/skills/herdr-orchestrator` are
+The skills in `.claude/skills/` are
 symlinks to `plugin/skills/`. On Windows, enable symlinks (`git config core.symlinks true`, Windows Developer Mode) and re-checkout; `skill-links` fails until you do.
 
 See `plugin/README.md` for the full adoption order and dependencies.

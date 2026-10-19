@@ -52,7 +52,7 @@ events.
 | T3 MED: no precedence framing | `t3-precedence` check | Text; check cut by #133 (0 real FAILs). |
 | T3 MED/LOW: no canonical pointer; vague vocabulary; ADR 0001 dropped | left on #8 | Text, fixed in AGENTS.md. Check on recurrence. |
 | Meta-lesson: pin exact wording in acceptance criteria | `intent-conversation.md` (not yet written) | Ticket-authoring behavior. Write at the intent-conversation adoption PR (#35). |
-| Sync-content drift (prose parity of the trio) | left on #8 | Text; it needs a check, not a behavior file. |
+| Sync-content drift (prose parity of the doc and README) | left on #8 | Text; it needs a check, not a behavior file. |
 | Protection-scope hole | Test §4 | Folded into contract text (4ea8957). Reviewer behavior; write a file if it recurs. |
 | Holistic workflow review (five priorities) | #1, #33 | Planning input, not corpus items. |
 | Deploy: carried notes owned by a non-author, never resolved by silence | left on #8 | Behavior. Write `review-loop.md` at the next carried-finding incident (#18 is the live case). |

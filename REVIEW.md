@@ -17,7 +17,7 @@ Run all three on every diff — the ticket's diff range, stated explicitly in th
 
 Do not review by eye what a check enforces mechanically:
 
-- The exact assertion each `tests/validate.sh` check makes — the canonical set is the check list in AGENTS.md's `## Commands` block (e.g. that the synced trio changed together, the `intent/` layout, ADR numbering and references, `hooks.json` shape, skill frontmatter and skill links) — and nothing beyond it: a checked file's content is still reviewed. Future checks are auto-covered.
+- The exact assertion each `tests/validate.sh` check makes — the canonical set is the check list in AGENTS.md's `## Commands` block (e.g. that the workflow doc and README changed together, the `intent/` layout, ADR numbering and references, skill frontmatter and skill links) — and nothing beyond it: a checked file's content is still reviewed. Future checks are auto-covered.
 - `.factory/` — orchestrator-local, untracked by design.
 - Generated files — none today.
 
