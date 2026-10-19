@@ -1,7 +1,7 @@
 # CozyHarness
 
-> **Start here:** read `STATUS.md` first — it is the single live board; the
-> open issues it mirrors are the live frontier. Then `CONTEXT.md` for the
+> **Start here:** say "catch me up" (`cmu`) for the live picture; the open
+> issues are the live frontier, and `STATUS.md` is the review log. Then `CONTEXT.md` for the
 > vocabulary, this file for the contracts, and `docs/training/onboarding-runbook.md`
 > for standing up a machine.
 

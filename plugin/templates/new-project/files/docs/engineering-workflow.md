@@ -20,8 +20,11 @@ A diff merges through a PR into `{{BASE}}`. Every PR runs the gate
 | `flagged: yes` from `tests/validate.sh --lane`: a diff that touches `tests/validate.sh`, `.github/workflows/**` or `.githooks/**` — the files that check other files | A human, after a green gate and a named checkoff in the PR; the PR carries the `flagged-risk` label |
 | Everything else | Merges on green; the review is owed after the merge and is not skipped |
 
-- A commit that changes only `STATUS.md` (a board update) acknowledges the
-  review of the work it reports.
+- A human acknowledges post-hoc review by appending
+  `reviewed through <40-hex sha> on <date>` to `STATUS.md` in a commit that
+  changes only that file; a line added by any other commit acknowledges
+  nothing. It covers exactly the first-parent history of `{{BASE}}` up to
+  that sha, never what merged while the line was in review.
 - Every PR body carries an `ADR:` line (`ADR: none` when there is no
   decision); the gate's `pr-adr-line` check fails a body without it.
 - A tag is a release step, never part of a merge.

@@ -45,14 +45,14 @@ Deploy ──► review loop per REVIEW.md; merge gate pasted (review resolution
           body); merge policy (ADR 0005): the hold list (LANE_HOLD in tests/validate.sh;
           `flagged: yes`) merges on a
           named human checkoff, everything else lands on green with review
-          after merge; a 401 is not evidence of absence — authenticate first
+          after merge, acknowledged in `STATUS.md`; a 401 is not evidence of absence — authenticate first
 Maintain ─► intake: retros/incidents feed back through Plan; fixed incident classes → eval ledger (#8); a resuming session reads the delta first with /cmu
 ```
 
 **Light lane, computed.** `tests/validate.sh --lane <range>` classifies a
 diff from what git sees, as an allow-list — **T0** (≤2 docs files, all in the
 light set: gate run + human review after merge, no adversary pass), **T1** (small and in
-the light set, or the board / runbook floor: one bounded adversary pass),
+the light set, or the review-log / runbook floor: one bounded adversary pass),
 **T2** (anything else — unknown paths, instruction files, deletes, symlinks, >2 files
 or >60 lines: the full review loop). T0/T1 take a thinner front end — a short `intent.md`,
 **no** `spec.md`/`plan.md` — and a smaller review budget, and close through

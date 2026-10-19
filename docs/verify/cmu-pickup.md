@@ -13,11 +13,11 @@ catch me up
 ## 2. Expected observations
 
 The session loads the `cmu` skill from the harness `plugin/` directory; runs
-`git fetch origin`; picks the anchor from `origin/main` (`handoffs/` or
-`STATUS.md`); reads issues, PRs and first-parent history with `gh` and `git`;
-reads the hold source from Deploy §4 or `tests/validate.sh` (`flagged:`, hold
-list); prints `Since …`, then Landed, In flight, Needs you, Next, with every
-held open PR under **merge held**.
+`git fetch origin`; picks the anchor from `origin/main` (`handoffs/` or the
+acknowledged sha in `STATUS.md`); reads issues, PRs and first-parent history
+with `gh` and `git`; reads the hold source from Deploy §4 or
+`tests/validate.sh` (`flagged:`, hold list); prints `Since …`, then Landed,
+In flight, Needs you, Next, with every held open PR under **merge held**.
 
 ## 3. Pass bar (pinned)
 

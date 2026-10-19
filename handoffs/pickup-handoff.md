@@ -3,7 +3,8 @@
 **From:** operator-orchestrator session · **For:** a fresh session continuing
 work on the Harness. **Repo:** `smcozart/cozyharness`, branch `main`, pushed
 **clean at `f66d79b`** (working tree = origin).
-**Start here:** read `STATUS.md` first — it is the **single live board**.
+**Start here:** say "catch me up" (`cmu`) for the live picture; `STATUS.md`
+is the review log.
 THIS FILE is session context; the repo + tracker are the truth.
 
 ---
@@ -20,7 +21,7 @@ output, hard decisions become pushed ADRs.
 
 ## Read first (fresh-session entrance ramp)
 
-`STATUS.md` → `AGENTS.md`/`CLAUDE.md` → `SYSTEM-INTENT.md` → `CONTEXT.md` →
+`cmu` → `AGENTS.md`/`CLAUDE.md` → `SYSTEM-INTENT.md` → `CONTEXT.md` →
 `docs/engineering-workflow.md` → `REVIEW.md` →
 `docs/training/onboarding-runbook.md` (incl. §4.5 for taking the harness into
 a project like the RAG).
@@ -32,7 +33,7 @@ contract**), `domain-modeling`, `tdd`/`implement`, `code-review` + the
 
 ---
 
-## Where the board is (matches STATUS.md)
+## Where things stood (2026-09-13)
 
 **Closed with proof:** six stages (#2#3#4#9#12#15) · Claude parity #19/#20 ·
 hooks-core #21/#22 · lean pass #24/#25/#26 (light lane, single-source STATUS,
@@ -76,7 +77,7 @@ Nothing sensitive (no keys/PII) is here. Private = repo + tracker + gh cred.
 ## Jump back in
 
 1. `gh issue list --state open` → frontier or the Claude pilot.
-2. Read `STATUS.md` + the ramp above.
+2. Say "catch me up" (`cmu`) + read the ramp above.
 3. Gates are yours; a fresh session never self-approves.
 4. Close with proof pushed.
 
