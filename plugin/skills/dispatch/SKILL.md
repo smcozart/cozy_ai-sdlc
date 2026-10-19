@@ -188,15 +188,16 @@ not a checkoff.
 
 Confirm `gh pr view <pr> --json state` is `MERGED` and the worktree has
 nothing uncommitted or unpushed. herdr clones: after the PR is merged, close
-the pane (`herdr tab close <tab>`), then remove the worker's clone (`rm -rf
-<clone>`) only if `git -C <clone> status --porcelain` is empty, `git -C
-<clone> stash list` is empty, `git -C <clone> log --oneline --branches --not
---remotes HEAD` is empty, `gh pr view <pr> --json state,headRefOid` says
-`MERGED` and `git -C <clone> rev-parse HEAD` equals its `headRefOid` — what QC
-checked and was merged is all the clone holds. Otherwise keep it and name it,
-with the reason, on the roster. Never delete anything the build did not
-create. CLI/other-host worktrees: `git worktree
-remove <path> && git branch -D <branch>`. **Close the worker session** with
+the pane (`herdr tab close <tab>`),
+then remove the worker's clone (`rm -rf <clone>`) only if
+`git -C <clone> status --porcelain` is empty,
+`git -C <clone> stash list` is empty, `git -C <clone> log --oneline --branches --not --remotes HEAD` is empty,
+`gh pr view <pr> --json state,headRefOid` says `MERGED` and
+`git -C <clone> rev-parse HEAD` equals its `headRefOid` — what QC checked and
+was merged is all the clone holds. Otherwise keep it and name it, with the
+reason, on the roster. Never delete anything the build did not create.
+CLI/other-host worktrees: `git worktree remove <path> && git branch -D
+<branch>`. **Close the worker session** with
 your harness's own session close/archive tool when it has one (then remove
 its worktree and branch the same way, so nothing stale is left for the next
 reconcile); an app workspace without such a tool is never deleted from disk —
