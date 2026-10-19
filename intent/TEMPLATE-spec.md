@@ -1,7 +1,7 @@
 # Spec: <one-line outcome>
 
 **Issue:** #<issue-number> · **Intent:** `intent/<issue-number>-<slug>/intent.md` ·
-**Status:** draft | approved · **ADRs:** <NNNN-slug, or "none">
+**ADRs:** <NNNN-slug, or "none">
 
 Copy this file to `intent/<issue-number>-<slug>/spec.md` — always a sibling of
 the work-item intent, named exactly `spec.md`. The issue body links to the
@@ -72,7 +72,7 @@ Approved specs have no blocking open questions left.
 # Spec: Design-stage contract
 
 **Issue:** #3 · **Intent:** `intent/3-design-stage/intent.md` ·
-**Status:** approved · **ADRs:** 0001-spec-md-lives-next-to-the-intent
+**ADRs:** 0001-spec-md-lives-next-to-the-intent
 
 ## Problem statement
 

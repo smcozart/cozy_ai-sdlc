@@ -116,9 +116,11 @@ origin/<base>..HEAD` (`<base>`: the base branch named in `AGENTS.md`,
 `**Base branch:**`, default `main`; record base/head SHAs, full output, exit
 code and lane line). Compare the actual diff's paths to its Touches; expansion pauses
 conflicting work for re-batching. Review against the ticket's spec and this
-repo's review policy. A fix needs fail-first evidence. If the branch is stale,
-the worker updates it (the brief's rebase-or-merge rule) and proof reruns
-before merge.
+repo's review policy. A fix needs fail-first evidence. On every QC head, and
+again right before the merge, run `git fetch origin &&
+git merge-base --is-ancestor origin/<base> <the head SHA QC ran on>`. A
+non-zero exit (a failed fetch too) means stale: the worker updates the branch (the brief's
+rebase-or-merge rule) and proof reruns before merge.
 
 This one check folds in the lane's review (ADR 0003): T2 one read-only
 adversary pass, T1 one bounded pass over the diff's own claims (MED+ only), T0
@@ -129,7 +131,8 @@ QC failures across the chain halt new launches until the developer weighs in.
 **Merge gate is light (ADR 0005).** The orchestrator merges only when the
 required `gate` check is green, this QC check passed, and the gate run's
 `flagged:` line says `flagged: no` — then `gh pr merge --squash
---delete-branch --match-head-commit <the head SHA QC ran on> <pr>`, no further
+--match-head-commit <the head SHA QC ran on> <pr>`, then `git push origin
+--delete <branch>` (a branch that GitHub already deleted is fine), no further
 review rounds; a new head re-runs QC before any merge. At `flagged: yes`, or with no
 `flagged:` line, dispatch never merges on its own: a human does (below). A
 `flagged-risk` or `ready-for-human` label only adds a hold, never removes one.
@@ -150,7 +153,8 @@ merges without asking.
 Only when `gate` is green and this QC check has passed: write `Checkoff by
 <developer> at <UTC timestamp>:` and their words verbatim to a file, post it on
 the PR thread (`gh pr comment <n> --body-file <file>`), then merge with
-`--match-head-commit <the head SHA QC ran on>`. If the gate
+`--match-head-commit <the head SHA QC ran on>`, then `git push origin --delete
+<branch>` (a branch that GitHub already deleted is fine). If the gate
 is red or QC is open, say so in the `Needs you:` line and do not merge — the
 checkoff is the human half of the hold, not a bypass. A merge clicked in GitHub
 is read on the next turn (`gh pr view <n> --json state,mergedBy,mergedAt`) and
