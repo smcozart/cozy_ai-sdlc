@@ -108,7 +108,7 @@ contains, where it lives, or when a decision needs an ADR.
 ## Testing decisions
 
 Proof = `git diff --stat` of the landed artifacts pasted into #3, plus the
-sync rule check: workflow doc, plugin SKILL.md, README changed in one commit.
+sync rule check: workflow doc and README changed in one commit.
 
 ## Out of scope
 

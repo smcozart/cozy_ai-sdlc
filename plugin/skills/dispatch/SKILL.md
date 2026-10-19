@@ -94,8 +94,8 @@ A sub-agent over a shared checkout is never a worker, whatever the host.
 | CLI with headless child sessions (`--worktree`) | A child headless session in its own worktree on branch `t<n>-<slug>` (verify: sibling worktree, exact branch). A shared-checkout sub-agent is not a worktree and may be used only after you have created the worktree yourself, or not at all. | Process completion and structured output; resume the exact session id, not an ambiguous "continue latest". |
 
 Before real unattended work, confirm in that exact worktree — never infer from
-the parent — that a guardrail source is verifiably loaded: the plugin's own
-enforcement hooks or the repo's committed hooks. Prove it with a harmless
+the parent — that a guardrail source is verifiably loaded: the repo's committed
+hooks. Prove it with a harmless
 denial: the worker's first turn runs one infra-flavoured command (for example,
 a cloud CLI read like `az account show` or a destructive-looking dry run) that
 a loaded guardrail must deny. If nothing denies it, that issue runs serially in
@@ -137,6 +137,13 @@ git merge-base --is-ancestor origin/<base> <the head SHA QC ran on>`. A
 non-zero exit (a failed fetch too) means stale: the worker updates the branch (the brief's
 rebase-or-merge rule) and proof reruns before merge.
 
+On herdr, QC runs in `~/.factory/<repo>/qc` (a full clone; `gh pr checkout
+<pr>` there, then `git rev-parse HEAD` must equal the PR's `headRefOid`), and
+logs go in `~/.factory/<repo>/logs/` (create it before writing
+`w<n>-prompt.md`). At the end of the build, remove `~/.factory/<repo>/qc` only
+if `git -C ~/.factory/<repo>/qc status --porcelain` is empty, then
+`~/.factory/<repo>/logs`.
+
 This one check folds in the lane's review (ADR 0003): T2 one read-only
 adversary pass, T1 one bounded pass over the diff's own claims (MED+ only), T0
 none — `adversary: n/a — T0` plus the filled `no-ADR=<y/n>
@@ -148,7 +155,9 @@ required `gate` check is green, this QC check passed, and the gate run's
 `flagged:` line says `flagged: no` — then `gh pr merge --squash
 --match-head-commit <the head SHA QC ran on> <pr>`, then `git push origin
 --delete <branch>` (a branch that GitHub already deleted is fine), no further
-review rounds; a new head re-runs QC before any merge. At `flagged: yes`, or with no
+review rounds; a new head re-runs QC before any merge. A merge into a branch
+other than the default does not auto-close the issue; close it with the
+proof. At `flagged: yes`, or with no
 `flagged:` line, dispatch never merges on its own: a human does (below). A
 `flagged-risk` or `ready-for-human` label only adds a hold, never removes one.
 Send unresolved findings back to the same worker, never to a new one. Workers
@@ -282,12 +291,14 @@ developer should never have to guess whether the loop is waiting on them.
 > QC or adversary corrections to this same session by its id if any are
 > needed, and closes the session after the merge.
 
-**herdr brief.** On the herdr row, send the brief above with three changes:
+**herdr brief.** On the herdr row, send the brief above with four changes:
 
 - The first line names the clone, not a worktree: `clone
   ~/.factory/<repo>/workers/w<n> (never a worktree)`, plus
   `ORCH_PANE_ID=<your HERDR_PANE_ID>`. Read "worktree" as that clone
   everywhere else in the brief.
+- The branch line: when `origin/t<n>-<slug>` does not exist, `git switch -c
+  t<n>-<slug> <sha>`; never rename the clone's default branch.
 - The probe line reads: "If it is not denied, say so in your first message
   and continue — your pane is supervised." The first message starts with
   the line `herdr pane: supervised — probe <denied|not denied>: <what
