@@ -16,9 +16,8 @@ set -uo pipefail
 unset GIT_DIR GIT_WORK_TREE  # #45: a hook-exported GIT_DIR makes rev-parse return cwd (tests/), not the root
 cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)" || exit 2
 
-FO=plugin/skills/herdr-orchestrator/SKILL.md
+FO=plugin/skills/dispatch/SKILL.md
 DOC=docs/engineering-workflow.md
-SK=plugin/skills/engineering-workflow/SKILL.md
 CHECKS="sync-rule stage-parity intent-layout adr-numbering adr-refs hooks-json skill-frontmatter skill-links template-gate-parity agents-commands dispatch-hold herdr-retire pr-adr-line"
 
 fail=0; why=""
@@ -117,22 +116,19 @@ lane_run() {  # lane_run [<range>] -> prints the lane and flagged lines with res
 check_sync_rule() {  # $1 = git range
   local files
   files=$(git diff --name-only "$1" 2>/dev/null) || { why="git diff $1 failed (bad range or shallow clone; git fetch --unshallow)"; return 1; }
-  grep -qxE "$DOC|$SK" <<<"$files" || return 0
-  local n; n=$(grep -cxE "$DOC|$SK|README.md" <<<"$files")
-  [ "$n" -eq 3 ] || { why="$1 touches $DOC/SKILL.md; expected 3 of {doc,SKILL.md,README.md}, found $n"; return 1; }
+  grep -qxF "$DOC" <<<"$files" || return 0
+  grep -qxF README.md <<<"$files" || { why="$1 touches $DOC without README.md"; return 1; }
 }
 
 check_stage_parity() {
-  local r=$1 d s m
-  for f in "$DOC" "$SK" README.md; do [ -f "$r/$f" ] || { why="$f missing"; return 1; }; done
+  local r=$1 d m
+  for f in "$DOC" README.md; do [ -f "$r/$f" ] || { why="$f missing"; return 1; }; done
   d=$(grep -cE '^## (Plan|Design|Build|Test|Deploy|Maintain)\b' "$r/$DOC")
-  s=$(grep -cE '^## (Plan|Design|Build|Test|Deploy|Maintain)\b' "$r/$SK")
   m=$(grep -cE '^(Plan|Design|Build|Test|Deploy|Maintain) (─)+►' "$r/README.md")
-  [ "$d$s$m" = 666 ] || { why="expected 6 stage headings each; found doc=$d SKILL.md=$s README=$m"; return 1; }
+  [ "$d$m" = 66 ] || { why="expected 6 stage headings each; found doc=$d README=$m"; return 1; }
   d=$(grep -oE '^## (Plan|Design|Build|Test|Deploy|Maintain)\b' "$r/$DOC" | grep -oE '(Plan|Design|Build|Test|Deploy|Maintain)' | sort -u | wc -l | tr -d " ")
-  s=$(grep -oE '^## (Plan|Design|Build|Test|Deploy|Maintain)\b' "$r/$SK" | grep -oE '(Plan|Design|Build|Test|Deploy|Maintain)' | sort -u | wc -l | tr -d " ")
   m=$(grep -oE '^(Plan|Design|Build|Test|Deploy|Maintain) (─)+►' "$r/README.md" | grep -oE '(Plan|Design|Build|Test|Deploy|Maintain)' | sort -u | wc -l | tr -d " ")
-  [ "$d$s$m" = 666 ] || { why="expected 6 distinct stage names each; found doc=$d SKILL.md=$s README=$m"; return 1; }
+  [ "$d$m" = 66 ] || { why="expected 6 distinct stage names each; found doc=$d README=$m"; return 1; }
 }
 
 check_intent_layout() {
@@ -191,7 +187,7 @@ check_skill_frontmatter() {
   done <<<"$files"
 }
 
-SKILL_LINKS=".claude/skills/cmu .claude/skills/dispatch .claude/skills/engineering-workflow .claude/skills/herdr-orchestrator .claude/skills/intent-conversation .claude/skills/new-project .agents/skills/herdr-orchestrator"
+SKILL_LINKS=".claude/skills/cmu .claude/skills/dispatch .claude/skills/intent-conversation .claude/skills/new-project"
 check_skill_links() {  # each host copy is a link into plugin/skills/; the index mode alone is not enough — core.symlinks=false still reports 120000
   local r=$1 l want
   for l in $SKILL_LINKS; do
@@ -234,10 +230,10 @@ check_dispatch_hold() {  # whitespace-joined, so a reflow neither hides the old 
     || { why="$1: expected the merge tied by 'and the gate run's \`flagged:\` line says \`flagged: no\`' and no 'plus this one QC check merges'"; return 1; }
 }
 
-# herdr-retire  herdr-orchestrator (#97): retire removes the worker's clone only behind the squash-safe guard  witness: mutation rows
+# herdr-retire  dispatch's herdr row (#97, #146): retire removes the worker's clone only behind the squash-safe guard  witness: mutation rows
 check_herdr_retire() {  # whitespace-joined, like dispatch-hold
   local t; t=$(tr -s '[:space:]' ' ' <"$1")
-  grep -qF "then remove the worker's clone (\`rm -rf <clone>\`) only if \`git -C <clone> status --porcelain\` is empty, \`git -C <clone> stash list\` is empty, \`git -C <clone> log --oneline --branches --not --remotes HEAD\` is empty, \`gh pr view <pr> --json state,headRefOid\` says \`MERGED\` and \`git -C <clone> rev-parse HEAD\` equals its \`headRefOid\` — what QC checked and was merged is all the clone holds. Otherwise keep it and name it, with the reason, in the checkpoint." <<<"$t" \
+  grep -qF "then remove the worker's clone (\`rm -rf <clone>\`) only if \`git -C <clone> status --porcelain\` is empty, \`git -C <clone> stash list\` is empty, \`git -C <clone> log --oneline --branches --not --remotes HEAD\` is empty, \`gh pr view <pr> --json state,headRefOid\` says \`MERGED\` and \`git -C <clone> rev-parse HEAD\` equals its \`headRefOid\` — what QC checked and was merged is all the clone holds. Otherwise keep it and name it, with the reason, on the roster." <<<"$t" \
     || { why="$1: expected the clone removal behind status clean + no stash + no unpushed branch commit + MERGED + HEAD == headRefOid, else keep it"; return 1; }
 }
 
@@ -358,14 +354,10 @@ witness_run() {
   expect FAIL 'mutation(template adversary copy)' template-gate-parity "$m"; reset_wt "$m"
   grep -v '^## Maintain' "$m/$DOC" > "$m/t" && mv "$m/t" "$m/$DOC"
   expect FAIL 'mutation(-## Maintain)' stage-parity "$m"; reset_wt "$m"
-  grep -v '^## Maintain' "$m/$SK" > "$m/t" && mv "$m/t" "$m/$SK"
-  expect FAIL 'mutation(-## Maintain SKILL)' stage-parity "$m"; reset_wt "$m"
   grep -v '^Maintain ' "$m/README.md" > "$m/t" && mv "$m/t" "$m/README.md"
   expect FAIL 'mutation(-Maintain README)' stage-parity "$m"; reset_wt "$m"
   sed -i.bak 's/^## Maintain/## Test/' "$m/$DOC"
   expect FAIL 'mutation(## Maintain→## Test)' stage-parity "$m"; reset_wt "$m"
-  sed -i.bak 's/^## Maintain/## Test/' "$m/$SK"
-  expect FAIL 'mutation(## Maintain→## Test SKILL)' stage-parity "$m"; reset_wt "$m"
   sed -i.bak 's/^Maintain ─►/Test ──►/' "$m/README.md"
   expect FAIL 'mutation(Maintain─►→Test README)' stage-parity "$m"; reset_wt "$m"
   # agents-commands: rewrite the ## Commands block with every --list name (control: ok), then all but one (FAIL)

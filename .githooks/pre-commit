@@ -1,14 +1,12 @@
 #!/usr/bin/env bash
 # pre-commit: staged-set mirror of check_sync_rule (tests/validate.sh).
-# Same trigger set as the suite: if the STAGED set touches the doc OR the
-# SKILL.md, all three of {doc, SKILL.md, README.md} must be staged too, else
-# block. Local guardrail — bypass with `git commit --no-verify`.
+# Same trigger as the suite: if the STAGED set touches the workflow doc,
+# README.md must be staged too, else block. Local guardrail — bypass with
+# `git commit --no-verify`.
 set -uo pipefail
 DOC=docs/engineering-workflow.md
-SK=plugin/skills/engineering-workflow/SKILL.md
 files=$(git diff --cached --name-only)
-grep -qxE "$DOC|$SK" <<<"$files" || exit 0
-n=$(grep -cxE "$DOC|$SK|README.md" <<<"$files")
-[ "$n" -eq 3 ] && exit 0
-echo "pre-commit: sync rule — staging the workflow doc/SKILL.md requires all three of {$DOC, $SK, README.md} staged (found $n of 3). Bypass: git commit --no-verify"
+grep -qxF "$DOC" <<<"$files" || exit 0
+grep -qxF README.md <<<"$files" && exit 0
+echo "pre-commit: sync rule — staging $DOC requires README.md staged too. Bypass: git commit --no-verify"
 exit 1
