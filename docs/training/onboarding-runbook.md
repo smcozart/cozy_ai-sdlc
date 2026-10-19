@@ -1,11 +1,11 @@
 # Runbook: clone → bootstrap → first intake
 
-> **Read `STATUS.md` first** — it is the board-state snapshot: where the loop
-> is, what's open, and what's queued. This runbook is how to stand a machine
-> up; STATUS.md is where the process looks right now.
+> **Say "catch me up" (`cmu`) first** — it reads where the loop is, what's
+> open, and what needs you from the tracker and git. This runbook is how to
+> stand a machine up; `cmu` is where the process looks right now.
 
-> `STATUS.md` is the single live board; `handoffs/` is archival session
-> context (repo-versioned), not a second live source. The open issues list is
+> `STATUS.md` is the review log; `handoffs/` is archival session
+> context (repo-versioned), not a live source. The open issues list is
 > the live frontier.
 
 Standing up the Harness on a machine (pi or Claude Code) and starting the
@@ -106,8 +106,8 @@ intake → spec → tickets → build — runs against YOUR repo: the harness fi
 now live in YOUR project, the SAME gate (`tests/validate.sh`), the same
 seams. Your intents live in `intent/<n>-<slug>/` — keep your OWN
 `SYSTEM-INTENT.md` and `CONTEXT.md` (your RAG's purpose and vocabulary) and
-write your OWN one-line `STATUS.md` for your board. Don't copy cozyharness's
-live `STATUS.md` — it's this project's board, not yours.
+start your OWN `STATUS.md` review log from its header. Don't copy cozyharness's
+`STATUS.md` — its lines acknowledge this project's reviews, not yours.
 
 > The git-seam guardrails from §1 install in your project too (`bootstrap.sh`
 > sets `core.hooksPath` locally). If the RAG lives on a different git host

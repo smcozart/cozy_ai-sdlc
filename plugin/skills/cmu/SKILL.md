@@ -39,7 +39,7 @@ this up") — `cmu` never does that work itself.
 ## Pick the since-anchor
 
 Use 1 when the developer gave it. Otherwise use the **newer** of 2 and 3 —
-a stale handoff folder must not hide a fresher board — and 4 only when
+a stale handoff folder must not hide a fresher review — and 4 only when
 neither resolves. Read 2 and 3 on the default branch after the fetch
 (`origin/<default>`), never the checked-out branch, so every run agrees:
 
@@ -50,27 +50,28 @@ neither resolves. Read 2 and 3 on the default branch after the fetch
    `pickup-handoff.md` already serves as the "entrance ramp" for (see
    `handoffs/README.md`); `cmu` reads its latest commit date rather than
    parsing file names, since this repo's own notes are nicknamed, not dated.
-3. **The newest commit date to `STATUS.md`** —
-   `git log -1 --format=%cI origin/<default> -- STATUS.md` — the board's last known-good
-   moment: repo-provable, deterministic, and correct even from a fresh clone.
+3. **The commit date of the acknowledged sha** —
+   `git log -1 --format=%cI <ack>`, where `<ack>` is the review acknowledgement
+   under **Needs you** — the last reviewed moment: repo-provable,
+   deterministic, and correct even from a fresh clone.
 4. **24 hours**, if nothing above resolves.
 
 Say which anchor was used in the first line of output, in plain words (for
 example "Since yesterday (you said so)" or "Since the last handoffs/ commit,
-2026-09-29" or "Since STATUS.md's last commit, 2026-09-28" or "Since 24 hours
-ago — no handoff commit, board commit, or stated anchor found"). Never use the
-viewer's own tracker activity (comments, reviews, merges) as an anchor: in
-this loop, workers and the developer often share one token, so "the viewer's
-last activity" can resolve to a worker's own `HANDOFF:` comment and silently
-hide real work.
+2026-09-29" or "Since your review through f66d79b, 2026-09-28" or "Since 24
+hours ago — no handoff commit, acknowledgement, or stated anchor found").
+Never use the viewer's own tracker activity (comments, reviews, merges) as
+an anchor: in this loop, workers and the developer often share one token, so
+"the viewer's last activity" can resolve to a worker's own `HANDOFF:`
+comment and silently hide real work.
 
 ## Sources (read-only, `gh` and `git` only)
 
 - `git fetch origin` (prune ok) first, so the branch scan and `git log` below
   read current refs, not a stale local clone — the one state-touch this skill
   makes; nothing else writes.
-- `STATUS.md` — the Updated line and the frontier block, for the snapshot this
-  delta sits against.
+- `STATUS.md` on `origin/<base>` — its `reviewed through` lines only, for the
+  acknowledgement under **Needs you**. The tracker is the snapshot.
 - Issues updated since the anchor: opened, closed, relabelled. Read their
   comments for `HANDOFF:` lines, QC verdicts, and approval comments.
 - PRs opened, merged, or closed since the anchor; review requests on the
@@ -91,11 +92,10 @@ hide real work.
   repo's own workflow doc counts — never the installed plugin's canon or
   another repo's policy; a repo whose doc names no held or review paths gets
   exactly "review paths: none defined here" and no path-based review owed.
-- `git log --first-parent --since <start>` on the default branch and on any
-  branch PRs merged into (after the fetch above), where `<start>` is the
-  older of the anchor and the review acknowledgement below, so review owed
-  never expires because the anchor moved; when there is no acknowledgement,
-  `<start>` is the anchor. A first-parent commit that is not
+- `git log --first-parent --since <anchor>` on the default branch and on any
+  branch PRs merged into (after the fetch above). Review owed reads the
+  acknowledgement range under **Needs you**, not this window, so it never
+  expires because the anchor moved. A first-parent commit that is not
   a PR merge is a direct push; one touching a held or review path counts as a
   merge with no review.
 - New files under `docs/adr/` and their status-history lines; new fragments
@@ -151,12 +151,18 @@ Next
   acknowledgement touching a review path, with no human checkoff stated on
   its thread. Agent verdicts (adversary, QC, `HANDOFF:`, "ready for merge")
   are not reviews, a merge is not a review, and the merger's account does
-  not show who checked. The acknowledgement is the newest commit that
-  changes **only** `STATUS.md`, on the default branch or on a branch PRs
-  merge into (the same branches scanned above); a commit that changes
-  anything else acknowledges nothing. With no such commit, the window starts
-  at the anchor: read first-parent history on review paths since the anchor
-  and say "no acknowledgement yet; showing since `<anchor>`". Also issues
+  not show who checked. The acknowledgement is the sha in a
+  `reviewed through <40-hex sha> on <date>` line of `STATUS.md` on
+  `origin/<base>`. Here `<base>` is the `AGENTS.md` **Base branch:**, else
+  the default branch. Of the listed shas, take the first one that
+  `git rev-list --first-parent origin/<base>` yields. A sha that is not on
+  the first-parent history of `origin/<base>` acknowledges nothing, and
+  neither does the position of the commit that adds the line. Review owed is
+  every commit in `git log --first-parent <ack>..origin/<base>` that touches
+  a review path, except commits that change only `STATUS.md`. It is a range,
+  not a date window. With no valid line, the window starts at the anchor:
+  read first-parent history on review paths since the anchor and say "no
+  acknowledgement yet; showing since `<anchor>`". Also issues
   labelled `needs-triage` or
   `needs-info`, or carrying no triage label at all (untriaged) (the
   canonical triage labels, `docs/agents/triage-labels.md` —

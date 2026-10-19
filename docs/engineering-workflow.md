@@ -172,7 +172,7 @@ lane is visible to git — how many files, which paths, how many lines — so
 | Lane | Computed trigger | Review owed |
 |---|---|---|
 | **T0 trivial** | ≤2 files, all `*.md`, ≤60 lines, every file in the **light set** and none on the T1 floor | the gate run + the human review (after merge unless held; ADR 0005). No adversary pass. (On this repo only the archival `handoffs/*.md` qualify.) |
-| **T1 light** | ≤2 files, ≤60 changed lines, every file in the light set — or any file on the **T1 floor**: the board `STATUS.md`, `docs/training/` (a human runs it), `handoffs/pickup-handoff.md` (a session's entrance ramp) | the gate run + one **bounded** adversary pass: correctness of the diff's claims only, findings MED and above, no scope sweep |
+| **T1 light** | ≤2 files, ≤60 changed lines, every file in the light set — or any file on the **T1 floor**: the review log `STATUS.md`, `docs/training/` (a human runs it), `handoffs/pickup-handoff.md` (a session's entrance ramp) | the gate run + one **bounded** adversary pass: correctness of the diff's claims only, findings MED and above, no scope sweep |
 | **T2 heavy** | **everything else** — any file outside the light set (the light set here is `handoffs/`, `docs/training/`, `STATUS.md`, `LICENSE`; every other path, including ones the repo has not grown yet, is heavy), any instruction file wherever it sits, in any case (`CLAUDE.md`, `AGENTS.md`, `README.md`, `.mcp.json`, `.cursorrules`, `.gitmodules`), any delete, any binary, any symlink (never followed), >2 files, or >60 lines | the full review loop: `REVIEW.md` axes + the unbounded adversary pass |
 
 The classifier is an **allow-list**: unknown is heavy, which is what "when in
@@ -230,8 +230,8 @@ light set): one full review, in place of a T2 records PR plus a lighter work
 review. Fixing a typo in
 `docs/training/onboarding-runbook.md` is **T1**: the runbook's fenced blocks
 are what a new human runs verbatim, so it floors at T1 and owes one bounded
-pass even at one line; refreshing the board is T1 for the same reason —
-`STATUS.md` is the first file a session reads. Adding the light lane itself
+pass even at one line; an acknowledgement in the review log `STATUS.md` is
+T1 too — its line decides what counts as reviewed. Adding the light lane itself
 (#24), or this tiering (ADR 0003), is **T2**: it edits the synced pair and
 `tests/validate.sh`, which are outside the light set, so it owes the sync
 rule (both files, one commit), the full adversary pass and merge-path
@@ -364,8 +364,10 @@ seam: this repo's ticket close, or a consumer's PR.
 
    **Post-hoc review** (ADR 0005): a human reviews every diff that landed on
    green after merge, against `REVIEW.md`. `cmu` lists it as "review owed";
-   a board-only `STATUS.md` commit acknowledges review of everything merged
-   before it. The behavior files in `docs/verify/` verify the agent side.
+   a human acknowledges post-hoc review by appending
+   `reviewed through <sha> on <date>` to `STATUS.md` in a commit that changes
+   only that file. It covers exactly the default-branch history up to
+   `<sha>`, never what merged while the line was in review. The behavior files in `docs/verify/` verify the agent side.
    The former flagged-risk set (suite-checked surfaces, `docs/agents/`,
    security/trust boundaries) is review guidance, not a hold. Auto-merge
    holds only while `gate` is a required check on `main`; otherwise every

@@ -28,8 +28,8 @@ means the person at this seat, whatever `CONTEXT.md` calls them.)
 **Only in a repo with `STATUS.md` and `AGENTS.md`.** Otherwise say in one line that the
 repo is not shaped for tracking and stop — file nothing, create no labels.
 
-**Never ask what the repo can answer.** Read `STATUS.md`, `SYSTEM-INTENT.md`,
-`CONTEXT.md`, `AGENTS.md` and the tracker before you open your mouth. At most
+**Never ask what the repo can answer.** Read `SYSTEM-INTENT.md`, `CONTEXT.md`,
+`AGENTS.md` and the tracker before you open your mouth. At most
 one question per turn, and only when nothing in the repo settles it.
 
 **Never put the developer's words on a command line.** Titles, bodies and
