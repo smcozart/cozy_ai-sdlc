@@ -94,9 +94,11 @@ the repo already tells you (the surface it touches, the file or screen by name,
 the app's own vocabulary).
 
 Then write `intent/<n>-<slug>/intent.md` from `intent/TEMPLATE.md`, filled in
-from the same words, with `**Issue:** #<n>` and `**Status:** draft`. The issue
+from the same words, with `**Issue:** #<n>`. The issue
 number only exists after the create, so cite the intent path in the body with
-`gh issue edit <n> --body-file <file>` once the folder is named.
+`gh issue edit <n> --body-file <file>` once the folder is named. When unsure
+whether a request is a `system-change`, choose `system-change`: it keeps the
+early records review.
 
 Also write a `**Touches:**` line — a JSON array of repo-relative paths/globs
 this work will change (`["backend/src/routes.ts", "backend/test/**"]`). Use

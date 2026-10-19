@@ -47,7 +47,8 @@ frontier is GitHub, nothing in a file outranks it.
    send a resume directive with tighter scope (numbered slices, commit after each).
 4. **QC — run the gates yourself.** GitHub is the claim; your terminal is the proof.
    Per ticket, on the worker's branch in the QC checkout `~/.factory/<repo>/qc` (a full
-   clone; `gh pr checkout <pr>` there), logs in `~/.factory/<repo>/logs/`, never on the
+   clone; `gh pr checkout <pr>` there, then `git rev-parse HEAD` must equal the PR's
+   `headRefOid`), logs in `~/.factory/<repo>/logs/`, never on the
    orchestrator's base: run the acceptance
    criteria with your own commands, run the gate from `AGENTS.md ## Commands` over the
    ticket's range (`origin/<base>..HEAD`, `<base>` = the `**Base branch:**` line in
@@ -65,7 +66,10 @@ frontier is GitHub, nothing in a file outranks it.
    brittle gate specs (a gate that greps the wrong pattern) are not — they show up when
    idiomatic worker output diverges from an over-specific gate. Watch for both.
 
-   When QC passes, the orchestrator merges the PR under the merge hold below
+   When QC passes, the orchestrator first runs `git fetch origin && git merge-base
+   --is-ancestor origin/<base> <the head SHA QC ran on>`; a non-zero exit (a failed
+   fetch too) means stale, so the worker updates the branch and QC reruns. Then it
+   merges the PR under the merge hold below
    (`gh pr merge --squash --delete-branch --match-head-commit <the head SHA QC ran on> <pr>`
    only at `flagged: no`; a new head re-runs QC before any merge). Then it closes
    the issue with the proof; a merge into a branch other than the default does not
