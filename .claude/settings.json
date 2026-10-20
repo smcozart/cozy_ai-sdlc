@@ -1,0 +1,17 @@
+{
+  "enabledPlugins": {
+    "cozysuite@cozysuite": true,
+    "ponytail@cozysuite": true,
+    "cozy-view@cozysuite": true,
+    "cozy-setup@cozysuite": true,
+    "mattpocock-skills@claude-plugins-official": true
+  },
+  "extraKnownMarketplaces": {
+    "cozysuite": {
+      "source": {
+        "source": "github",
+        "repo": "smcozart/cozysuite"
+      }
+    }
+  }
+}
