@@ -8,13 +8,7 @@ fail=0
 have() { command -v "$1" >/dev/null 2>&1; }
 
 echo "==> 1/5 Matt Pocock skills"
-if have claude; then
-  if claude plugin install mattpocock-skills 2>&1 | grep -qE "already installed|Installing"; then
-    echo "  ok: Claude managed plugin (mattpocock-skills)"
-  else fail=1; fi
-else
-  echo "  -- claude not installed, skipping"
-fi
+# Claude Code: a project-scope plugin named in .claude/settings.json (step 3).
 # pi + editable installs: copy full skill dirs (SKILL.md + agents/ subdirs) from
 # upstream, recorded by skills-lock.json. No hash check — the lock hash is not a
 # plain file sha; provenance = upstream HEAD sha printed below.
@@ -45,12 +39,21 @@ echo "==> 2/5 Vendored skills"
 echo "==> 3/5 Harness registration"
 if have gh && gh auth status >/dev/null 2>&1; then echo "  ok: gh authenticated"
 else echo "  !! run: gh auth login"; fail=1; fi
-if have claude; then
-  claude plugin marketplace add "$(pwd)" >/dev/null 2>&1 || true
-  claude plugin install ai-sdlc@cozycode 2>&1 | grep -qE "already installed|Installing" \
-    && echo "  ok: ai-sdlc plugin" || { echo "  !! plugin install failed"; fail=1; }
+# Claude Code tools: what .claude/settings.json names, at project scope, from
+# the cozysuite catalog (github.com/smcozart/cozysuite). Never user scope.
+if ! have claude; then
+  echo "  -- claude not installed, skipping plugin install"
+elif [ ! -f .claude/settings.json ]; then
+  echo "  -- no .claude/settings.json: set up tools per the cozysuite README (\"Set up a project\")"
+elif ! have python3; then
+  echo "  !! python3 needed to read .claude/settings.json"; fail=1
 else
-  echo "  -- claude not installed, skipping plugin registration"
+  claude plugin marketplace add smcozart/cozysuite --scope project >/dev/null 2>&1 || true
+  claude plugin marketplace update cozysuite >/dev/null 2>&1 || true
+  for id in $(python3 -c 'import json; print(" ".join(k for k, v in json.load(open(".claude/settings.json")).get("enabledPlugins", {}).items() if v))'); do
+    claude plugin install "$id" --scope project >/dev/null 2>&1 \
+      && echo "  ok: $id (project scope)" || { echo "  !! $id install failed"; fail=1; }
+  done
 fi
 
 echo "==> 4/5 Git hooks (local guardrail)"

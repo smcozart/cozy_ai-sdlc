@@ -7,6 +7,6 @@ and contracts for this repo. This file is only the pointer.
 - Review policy: `REVIEW.md` · Vocabulary: `CONTEXT.md`
 - Skills: `.claude/skills/` (symlinks to `plugin/skills/`)
 - Proof gate: `tests/validate.sh [<range>]` · `--witness` for fail-first
-- Prerequisite: install Matt Pocock skills once per machine
-  (`mattpocock/skills`) — `/to-spec`, `/triage`, `/to-tickets` are not
+- Prerequisite: `./bootstrap.sh` installs the tools `.claude/settings.json`
+  names, Matt Pocock skills included (project scope, cozysuite catalog) — `/to-spec`, `/triage`, `/to-tickets` are not
   repo files.
