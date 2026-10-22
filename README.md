@@ -69,15 +69,16 @@ the merge hold list (the files that check other files hold; the list is
 ```bash
 git clone <this-repo> && cd <repo-name>
 ./bootstrap.sh          # restores skills (hash-tracked upstream + vendored),
-                        # registers the Claude plugin, checks gh auth
+                        # installs the tools .claude/settings.json names
+                        # (project scope, cozysuite catalog), checks gh auth
 gh auth login           # if flagged — GitHub Issues is the tracker
 claude                  # plugin + skills are live
 ```
 
-On YOUR project repo (the one you'll build in): copy in `bootstrap.sh`,
-`skills-lock.json`, `plugin/`, and `.claude-plugin/`, run `./bootstrap.sh`,
-then run `/setup-matt-pocock-skills` once to scaffold that repo's tracker
-labels and ADR layout. Full detail: `plugin/README.md` and
+On YOUR project repo (the one you'll build in): get the tools from the
+cozysuite catalog (github.com/smcozart/cozysuite, "Set up a project"; the
+`core` preset carries ai-sdlc), then say "start a new project" (ai-sdlc
+`new-project`) to scaffold the workflow files. Full detail: `plugin/README.md` and
 `docs/engineering-workflow.md`.
 
 ## How it's organized

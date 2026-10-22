@@ -8,10 +8,10 @@ plugin it declares as a dependency.
 
 ```bash
 git clone <this-repo> && cd <repo-name>
-./bootstrap.sh   # restores Matt Pocock skills (Claude: official managed
-                 # plugin; pi: editable copies from the lock), verifies
-                 # vendored ponytail, registers the Claude plugin,
-                 # checks gh auth; re-runnable
+./bootstrap.sh   # installs the tools .claude/settings.json names (project
+                 # scope, cozysuite catalog); pi: Matt Pocock copies from
+                 # the lock; verifies vendored ponytail, checks gh auth;
+                 # re-runnable
 ```
 
 Then: `gh auth login` if flagged, `herdr` only for parallel builds, branch
@@ -32,10 +32,12 @@ ready-for-agent`.
 ## Install
 
 ```
-/plugin install ai-sdlc --marketplace smcozart/claude-plugins
+claude plugin marketplace add smcozart/cozysuite --scope project
+claude plugin install ai-sdlc@cozysuite --scope project
 ```
 
-This also installs `mattpocock-skills` from `claude-plugins-official`.
+This also installs `mattpocock-skills` from `claude-plugins-official`. Or run
+`/cozysuite:setup` and pick the `core` preset. Never user scope.
 
 From this repo (local path install):
 
@@ -55,16 +57,15 @@ The plugin is self-contained for the *process*; three dependency classes sit
 outside it:
 
 1. **Matt Pocock skills** (`mattpocock/skills`): Claude gets the official
-   managed plugin (`claude plugin install mattpocock-skills` — updates when
-   upstream ships). pi gets editable copies restored by `./bootstrap.sh` from
+   managed plugin, installed with ai-sdlc at project scope. pi gets editable copies restored by `./bootstrap.sh` from
    `skills-lock.json` (full skill dirs incl. `agents/` subdirs; provenance =
    upstream HEAD sha, printed at restore time).
 2. **Ponytail** (lean-code discipline, github.com/DietrichGebert/ponytail,
    MIT): forces stdlib-first, shortest-diff, no-speculative-abstraction coding.
    `docs/engineering-workflow.md` Build §2 states its core rules, but the full
    skill (intensity modes, persistence) installs separately — in pi via its
-   skill-git mechanism; in Claude Code, vendor `SKILL.md` into
-   `~/.claude/skills/ponytail/` if you want the complete version.
+   skill-git mechanism; in Claude Code, `ponytail@cozysuite` (in the
+   `core` preset).
 3. **CLIs**: `gh` (authenticated — the tracker depends on it) always; `herdr`
    only for parallel orchestrated builds (`dispatch`'s herdr row).
 

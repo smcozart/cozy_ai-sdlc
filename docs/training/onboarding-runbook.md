@@ -24,7 +24,8 @@ gh auth login   # if flagged — GitHub Issues is the tracker
 
 - Installs the Matt Pocock skills (Claude plugin, or copies them into
   `.agents/skills/` for pi).
-- Registers the Claude plugin if Claude Code is present.
+- Installs the tools `.claude/settings.json` names, at project scope, from the
+  cozysuite catalog, if Claude Code is present.
 - Installs the **local git-seam guardrails** (`core.hooksPath .githooks` —
   pre-commit enforces the sync rule per-commit, pre-push runs the Test gate
   before a push; silent when green).
@@ -96,9 +97,9 @@ cp -R /tmp/harness-ref/bootstrap.sh \                # carry the scaffolding ove
       /tmp/harness-ref/.claude-plugin \
       /tmp/harness-ref/AGENTS.md \
       /tmp/harness-ref/CLAUDE.md .
-./bootstrap.sh                                         # installs hooks + skills + plugin
+./bootstrap.sh                                         # installs hooks + skills
 gh auth login                                          # track via YOUR GitHub issues
-claude   # then run: /setup-matt-pocock-skills once, to scaffold the project's labels + ADR layout
+claude   # then: tools per the cozysuite README ("Set up a project"), and /setup-matt-pocock-skills once
 ```
 
 Then the same cycle in §4 — issue-first
