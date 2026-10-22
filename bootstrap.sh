@@ -41,17 +41,19 @@ if have gh && gh auth status >/dev/null 2>&1; then echo "  ok: gh authenticated"
 else echo "  !! run: gh auth login"; fail=1; fi
 # Claude Code tools: what .claude/settings.json names, at project scope, from
 # the cozysuite catalog (github.com/smcozart/cozysuite). Never user scope.
-if have claude && have python3 && [ -f .claude/settings.json ]; then
+if ! have claude; then
+  echo "  -- claude not installed, skipping plugin install"
+elif [ ! -f .claude/settings.json ]; then
+  echo "  -- no .claude/settings.json: set up tools per the cozysuite README (\"Set up a project\")"
+elif ! have python3; then
+  echo "  !! python3 needed to read .claude/settings.json"; fail=1
+else
   claude plugin marketplace add smcozart/cozysuite --scope project >/dev/null 2>&1 || true
   claude plugin marketplace update cozysuite >/dev/null 2>&1 || true
   for id in $(python3 -c 'import json; print(" ".join(k for k, v in json.load(open(".claude/settings.json")).get("enabledPlugins", {}).items() if v))'); do
     claude plugin install "$id" --scope project >/dev/null 2>&1 \
       && echo "  ok: $id (project scope)" || { echo "  !! $id install failed"; fail=1; }
   done
-elif have claude; then
-  echo "  -- no .claude/settings.json: set up tools per the cozysuite README (\"Set up a project\")"
-else
-  echo "  -- claude not installed, skipping plugin install"
 fi
 
 echo "==> 4/5 Git hooks (local guardrail)"

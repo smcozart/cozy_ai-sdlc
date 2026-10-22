@@ -39,14 +39,8 @@ claude plugin install ai-sdlc@cozysuite --scope project
 This also installs `mattpocock-skills` from `claude-plugins-official`. Or run
 `/cozysuite:setup` and pick the `core` preset. Never user scope.
 
-From this repo (local path install):
-
-```bash
-claude plugin add /path/to/repo/plugin
-```
-
-Or host a marketplace later by adding `.claude-plugin/marketplace.json` at repo
-root and pointing other machines at the GitHub URL.
+To try a working copy of the plugin for one session: `claude --plugin-dir plugin`
+from this repo.
 
 After install, verify: `/plugin` shows `ai-sdlc`; the `dispatch` skill is
 available.
