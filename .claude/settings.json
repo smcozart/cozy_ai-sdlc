@@ -4,7 +4,8 @@
     "ponytail@cozysuite": true,
     "cozy-view@cozysuite": true,
     "cozy-setup@cozysuite": true,
-    "mattpocock-skills@claude-plugins-official": true
+    "mattpocock-skills@claude-plugins-official": true,
+    "cozy-cleanup@cozysuite": true
   },
   "extraKnownMarketplaces": {
     "cozysuite": {
