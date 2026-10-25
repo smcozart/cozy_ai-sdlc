@@ -21,28 +21,29 @@ recorded, 0 plugin skills loaded, and `PATH=/usr/bin ls -d /tmp` ran.
 
 Before a worker starts, its clone has every `enabledPlugins` entry of its
 committed settings installed at project scope, so the probe is denied by the
-repo's own hooks. Retiring the worker removes those installs.
+repo's own hooks.
 
 ## Scope
 
 - `dispatch` Move 3: the install step for the herdr row, and the same for the
   worktree rows (each new worktree is also a new path).
-- `dispatch` Move 6: remove the worker's installs before its clone or worktree
-  is deleted.
 - `plugin/.claude-plugin/plugin.json`: raise the version.
 
 ## Non-goals
 
 - The tools a repo chooses (`/cozysuite:setup`), and the catalog.
 - `bootstrap.sh` (it already installs from the committed settings, #154).
+- Removing a retired worker's install records (Sean, 2026-10-25: "Drop it:
+  leave the records"). They are harmless: no session loads them,
+  `cozy-cleanup` reports them as harmless, and the cached code is shared.
+  Removing them inside Move 6's guard would change the `herdr-retire` check
+  in `tests/validate.sh` (merge hold).
 
 ## Acceptance criteria
 
 - On a fresh clone of this repo, following the new Move 3 step: the plugin
   skills of every named tool load (`claude -p` skill list), and
   `PATH=/usr/bin ls -d /tmp` is blocked by a hook.
-- Following the new Move 6 step: `claude plugin list --json` has no entry
-  whose `projectPath` is the removed clone.
 - `bash tests/validate.sh origin/main..HEAD` exits 0.
 
 ## System-intent alignment
