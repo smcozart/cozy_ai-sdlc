@@ -39,7 +39,8 @@ Build ───► one ticket per agent session; workers cite ADRs, write ADRs
 Test ────► tests/validate.sh exits 0 (fail-first; checks and the content
           they guard protected) — run + acceptance output (+ pair for fixes)
           pasted at close; CI runs it on every PR (check `gate`)
-Deploy ──► review loop per REVIEW.md; merge gate pasted (review resolution,
+Deploy ──► review loop per REVIEW.md (mattpocock-skills:code-review axes,
+          /code-review, /security-review, adversary); merge gate pasted (review resolution,
           validate.sh run, adversary verdict, preview proof for UI,
           branch-protection proof for merge path, `ADR:` line in the PR
           body); merge policy (ADR 0005): the hold list (LANE_HOLD in tests/validate.sh;

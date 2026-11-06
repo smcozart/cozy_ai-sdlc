@@ -4,8 +4,10 @@
 
 Run all three on every diff — the ticket's range, stated in the review.
 
-- **Bugs** — logic errors, broken edge cases, regressions.
-- **Security** — injection, secrets, PII in logs, permissions.
+- **Bugs** — logic errors, broken edge cases, regressions (the built-in
+  `/code-review`).
+- **Security** — injection, secrets, PII in logs, permissions (the built-in
+  `/security-review`).
 - **Compliance** — the change matches its `spec.md` and this repo's records
   (`CONTEXT.md` vocabulary, ADR constraints).
 
@@ -22,7 +24,8 @@ Do not review by eye what `tests/validate.sh` enforces (the check list in
 
 ## The loop
 
-- Every diff gets the `code-review` skill's two axes plus an `adversary`
+- Every diff gets the `mattpocock-skills:code-review` skill's two axes
+  (Standards + Spec), the Bugs and Security passes above, plus an `adversary`
   pass sized to the lane (`tests/validate.sh --lane <range>`): unbounded at
   T2; at T1 bounded to the diff's own claims, MED+ findings only; none at T0,
   where the gate run is the review and the close pastes `adversary: n/a — T0`.

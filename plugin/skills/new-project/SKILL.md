@@ -99,10 +99,12 @@ out=$(mktemp); echo "scaffold output: $out"
 
 A non-zero exit: report the output and stop. Name every `skip:` of
 `README.md`, `tests/validate.sh` or an ADR. When there are `wrote:` or
-`appended:` lines, commit exactly those paths, and stop if `git add` fails:
+`appended:` lines, commit exactly those paths, and stop if `git add` fails
+(`--chmod=+x` keeps the gate executable where the filesystem has no
+executable bit, as on Windows):
 
 ```bash
-git add -- $(sed -nE 's/^(wrote|appended): //p' <scaffold output>) && git commit -m "Adopt the engineering workflow"
+git add -- $(sed -nE 's/^(wrote|appended): //p' <scaffold output>) && { ! grep -qx 'wrote: tests/validate.sh' <scaffold output> || git add --chmod=+x -- tests/validate.sh; } && git commit -m "Adopt the engineering workflow"
 ```
 
 With `origin` (an existing repo), read the protection first:

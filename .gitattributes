@@ -1,0 +1,2 @@
+# LF in every checkout on every OS: the gate is bash and greps these files (core.autocrlf would make them CRLF).
+* text=auto eol=lf
