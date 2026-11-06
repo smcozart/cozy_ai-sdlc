@@ -4,8 +4,8 @@
 
 Run all three on every diff — the ticket's diff range, stated explicitly in the review, the same way the Test gate requires a range ("agent-produced" means authored in an agent session). Tag each finding with the risk class it poses — Bugs, Security, or Compliance — regardless of which pass or axis surfaced it.
 
-- **Bugs** — logic errors, broken edge cases, regressions.
-- **Security** — injection, secrets, PII in logs.
+- **Bugs** — logic errors, broken edge cases, regressions (the built-in `/code-review`).
+- **Security** — injection, secrets, PII in logs (the built-in `/security-review`).
 - **Compliance** — the change matches its spec.md / plan.md and the repo's design principles (CONTEXT.md vocabulary, ADR constraints).
 
 ## Severity
@@ -23,6 +23,6 @@ Do not review by eye what a check enforces mechanically:
 
 ## The loop
 
-- Reviewers give reviews per this policy: the `code-review` skill's two axes plus an `adversary` pass on agent-produced diffs **sized to the computed lane** (the `lane:` line of the gate run's trailer, ADR 0003): unbounded at T2; at T1 bounded to the correctness of the diff's claims, MED+ findings only; none at T0, where the gate run is the review and the close pastes `adversary: n/a — T0`. These passes and the adversary produce the findings; every finding is tagged with its risk class from `## Passes`.
+- Reviewers give reviews per this policy: the `mattpocock-skills:code-review` skill's two axes (Standards + Spec), the Bugs and Security passes above, plus an `adversary` pass on agent-produced diffs **sized to the computed lane** (the `lane:` line of the gate run's trailer, ADR 0003): unbounded at T2; at T1 bounded to the correctness of the diff's claims, MED+ findings only; none at T0, where the gate run is the review and the close pastes `adversary: n/a — T0`. These passes and the adversary produce the findings; every finding is tagged with its risk class from `## Passes`.
 - Review timing follows the merge policy (ADR 0005). A diff on the hold list — the files that check other files hold; the list is `LANE_HOLD` in `tests/validate.sh`; `flagged: yes` in the gate run's trailer — is reviewed and checked off by a named human before merge. Every other diff may land on green and is reviewed after merge: `cmu` lists it as "review owed", and a human acknowledges post-hoc review by appending `reviewed through <40-hex sha> on <date>` to `STATUS.md` in a commit that changes only that file; a line added by any other commit acknowledges nothing. It covers exactly the first-parent history of the base branch up to that sha, never what merged while the line was in review.
 - Authors resolve findings by a fix commit or an explicit carried-forward note — never by silence. A carried-forward note lives in the tracker with an owner other than the author, and is re-verified at the next operator checkpoint (the between-tickets report where the operator releases work).
