@@ -9,7 +9,7 @@ running Claude Code or pi should follow it. Prerequisites: Matt Pocock skills in
 ```
 setup (once per repo)
   → issue-first intake → intent → /to-questionnaire → /to-spec → /to-tickets → /triage loop
-  → /implement (per ticket, test-first) → /code-review + adversarial pass
+  → /implement (per ticket, test-first) → mattpocock-skills:code-review + /code-review + /security-review + adversarial pass
   → ADRs + CONTEXT.md maintained continuously (domain-modeling)
   → /retro at milestones, /handoff at session end
 ```
@@ -319,7 +319,8 @@ Deploy is what a diff owes before it merges — the same checklist at either
 seam: this repo's ticket close, or a consumer's PR.
 
 1. **The review loop.** Every diff is reviewed against
-   [`REVIEW.md`](../REVIEW.md): the `code-review` skill's two axes plus an
+   [`REVIEW.md`](../REVIEW.md): the `mattpocock-skills:code-review` skill's two axes, the built-in
+   `/code-review` (Bugs) and `/security-review` (Security) passes, plus an
    `adversary` pass on agent-produced diffs **sized to the computed lane**
    (Light lane table; ADR 0003) — unbounded at T2, bounded to the diff's
    claims and MED+ findings at T1, none at T0 where the gate is the review.
@@ -416,7 +417,7 @@ tooling — waits on #1.
 | Implement | `/implement` | Per ticket, one ticket per session. Test-first (red-green slices). Lean: stdlib first, shortest working diff. |
 | Test discipline | `/tdd` | Default mode inside implement. Every test justifies itself — guards behavior no other test covers. |
 | Debugging | `/diagnosing-bugs` | When something is broken/slow, not during planned work. |
-| Review | `REVIEW.md`, `/code-review` | After each diff (or each batch). Two axes: standards + spec; policy per REVIEW.md. |
+| Review | `REVIEW.md`, `mattpocock-skills:code-review`, `/code-review`, `/security-review` | After each diff (or each batch). Two axes (standards + spec) from `mattpocock-skills:code-review`; the built-in `/code-review` and `/security-review` run the Bugs and Security passes; policy per REVIEW.md. |
 | Adversarial review | `adversary` subagent (pi) | On agent-produced diffs, sized to the computed lane (ADR 0003): full at T2, bounded to the diff's claims at T1, none at T0 where the human review is the second pair of eyes. Breaks the author-boss bias loop. Claude equivalent: a second review pass with "assume this is wrong" instructions. |
 | Record decisions | `domain-modeling` | ADR bar: hard to reverse, surprising without context, or a real trade-off. One paragraph, `docs/adr/NNNN-slug.md`, **commit and push** — an unpushed ADR is invisible. Visible in code ⇒ no ADR. |
 | Shared vocabulary | `CONTEXT.md` via `domain-modeling` | Update when terminology shifts; consumers read it before issues. |
