@@ -22,3 +22,37 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
       - run: bash tests/validate.sh "origin/${{ github.base_ref }}..HEAD" "$GITHUB_WORKSPACE/pr-body.md"
+  # #159: the scaffolded project's gate on every OS. Mirrors new-project Move 3 (scaffold, add, commit) and its
+  # clone check; windows-latest runs Git Bash with core.autocrlf=true and no symlinks, as a developer's machine does.
+  template:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: scaffold, commit, clone
+        run: |
+          p="$RUNNER_TEMP/p"; git init -q -b main "$p"; cd "$p"
+          bash "$GITHUB_WORKSPACE/plugin/templates/new-project/scaffold.sh" . --owner demo --name demo | tee "$RUNNER_TEMP/out"
+          git add -- $(sed -nE 's/^(wrote|appended): //p' "$RUNNER_TEMP/out")
+          ! grep -qx 'wrote: tests/validate.sh' "$RUNNER_TEMP/out" || git add --chmod=+x -- tests/validate.sh
+          git -c user.name=ci -c user.email=ci@localhost -c commit.gpgsign=false commit -qm scaffold
+          git clone -q "$p" "$RUNNER_TEMP/c"
+      - name: LF checkout, executable gate
+        working-directory: ${{ runner.temp }}/c
+        run: |
+          git config --get core.autocrlf || true
+          ! git ls-files --eol | grep 'w/crlf'
+          [ "$(git ls-files -s tests/validate.sh | cut -c1-6)" = 100755 ]
+      - name: gate
+        working-directory: ${{ runner.temp }}/c
+        run: bash tests/validate.sh
+      - name: witness
+        working-directory: ${{ runner.temp }}/c
+        run: bash tests/validate.sh --witness
