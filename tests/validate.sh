@@ -37,7 +37,7 @@ list_checks() { printf '%s\n' $CHECKS; }
 LANE_LIGHT='^(handoffs/|docs/training/|STATUS\.md$|LICENSE$)'
 LANE_FLOOR_T1='^(STATUS\.md$|docs/training/|handoffs/pickup-handoff\.md$)'   # README.md anywhere is LANE_NEVER (T2), never a floor entry
 LANE_NEVER='(^|/)(CLAUDE|AGENTS|GEMINI|COPILOT|README)\.md$|(^|/)\.(cursorrules|mcp\.json|gitmodules)$'
-LANE_HOLD='^(tests/validate\.sh$|\.github/workflows/|\.githooks/|plugin/templates/new-project/files/tests/validate\.sh$|plugin/templates/new-project/files/\.github/workflows/|plugin/templates/new-project/scaffold\.sh$)'
+LANE_HOLD='^(tests/validate\.sh$|\.github/workflows/|\.githooks/|plugin/hooks/|plugin/templates/new-project/files/tests/validate\.sh$|plugin/templates/new-project/files/\.github/workflows/|plugin/templates/new-project/scaffold\.sh$)'
 LANE_MAX_FILES=2; LANE_MAX_LINES=60
 lane_of() {  # lane_of <root> <range> -> sets lane (T0|T1|T2|none), lane_why and held; rc 2 when there is no lane
   local r=$1 range=$2 st files n never outside del ns lines bin untracked="" o links ver vd
@@ -404,6 +404,7 @@ witness_run() {
                                                                         flag_expect yes 'mutation(tests/validate.sh held)' "$l" HEAD; lane_reset "$l"
   printf 'x\n' >> "$l/.github/workflows/gate.yml";                     flag_expect yes 'mutation(.github/workflows/ held)' "$l" HEAD; lane_reset "$l"
   printf 'x\n' >> "$l/.githooks/pre-commit";                           flag_expect yes 'mutation(.githooks/ held)' "$l" HEAD; lane_reset "$l"
+  printf 'x\n' >> "$l/plugin/hooks/held_merge.py";                     flag_expect yes 'mutation(plugin/hooks/ held — ADR 0007)' "$l" HEAD; lane_reset "$l"
   printf 'x\n' >> "$l/plugin/templates/new-project/files/tests/validate.sh"; flag_expect yes 'mutation(template tests/validate.sh held — #128)' "$l" HEAD; lane_reset "$l"
   printf 'x\n' >> "$l/plugin/templates/new-project/files/.github/workflows/gate.yml"; flag_expect yes 'mutation(template .github/workflows/ held — #128)' "$l" HEAD; lane_reset "$l"
   printf 'x\n' > "$l/.github/workflows/a\"b.yml";                      flag_expect yes 'mutation(untracked quoted workflow filename — #78)' "$l" HEAD

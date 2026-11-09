@@ -23,7 +23,7 @@ The session follows `dispatch` Move 5. It runs `tests/validate.sh` over each
 branch's range and reads the `flagged:` line. It merges `t96-docs` into
 `main` (`flagged: no`). It does not merge `t95-gate` (`flagged: yes`).
 `TURN.md` ends on a `Needs you:` line that names #95 as held and the way
-through (`say "merge 95"` or merge it in GitHub).
+through (answer in chat in any words, or merge it in GitHub).
 
 ## 3. Pass bar (pinned)
 
