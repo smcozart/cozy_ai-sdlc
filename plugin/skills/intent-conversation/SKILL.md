@@ -11,7 +11,8 @@ description: >
   that's running", "also need"); when the app's `SYSTEM-INTENT.md` is missing
   or still has placeholder sections; when the developer approves with "go",
   "build it", "do it", "yes, go ahead"; and when they wrap up with "I'm done",
-  "done for today", "wrapping up", "let's stop here", "hand off".
+  "done for today", "wrapping up", "let's stop here", "hand off"; and when they
+  say they reviewed what landed ("reviewed", "I looked at those").
 ---
 
 **Companion skill:** `dispatch` ships alongside this skill — automatic
@@ -265,3 +266,12 @@ hyphens. When no handoff note exists for a session that stopped some other
 way, `/cmu` reconstructs the same pickup from the tracker and git instead.
 Then say in one line that
 it is written, and stop.
+
+---
+
+## Move 5 — a review note
+
+Trigger: the developer says they looked at what landed, in any words. Append
+`reviewed through <sha> on <date>` to `STATUS.md` (`<sha>` as they name it, else
+`origin/<base>`), commit on this branch (on `<base>`, a new branch and a PR
+merged on green), and say so in one line. Never ask for this.

@@ -171,7 +171,7 @@ lane is visible to git — how many files, which paths, how many lines — so
 
 | Lane | Computed trigger | Review owed |
 |---|---|---|
-| **T0 trivial** | ≤2 files, all `*.md`, ≤60 lines, every file in the **light set** and none on the T1 floor | the gate run + the human review (after merge unless held; ADR 0005). No adversary pass. (On this repo only the archival `handoffs/*.md` qualify.) |
+| **T0 trivial** | ≤2 files, all `*.md`, ≤60 lines, every file in the **light set** and none on the T1 floor | the gate run. No adversary pass. (On this repo only the archival `handoffs/*.md` qualify.) |
 | **T1 light** | ≤2 files, ≤60 changed lines, every file in the light set — or any file on the **T1 floor**: the review log `STATUS.md`, `docs/training/` (a human runs it), `handoffs/pickup-handoff.md` (a session's entrance ramp) | the gate run + one **bounded** adversary pass: correctness of the diff's claims only, findings MED and above, no scope sweep |
 | **T2 heavy** | **everything else** — any file outside the light set (the light set here is `handoffs/`, `docs/training/`, `STATUS.md`, `LICENSE`; every other path, including ones the repo has not grown yet, is heavy), any instruction file wherever it sits, in any case (`CLAUDE.md`, `AGENTS.md`, `README.md`, `.mcp.json`, `.cursorrules`, `.gitmodules`), any delete, any binary, any symlink (never followed), >2 files, or >60 lines | the full review loop: `REVIEW.md` axes + the unbounded adversary pass |
 
@@ -224,7 +224,7 @@ surface or a multi-ticket effort, and the classifier makes that mechanical.
 **Light vs heavy, worked.** Fixing a typo in an archival
 `handoffs/design-stage-handoff.md` is **T0**: one file, docs-only, in the
 light set — `--lane` says so, a two-line `intent.md`, the gate run, land on
-green, human review after merge; no adversary pass. A `feature` or `bug`
+green; no adversary pass. A `feature` or `bug`
 intent that rides its work PR lifts that PR to T2 (`intent/` is outside the
 light set): one full review, in place of a T2 records PR plus a lighter work
 review. Fixing a typo in
@@ -350,8 +350,8 @@ seam: this repo's ticket close, or a consumer's PR.
    results: the protection fields and rules, or the recorded absence.
    Today: `main` is protected (pull request required, no force-push, no
    deletion). The `gate` check is required; the merge hold list (ADR 0005)
-   is the only pre-merge human gate; everything else lands on green with
-   post-hoc review (#33; ADR 0005 fails closed). An
+   is the only pre-merge human gate; everything else lands on green, with
+   optional post-hoc sampling (#33; ADR 0005 fails closed). An
    authentication failure (401) is not evidence of absence — authenticate
    first. No online
    check joins `tests/validate.sh` (Test §5); this proof stays manual.
@@ -360,22 +360,18 @@ seam: this repo's ticket close, or a consumer's PR.
    | Change class | Who merges |
    |---|---|
    | Hold list — `flagged: yes` from `tests/validate.sh --lane`: the files that check other files hold; the list is `LANE_HOLD` in `tests/validate.sh` | A named human checkoff, recorded in the thread, after a green gate — or a recorded operator delegation. The PR carries the `flagged-risk` label |
-   | Everything else, including AGENTS.md, the synced pair, ADRs, CONTEXT.md and the skills | Agent may land on green; the gate's pasted evidence is the record; post-hoc review follows |
+   | Everything else, including AGENTS.md, the synced pair, ADRs, CONTEXT.md and the skills | Agent may land on green; the gate's pasted evidence is the record; post-hoc review is optional sampling |
 
-   **Post-hoc review** (ADR 0005): a human reviews every diff that landed on
-   green after merge, against `REVIEW.md`. `cmu` lists it as "review owed";
-   a human acknowledges post-hoc review by appending
-   `reviewed through <40-hex sha> on <date>` to `STATUS.md` in a commit that
-   changes only that file; a line added by any other commit acknowledges
-   nothing. It covers exactly the first-parent history of the base branch up
-   to that sha, never what merged while the line was in review. The behavior files in `docs/verify/` verify the agent side.
+   **Post-hoc review** (ADR 0005) is optional sampling against `REVIEW.md`,
+   not owed on every diff. A developer who looked says so in chat, and a
+   `reviewed through <sha> on <date>` line is added to `STATUS.md`. The behavior files in `docs/verify/` verify the agent side.
    The former flagged-risk set (suite-checked surfaces, `docs/agents/`,
    security/trust boundaries) is review guidance, not a hold. Auto-merge
    holds only while `gate` is a required check on `main`; otherwise every
    merge takes the pre-merge checkoff (§3). Hooks/CI/release gates and
    irreversible ops are always human-authorized. Only an operator decision,
    recorded as an ADR 0005 amendment, adds a pre-merge checkoff or drops the
-   post-hoc review or the `ADR:` line.
+   `ADR:` line.
 
 ## Maintain — closing the loop
 

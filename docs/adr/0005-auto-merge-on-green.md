@@ -64,6 +64,16 @@ written in the line, never the position of the commit that adds it; a line
 added by a commit that changes anything else acknowledges nothing; and
 `STATUS.md` is the review log only. The decision is unchanged.
 
+**Amended (proposed 2026-11-08, branch `windows/lean-post-merge-review-optional`;
+takes effect only on adoption, which is the operator decision this ADR's
+prohibition requires).** Post-hoc review becomes optional sampling, not owed
+on every diff. `cmu` stops listing "review owed". A developer who sampled what
+landed says so in chat and the agent adds a `reviewed through <sha> on <date>`
+line to `STATUS.md`; the 40-hex sha, the `STATUS.md`-only commit and hand
+editing are no longer required. ADR 0003's T0 human checkoff goes with it. The
+hold list and the `ADR:` line are unchanged. What is given up: nothing now
+guarantees a human ever reads an unheld diff.
+
 **Rejected.** *Keep the checkoff on every flagged-risk surface*: it did not
 hold in practice and it fails open. *Hold the broad flagged-risk set*
 (suite-checked surfaces, `docs/adr/**`, `plugin/**`): the gate already
