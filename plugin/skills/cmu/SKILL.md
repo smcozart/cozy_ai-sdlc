@@ -52,9 +52,9 @@ checked-out branch, so every run agrees:
    `handoffs/README.md`); `cmu` reads its latest commit date rather than
    parsing file names, since this repo's own notes are nicknamed, not dated.
 3. **The commit date of the acknowledged sha** —
-   `git log -1 --format=%cI <ack>`, where `<ack>` is the review acknowledgement
-   under **Needs you** — the last reviewed moment: repo-provable,
-   deterministic, and correct even from a fresh clone.
+   `git log -1 --format=%cI <ack>`, where `<ack>` is the sha in the newest
+   `reviewed through <sha>` line of `STATUS.md` on `origin/<base>` that
+   resolves to a commit on that branch's first-parent history.
 4. **24 hours**, if nothing above resolves.
 
 Say which anchor was used in the first line of output, in plain words (for
@@ -72,7 +72,7 @@ comment and silently hide real work.
   read current refs, not a stale local clone — the one state-touch this skill
   makes; nothing else writes.
 - `STATUS.md` on `origin/<base>` — its `reviewed through` lines only, for the
-  acknowledgement under **Needs you**. The tracker is the snapshot.
+  since-anchor. The tracker is the snapshot.
 - Issues updated since the anchor: opened, closed, relabelled. Read their
   comments for `HANDOFF:` lines, QC verdicts, and approval comments.
 - PRs opened, merged, or closed since the anchor; review requests on the
@@ -81,24 +81,13 @@ comment and silently hide real work.
 - Every open issue and open PR, whatever its age — **Needs you** is current
   state, not a delta; a gate does not expire because the anchor moved.
 - The repo's merge policy from its workflow doc (in this plugin's canon, the
-  Deploy section): the paths **held** for a human before merge, and any paths
-  that merge on green but owe a human **review** after. Where the repo's
-  `tests/validate.sh --lane` prints a `flagged:` line, that line is the hold
-  source (ADR 0005): the held paths are its hold list, and every other path
-  merges on green and owes review after. When the doc names
-  only one human-gated set (a "flagged risk" set needing a human checkoff),
-  that set is both: held for open PRs, and owed review for anything that
-  merged on it without a checkoff. Say "review paths: none defined here" once
-  in **Needs you** only when the doc names no such set at all. Only the
-  repo's own workflow doc counts — never the installed plugin's canon or
-  another repo's policy; a repo whose doc names no held or review paths gets
-  exactly "review paths: none defined here" and no path-based review owed.
+  Deploy section): the paths **held** for a human before merge. Where the
+  repo's `tests/validate.sh --lane` prints a `flagged:` line, that line is the
+  hold source (ADR 0005). Only the repo's own workflow doc counts, never the
+  installed plugin's canon or another repo's policy.
 - `git log --first-parent --since <anchor>` on the default branch and on any
-  branch PRs merged into (after the fetch above). Review owed reads the
-  acknowledgement range under **Needs you**, not this window, so it never
-  expires because the anchor moved. A first-parent commit that is not
-  a PR merge is a direct push; one touching a held or review path counts as a
-  merge with no review.
+  branch PRs merged into (after the fetch above). A first-parent commit that
+  is not a PR merge is a direct push; say so under **Landed**.
 - New files under `docs/adr/` and their status-history lines; new fragments
   under `docs/journal/`.
 - New files under `handoffs/`.
@@ -148,30 +137,12 @@ Next
   a hold and never adds one (ADR 0005):
   **merge held** — an open PR touching a held path, or awaiting a human
   gate (`ready-for-human`, review
-  requested, red CI); **review owed** — a merge or direct push since the last
-  acknowledgement touching a review path, with no human checkoff stated on
-  its thread. Agent verdicts (adversary, QC, `HANDOFF:`, "ready for merge")
-  are not reviews, a merge is not a review, and the merger's account does
-  not show who checked. The acknowledgement is the sha in a
-  `reviewed through <40-hex sha> on <date>` line of `STATUS.md` on
-  `origin/<base>`. Here `<base>` is the branch that the
-  `AGENTS.md` **Base branch:** line names, or `main` when there is no such
-  line; a line that names no branch fails closed: say "no acknowledgement read; Base branch
-  line unreadable". A line counts only if the first-parent commit that
-  added it changes only `STATUS.md`:
-  `git log --first-parent --format=%H -S'<sha>' origin/<base> -- STATUS.md`,
-  then `git diff --name-only <commit>^1 <commit>` lists only `STATUS.md`. A
-  line added by any other commit acknowledges nothing. Of the shas in the
-  lines that count, take the first one that
-  `git rev-list --first-parent origin/<base>` yields. A sha that is not on
-  the first-parent history of `origin/<base>` acknowledges nothing, and
-  neither does the position of the commit that adds the line. Review owed is
-  every commit in `git log --first-parent <ack>..origin/<base>` that touches
-  a review path, except commits that change only `STATUS.md`. It is a range,
-  not a date window. With no valid line, the window starts at the anchor:
-  read first-parent history on review paths since the anchor and say "no
-  acknowledgement yet; showing since `<anchor>`". Also issues
-  labelled `needs-triage` or
+  requested, red CI). Review after a merge is optional sampling (ADR 0005):
+  landed work stays under **Landed** and is never listed here. `<base>` is the
+  branch that the `AGENTS.md` **Base branch:** line names, or `main` when
+  there is no such line; a line that names no branch fails closed: say "no
+  acknowledgement read; Base branch line unreadable". Also issues labelled
+  `needs-triage` or
   `needs-info`, or carrying no triage label at all (untriaged) (the
   canonical triage labels, `docs/agents/triage-labels.md` —
   `needs-triage` is a human gate, not an agent one); open blockers, read from
@@ -179,9 +150,7 @@ Next
   (`gh api repos/{owner}/{repo}/issues/<n>`, the same mechanism `dispatch`
   Move 1 uses); an idle worker with no `HANDOFF:` line. Say plainly "nothing
   waits on you" when this block is empty — do not pad it. **Nothing here is
-  ever dropped:** merge held lists every PR; review owed past five becomes
-  one line naming every item ("review owed: 9 since f66d79b — #38 #37 #36
-  #30 #29 #28 7ae706b 03f53d2 bf6cad5"); each issue or worker class
+  ever dropped:** merge held lists every PR; each issue or worker class
   (untriaged, needs-triage, needs-info, blocked, idle workers) lists five and
   ends "+N more <class>".
 - **Next** — one to three lines in the loop's own vocabulary: approve a named
@@ -190,10 +159,9 @@ Next
   and nothing needs a decision.
 
 The twenty-line budget trims **Landed** and **In flight** only, oldest first;
-a trimmed block ends with "+N more". In **Needs you** a human gate (merge
-held, review owed) is never cut for length: merge held lists every PR, and
-review owed past five is one line naming every item. Issue and worker
-classes past five end in a counted line.
+a trimmed block ends with "+N more". In **Needs you** a merge hold is never
+cut for length: every held PR is listed. Issue and worker classes past five
+end in a counted line.
 
 Every line cites what the tracker or git actually shows (an issue or PR
 number, a file path, a commit). Never a claim with nothing behind it.
