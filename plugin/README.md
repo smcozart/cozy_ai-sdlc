@@ -4,6 +4,11 @@ Packages the repo's engineering process as a Claude Code plugin: skills,
 no external deps beyond `gh` and the `mattpocock-skills`
 plugin it declares as a dependency.
 
+## Hooks
+
+One backstop, for held merges only (ADR 0007, lightly measured): `gh pr merge`
+of a held PR is refused until the developer's own chat message is on record.
+
 ## Adoption order (canonical — one command on a new machine)
 
 ```bash

@@ -171,12 +171,16 @@ check runs.
 label), add the `flagged-risk` label and end the turn on the fuller `Needs you:`
 line: the PR number and link, one line on what it changes, its gate state
 (`gate`, this QC check, the adversary verdict), and the two ways through —
-`say "merge <n>"` or merge it in GitHub.
+answer here in any words, or merge it in GitHub.
 Nothing else waits on the developer: an unheld PR that is green and QC-clean
-merges without asking.
+merges without asking. An irreversible or production action is asked the same
+way: name it in the `Needs you:` line, and the answer here, in any words, is
+the go-ahead. Never send the developer to a URL or another app to approve.
 
-**"merge <n>" is the checkoff — after a green gate, never instead of one.**
-Only when `gate` is green and this QC check has passed: write `Checkoff by
+**The developer's answer here is the checkoff — after a green gate, never
+instead of one.** Any reply that tells you to merge counts; one that does not
+is not a checkoff. On Claude Code a hook refuses the merge until that message
+is on record (ADR 0007). Only when `gate` is green and this QC check has passed: write `Checkoff by
 <developer> at <UTC timestamp>:` and their words verbatim to a file, post it on
 the PR thread (`gh pr comment <n> --body-file <file>`), then merge with
 `--match-head-commit <the head SHA QC ran on>`, then `git push origin --delete
