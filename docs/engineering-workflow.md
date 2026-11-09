@@ -29,8 +29,9 @@ records:
 
 Formalized in issue [#2](https://github.com/smcozart/cozyharness/issues/2).
 
-1. **Issue-first intake.** Every request — greenfield or brownfield — becomes
-   a GitHub issue before any other artifact. The issue states the problem,
+1. **Issue-first intake.** Every request — greenfield or brownfield — except
+   a small change (Light lane) becomes a GitHub issue before any other
+   artifact. The issue states the problem,
    desired outcome, scope, and non-goals. No side-lists in chat.
 2. **One request, one issue.** A conversation containing multiple requests is
    split into separate issues (GitHub sub-issues or `Blocked by:` edges when
@@ -211,6 +212,13 @@ The light lane below is **T0 and T1**; the heavy lane is **T2**.
    acceptance criteria defined), and the close pastes the green
    `tests/validate.sh [<range>]` run beside the acceptance output, then the
    Deploy merge-gate items.
+
+**The small-change path** (ADR 0003). A diff within the lane size limits
+(≤2 files, ≤60 changed lines) with no delete, binary, symlink, instruction
+file or hold-list path, earning no ADR and adding no public contract, skips
+the issue, the intent file, the worktree and dispatch: code on a branch in the
+same session, run the gate, land on green. It owes no adversary pass. Anything
+larger or riskier takes the path below.
 
 **It is a lane, not a loophole.** Nothing about the close gate relaxes.
 `ready-for-agent`, pasted proof, and the merge policy are identical on both
