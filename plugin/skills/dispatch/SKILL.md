@@ -149,7 +149,9 @@ if `git -C ~/.factory/<repo>/qc status --porcelain` is empty, then
 This one check folds in the lane's review (ADR 0003): T2 one read-only
 adversary pass, T1 one bounded pass over the diff's own claims (MED+ only), T0
 none — `adversary: n/a — T0` plus the filled `no-ADR=<y/n>
-not-speculative=<y/n>` line. Escalate a lane, never lower it. Two consecutive
+not-speculative=<y/n>` line. The adversary pass also compares the diff with
+`docs/adr/` and `intent/`: a conflict or reversal the developer has not been
+told about is reported in one line, and the work carries on. Escalate a lane, never lower it. Two consecutive
 QC failures across the chain halt new launches until the developer weighs in.
 
 **Merge gate is light (ADR 0005).** The orchestrator merges only when the

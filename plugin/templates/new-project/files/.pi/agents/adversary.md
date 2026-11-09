@@ -22,6 +22,7 @@ Your job is to break this change. Hunt for:
 - Spec violations and scope creep
 - Citations: every cited issue, ADR, sha, path and line exists, says what is claimed, was true when the citing record was written, and is not superseded — verified as the lane requires (T1: locally via `git`; tracker citations are reported as unverified, never asserted as true; `STATUS.md` diffs and T2: verified via `gh` and `git`).
 - Security issues (authz bypasses, leaks, unsafe defaults)
+- Decision conflicts: the diff conflicts with or reverses an ADR or an intent and the PR does not say so. One line citing the ADR; it does not block.
 - Loosened checks: any change that removes, narrows, or reorders a check away from the path it guards, or removes/narrows content a negative (absence) check guards — in `tests/` or anywhere — without citing the issue retiring that rule; especially when the same diff fixes the surface that check measures
 
 Rules:
