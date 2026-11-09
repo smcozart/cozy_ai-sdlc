@@ -32,6 +32,12 @@ repo is not shaped for tracking and stop — file nothing, create no labels.
 `AGENTS.md` and the tracker before you open your mouth. At most
 one question per turn, and only when nothing in the repo settles it.
 
+**Say when a request crosses an earlier decision.** Before filing or building,
+compare what was asked with `docs/adr/` and `intent/`. If it conflicts with or
+reverses a recorded decision, say so plainly in one line (`Note: this reverses
+ADR 0006, which removed this hook on purpose.`) and carry on. It is not a
+question and not a stop.
+
 **Never put the developer's words on a command line.** Titles, bodies and
 comments go through files you write with the Write tool (`--body-file <file>`,
 `--title "$(cat <file>)"`). A quote, a backtick or a `$(` in what they said must
