@@ -25,6 +25,15 @@ blocker, or a foundation ticket in flight; a dependent request is filed as
 its own issue with a blocking edge to the one ahead of it (mechanics:
 `docs/agents/issue-tracker.md`).
 
+**Amended (proposed 2026-11-08, branch `windows/lean-request-is-approval`;
+takes effect on adoption).** A developer's explicit request to change
+something, in any phrasing, is the approval to build it on a branch. The
+developer is not asked for a separate "go"; their words are saved as the
+approval record automatically. Questions, thinking aloud and "don't build
+yet" are not requests. High-risk work still gets one explicit yes. The merge
+policy (ADR 0005) is untouched. Evidence: the eval session-chain scored 0/5
+because "please update what's already there" was held for approval.
+
 **Amended from `claude-harness`.** There, settling was the record's approval,
 which let an agent self-merge its own records with no merge policy behind
 them. Here, approval of the decision and merge of the record are separate.
