@@ -86,3 +86,23 @@ Each is a separate PR cut from `main`, to be merged or closed on its own. Some t
 - A first version of the harness double-counted cost across resumed sessions. All figures here are corrected.
 
 Full evidence (private): `smcozart/cozysuite_review_evidence`.
+
+## Result of the lean-version check
+
+Proposals 1–6 were built and measured together: 5 Opus runs per setup, against the same repo with no plugin. Criteria were written before the data.
+
+| Criterion | Target | Result | |
+|---|---|---|---|
+| Friction, feature request | at most 1.25x | **2.95x** | **Fail** |
+| Friction, recording a decision | at most 1.25x | **1.36x** | **Fail, narrowly** |
+| Friction, catch-up | no worse than 1.5x | 0.98x | Pass |
+| Stuck-approval defect | as good as no plugin | 5/5, 0 approval waits | Pass |
+| Durable shared record | at least 4/5 | 5/5, no plugin 0/5 | Pass |
+| History questions | at least 4/5 | 5/5 (read by hand; the regex scorer said 3/5 on phrasing) | Pass |
+| Raises the earlier decision | at least 3/5 | 5/5, no plugin also 5/5 | Pass |
+
+**What this means:** the lean version fixes the defect and keeps the long-term value, but it doesn't yet meet the friction goal. `intent-conversation` and `dispatch` still ran on every feature-request and six-session run, because a typical feature is over the small-change limit of 2 files and 60 lines.
+
+**The largest remaining lever is making `dispatch` opt-in by default.** It's recommended above but isn't among the six changes built, so it's the first thing to consider next.
+
+Costs rose in both setups compared with earlier runs, for a reason not established. Compare ratios within this check only. This check was not blind-labelled.
