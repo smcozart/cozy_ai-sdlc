@@ -29,6 +29,15 @@ its own issue with a blocking edge to the one ahead of it (mechanics:
 which let an agent self-merge its own records with no merge policy behind
 them. Here, approval of the decision and merge of the record are separate.
 
+**Amended (proposed 2026-11-08, branch `windows/lean-decisions-always-recorded`;
+takes effect on adoption).** A settled decision is always recorded in the same
+turn on the working branch: an ADR, or a one-line ADR when nothing harder is
+at stake. There is no separate records branch, worktree or records PR; the
+record lands with the branch's work, and a `system-change` intent rides its
+ticket branch like any other intent. Early review of system-change records is
+given up for this. Evidence: decision-record cost 2.9x in the eval, and
+without the plugin agents kept the decision in private memory (5/5 vs 1/5).
+
 **Consequences.** The Design item "a settled decision becomes a record in the
 same turn" and the Plan item "one request, one issue" state the rule only.
 Records-worktree mechanics are out of scope until a ticket proposes them. The

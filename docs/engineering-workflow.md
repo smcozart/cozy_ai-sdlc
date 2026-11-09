@@ -44,9 +44,7 @@ Formalized in issue [#2](https://github.com/smcozart/cozyharness/issues/2).
    `intent/<issue-number>-<slug>/intent.md` (start from
    [`intent/TEMPLATE.md`](../intent/TEMPLATE.md)). The issue number is the join
    key: it ties the intent to the issue, later branch, run, PR, and pasted
-   proof. A `feature` or `bug` intent rides its ticket branch into the work
-   PR; a `system-change` intent merges first in a records PR
-   (`intent-conversation` Move 2).
+   proof. The intent rides its ticket branch into the work PR.
 4. **System-intent alignment.** Greenfield work starts from
    [`SYSTEM-INTENT.md`](../SYSTEM-INTENT.md); every work-item intent is checked
    against it. Conflicts either amend SYSTEM-INTENT.md deliberately or rewrite
@@ -146,14 +144,15 @@ that moves work toward `ready-for-agent`.
    next question, never held in chat for later batching: a hard-to-reverse
    or authority rule becomes a new `docs/adr/NNNN-slug.md`; a requirement or
    design detail becomes an edit to the spec's matching section; a detail
-   scoped to one ticket becomes an edit to that issue's body. Settling
+   scoped to one ticket becomes an edit to that issue's body; any other
+   decision becomes a one-line ADR. The record is committed on the working
+   branch, with no separate records branch or PR. Settling
    approves the decision. Settling is not a merge approval — the record
    merges only under the repo's merge policy (ADR 0005). No separate
    sign-off on the decision is owed beyond item 6's high-risk carve-out.
    Reply in one line naming the record. "Captured in this conversation
    only" and "finish mapping first, then update once" are not moves; batch
-   only when asked. The `intent-conversation` skill carries the mechanics
-   (records branch/PR, one-line reply).
+   only when asked. The `intent-conversation` skill carries the mechanics.
 
 ## Light lane — thin front end, same tail
 
@@ -224,9 +223,8 @@ surface or a multi-ticket effort, and the classifier makes that mechanical.
 **Light vs heavy, worked.** Fixing a typo in an archival
 `handoffs/design-stage-handoff.md` is **T0**: one file, docs-only, in the
 light set — `--lane` says so, a two-line `intent.md`, the gate run, land on
-green, human review after merge; no adversary pass. A `feature` or `bug`
-intent that rides its work PR lifts that PR to T2 (`intent/` is outside the
-light set): one full review, in place of a T2 records PR plus a lighter work
+green, human review after merge; no adversary pass. An intent that rides its
+work PR lifts that PR to T2 (`intent/` is outside the light set): one full
 review. Fixing a typo in
 `docs/training/onboarding-runbook.md` is **T1**: the runbook's fenced blocks
 are what a new human runs verbatim, so it floors at T1 and owes one bounded
