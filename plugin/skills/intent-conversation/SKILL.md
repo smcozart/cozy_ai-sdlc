@@ -75,7 +75,8 @@ about a section the repo already answers.
 
 ## Move 2 — a request becomes an issue and its intent, in one step
 
-Trigger: the developer describes something they want, in their own words.
+Trigger: the developer describes something they want, in their own words, and
+it is not a small change (Move 2a).
 
 This is **one step**, not a conversation. Run `gh label list` before each
 `gh issue create`; when it lacks any of `needs-triage`, `ready-for-agent`,
@@ -147,6 +148,24 @@ id of the blocker>`, the form `dispatch` Move 1 reads) **and** a `Blocked by:
 line alone is invisible to `dispatch` and would launch the blocked ticket
 early. If filing this idea requires a foundation ticket that does not exist
 yet, file it too, say so in one line, and keep taking input.
+
+---
+
+## Move 2a — a small change is just done
+
+Small: the diff should fit the gate's lane limits (`LANE_MAX_FILES`,
+`LANE_MAX_LINES` in `tests/validate.sh`), with no delete, binary, symlink,
+instruction file or hold-list path, and earn no ADR or new public contract.
+Code outside the light set still counts; the lane printing T2 is expected.
+
+No issue, intent, worktree or `dispatch`. On `<base>`, `git switch -c <slug>`;
+otherwise stay on this branch. Make the change, commit, and run `bash
+tests/validate.sh origin/<base>..HEAD`. Green and `flagged: no`: push, open the
+PR (body file: their words, the gate run, `ADR: none`), and `gh pr merge
+--squash --match-head-commit <sha>`. With no `origin`, stop at the commit.
+
+Reply in one line. If it outgrows the limits or prints `flagged: yes`, say so
+in one line and go through Move 2 on this branch.
 
 ---
 

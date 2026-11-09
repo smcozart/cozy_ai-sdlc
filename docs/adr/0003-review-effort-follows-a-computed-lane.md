@@ -45,6 +45,16 @@ line in one hunk, both a semver `"version"` line, and the same line, only the
 version number changes. Every other rule still applies. It
 is never T0, so a release still gets one bounded pass.
 
+**Amended (proposed 2026-11-08, branch `windows/lean-small-change-path`;
+takes effect on adoption).** The lane limits also size the front of the
+process. A change within `LANE_MAX_FILES` and `LANE_MAX_LINES`, with no delete,
+binary, symlink, instruction file or hold-list path, earning no ADR and adding
+no public contract, skips the issue, intent file, worktree and dispatch, and
+owes no adversary pass: branch, gate, land. The computed lane still prints T2
+for code outside the light set; that is expected and the lane is not lowered.
+Larger or riskier work keeps the full path. Evidence: feature-request cost
+2.6x in the eval, with GitHub writes, worktrees and dispatch the main extras.
+
 **Rejected.** *Keep "adversary on everything"*: correct when it caught 13
 defects in a two-file skill PR, but it cannot distinguish that PR from a typo
 fix, and the cost grows with every parallel worker. *Let the agent pick the

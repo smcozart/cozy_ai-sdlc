@@ -20,7 +20,8 @@ in hours, and **humans stay above the loop: instigating, directing, governing.**
   script, and config files that remove setup guesswork.
 
 ```
-Plan ────► issue-first intake, then intent: the why (outcome, scope,
+Plan ────► small changes skip straight to a branch and the gate; otherwise
+          issue-first intake, then intent: the why (outcome, scope,
           non-goals) at intent/<issue-number>-<slug>/intent.md,
           aligned with SYSTEM-INTENT.md — human-approved; intake never waits;
           a feature or bug intent rides the work PR, a system-change

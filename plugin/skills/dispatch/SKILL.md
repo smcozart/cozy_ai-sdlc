@@ -26,6 +26,7 @@ the whole unapproved backlog — that gate is `intent-conversation` Move 3.
 needs the developer since they last looked; `cmu` never triggers this skill —
 dispatch's own triggers (above) are unchanged.
 
+A small change (`intent-conversation` Move 2a) never reaches dispatch.
 Planning, read-only or explicit-pause requests override dispatch. Workers never
 recursively dispatch — the worker brief below forbids it.
 
