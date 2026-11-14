@@ -23,9 +23,10 @@ that are tied to the merged PRs within the CI".
 
 **How it gets in** (SYSTEM-INTENT "How the system changes"): the hold part by
 the third trigger, a merge hold that gives a wrong result, shown by this PR's
-fail-first base-lane witness. The speed part by the operator's waiver of the
-before-timing (2026-11-14): arm A is already measured above, and arm B with the
-revert rule follows the merge. **What it replaces:** `--fast` replaces the
+fail-first base-lane witness. The speed part is a measured cost (arm A
+above, from transcripts at $0), which none of the three triggers names, so it
+gets in only by the operator's approval of this intent. Arm B and the revert
+rule follow the merge. **What it replaces:** `--fast` replaces the
 worker's full run; the base-lane rule replaces trusting the PR's own script;
 ADR 0007 replaces Orchestration rule 4. `--deadline` adds a limit to the one
 local run that is kept (for macOS); nothing else covers a hang.
