@@ -15,7 +15,8 @@ blocked the developer's conversation: 37 runs, median 92 s, 80 min over about
 - **QC's one local full run is the proof on the developer's OS.** It runs in the
   background, never in the developer's foreground. A macOS-only failure has
   happened (cozystudio #7, a hang), so this run is kept, not removed. Its limit
-  is the `gate` job's `timeout-minutes`, enforced by the script's `--deadline`.
+  is the `gate` job's `timeout-minutes`, enforced by the script's `--deadline`,
+  which kills the command's whole process group.
   A host without background jobs runs it in the foreground, as before.
 - **The worker runs `--fast`**, the tests for the code it touched and the
   fail-first pair, and hands off.
@@ -31,7 +32,7 @@ blocked the developer's conversation: 37 runs, median 92 s, 80 min over about
 - **The CI wait and the merge are separate.** `gh pr checks <pr> --watch
   --fail-fast` runs in the background, and its exit is an event. When the last
   background job ends, the orchestrator confirms QC, base-lane `flagged: no`,
-  the local run, and `gate` itself `pass` on the head SHA (`gh pr checks` alone
+  the local run, and every `gate` entry `pass` on the head SHA (at least one) (`gh pr checks` alone
   exits 0 when `gate` is not reported yet), runs the stale check, then
   `gh pr merge --squash --match-head-commit <sha> <pr>` in the foreground. In a
   private repo on the free plan, GitHub enforces no check, so these steps are

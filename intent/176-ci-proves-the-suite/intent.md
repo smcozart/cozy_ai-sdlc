@@ -43,8 +43,11 @@ local run that is kept (for macOS); nothing else covers a hang.
   `app-tests`, and prints `deferred: app-tests — CI gate is the proof`. It never
   prints `ok: app-tests`.
 - **`--deadline <seconds>`** (template `tests/validate.sh`): the `app-tests`
-  command is stopped at the limit and prints `FAIL: app-tests — deadline
-  <seconds>s`. The script enforces it, so it works the same on every host and
+  command runs in its own process group (`set -m`, which works on bash 3.2) and,
+  at the limit, the whole group is killed (`kill -TERM -- -<pid>`), so no
+  orphan (`npm test` → `node` → test workers) keeps the output pipe open. It
+  prints `FAIL: app-tests — deadline <seconds>s`. Stock macOS has no
+  `setsid(1)`. The script enforces it, so it works the same on every host and
   needs no `timeout(1)`, which stock macOS does not have.
 - **QC (Move 5):**
   - runs the acceptance commands; an acceptance command that is the
@@ -67,7 +70,8 @@ local run that is kept (for macOS); nothing else covers a hang.
   run) has ended. Then, in the foreground and in this order (about 1 s, no
   wait): confirm QC passed and base-lane `flagged: no`; confirm the local run
   exited 0; confirm `gate` itself passed on the head SHA (`gh pr checks <pr>
-  --json name,bucket` has `gate` with `bucket` `pass`; `gh pr checks` alone
+  --json name,bucket` has at least one `gate` entry and every `gate` entry is
+  `pass`, so a duplicate row from an `edited` re-run cannot pass a stale result; `gh pr checks` alone
   exits 0 when `gate` is not reported yet, or skipped); run the stale check
   (unchanged); then `gh pr merge --squash --match-head-commit <sha> <pr>`.
   `gate` not reported is retried at most 3 times, then it is red and goes to the
@@ -128,9 +132,11 @@ This PR edits the machinery that reviews it:
   tests/validate.sh --fast origin/main..HEAD` prints `deferred: app-tests — CI
   gate is the proof` and no `ok: app-tests`. Fail-first: the template
   `--witness` has rows that fail when `--fast` prints `ok:` or runs the command.
-- With `**App tests:** sleep 30`, `bash tests/validate.sh --deadline 1` prints
-  `FAIL: app-tests — deadline 1s` and exits non-zero within 5 s. A template
-  witness row checks it.
+- With `**App tests:** sh -c "sleep 30"` (a grandchild, which a kill of the
+  direct child misses), `bash tests/validate.sh --deadline 1 | cat` prints
+  `FAIL: app-tests — deadline 1s`, exits non-zero within 5 s, and leaves no
+  `sleep 30` behind (`pgrep -f 'sleep 30'` is empty). A template witness row
+  checks it.
 - A root witness fails when the template `gate.yml` passes `--fast`.
 - A root witness: under `origin/<base>`'s script, a branch that rewrites
   `tests/validate.sh` to print `flagged: no` is `flagged: yes`.
