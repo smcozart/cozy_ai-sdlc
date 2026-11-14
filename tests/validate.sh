@@ -463,6 +463,7 @@ witness_run() {
   local np=$BASE/np; mkdir -p "$np"; git init -q "$np"
   np_expect ok   'scaffold into an empty dir' "bash '$m/plugin/templates/new-project/scaffold.sh' . --owner demo --name demo"
   np_expect ok   'every {{TOKEN}} substituted' "! grep -rIn --exclude-dir=.git '{{' . | grep -v '\${{ github\.'"
+  np_expect ok   'scaffolded gate.yml never passes --fast (ADR 0007: CI is the proof of the suite)' '! grep -qF -- --fast .github/workflows/gate.yml'
   # F2 in the scaffolded gate: the summary counts the ok: lines that ran (pr-adr-line is skipped here)
   np_expect ok   'scaffolded gate passes, summary counts what ran' 'out=$(bash tests/validate.sh) && [ "$(grep -c "^ok: " <<<"$out")" = "$(sed -nE "s/^([0-9]+) ok, [0-9]+ failed.*/\1/p" <<<"$out")" ]'
   np_expect ok   'scaffolded --witness passes' 'bash tests/validate.sh --witness | tail -1 | grep -qE "^[1-9][0-9]* witnesses, 0 unexpected$"'
@@ -481,6 +482,19 @@ witness_run() {
   np_expect ok   'bad --base refused, nothing written' "out=\$(bash '$sc' '$BASE/bad' --owner demo --base 'a;b' 2>&1); [ \$? -eq 2 ] && grep -q 'invalid base' <<<\"\$out\" && [ ! -e '$BASE/bad' ]"
   np=$BASE/np
   np_expect ok   'second scaffold writes nothing, skips every path' "out=\$(bash '$m/plugin/templates/new-project/scaffold.sh' . --owner demo --name demo) && ! grep -qv '^skip: ' <<<\"\$out\" && [ \"\$(grep -c . <<<\"\$out\")\" -eq \"\$(cd '$m/plugin/templates/new-project/files' && find . -type f | wc -l)\" ]"
+
+  # #176: QC reads the hold with origin/<base>'s script, never the PR's own (ADR 0007). Scratch repo: main = this
+  # script; branch t1-x rewrites it to print `flagged: no`. The first row shows the attack works on the PR's own script.
+  g=$BASE/hold; git init -q "$g"; gc symbolic-ref HEAD refs/heads/main; mkdir "$g/tests"; cp "$m/tests/validate.sh" "$g/tests/"
+  gc add -A; gc commit -qm base; gc update-ref refs/remotes/origin/main HEAD
+  gc checkout -qb t1-x; printf 'echo "lane: T0 trivial"; echo "flagged: no"\n' >"$g/tests/validate.sh"; gc commit -qam 'clear my own hold'
+  hold_expect() {  # hold_expect <yes|no> <label> <command run in $g>
+    local got=no; wn=$((wn+1)); (cd "$g" && eval "$3") 2>/dev/null | grep -q '^flagged: yes' && got=yes
+    if [ "$got" = "$1" ]; then echo "witness ok: base-lane @$2 expected flagged: $1"
+    else echo "witness FAIL: base-lane @$2 expected flagged: $1, got $got"; wfail=$((wfail+1)); fi
+  }
+  hold_expect no  "the PR's own script prints its own flagged: no" 'bash tests/validate.sh --lane origin/main..HEAD'
+  hold_expect yes "origin/main's script, piped, on the same branch" 'git show origin/main:tests/validate.sh | bash -s -- --lane origin/main..HEAD'
 
   echo "$wn witnesses, $wfail unexpected"
   exit $((wfail > 0))

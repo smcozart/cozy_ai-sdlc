@@ -128,12 +128,44 @@ and never closed — they are the developer's own.
 ## Move 5 — QC
 
 Run yourself, on the worker's branch, never by switching the developer's busy
-checkout: the ticket's acceptance commands, then `bash tests/validate.sh
-origin/<base>..HEAD` (`<base>`: the base branch named in `AGENTS.md`,
-`**Base branch:**`, default `main`; record base/head SHAs, full output, exit
-code and lane line). Compare the actual diff's paths to its Touches; expansion pauses
-conflicting work for re-batching. Review against the ticket's spec and this
-repo's review policy. A fix needs fail-first evidence. On every QC head, and
+checkout (`<base>`: the base branch named in `AGENTS.md`, `**Base branch:**`,
+default `main`; record base/head SHAs). CI's `gate` run on the head SHA is the
+proof of the suite; your one local full run is the proof on the developer's OS
+(ADR 0007). **A check that did not run is never proof**: deferred, skipped,
+pending, timed out, "no checks reported" and inconclusive are all not proof.
+Only a run that printed `ok:` on the head SHA is, plus the one exception the
+gate decides itself, `skipped: app-tests — records-only diff`.
+
+1. **At QC start, one local full run, in the background:** `bash
+   tests/validate.sh --deadline <s> origin/<base>..HEAD`, where `<s>` is the
+   `gate` job's `timeout-minutes` in the repo's own
+   `.github/workflows/gate.yml`, read now, times 60. Record its full output,
+   exit code and lane line. A non-zero exit, the deadline included, is red:
+   send the tail of the output to the same worker. A script without
+   `--deadline` (`grep -q -- '--deadline' tests/validate.sh` fails) is the old
+   script: run it without the flag.
+2. **The CI wait, in the background, alone:** `gh pr checks <pr> --watch
+   --fail-fast`. Its exit is an event, never a merge.
+3. **The acceptance commands.** One that is the `**App tests:**` command is
+   read from CI, not run again.
+4. **The base lane:** compute `lane:` and `flagged:` with `origin/<base>`'s
+   script on the fetched head, never with the PR's own script: `git show
+   origin/<base>:tests/validate.sh | bash -s -- --lane origin/<base>..HEAD`
+   (a copy of the script outside the work tree exits 2 at its `cd` line).
+5. **Review while CI runs.** Compare the actual diff's paths to its Touches;
+   expansion pauses conflicting work for re-batching. Review against the
+   ticket's spec and this repo's review policy. A fix needs fail-first
+   evidence. Do not idle-wait on CI: read `gate` last, right before close.
+
+**Hosts without background jobs** (no completion notice, for example pi by
+hand): run the CI wait and the local run in the foreground, as before. The
+proof rules are the same; only the wait is not hidden. **No CI:** a repo with
+no `.github/workflows/gate.yml` keeps the old rule: the local run (without
+`--deadline`) is the proof of the suite. A red CI run after handoff goes back
+to the same worker. The close pastes the `gate` check lines and run URL, the
+tail of the local run, and the base-lane lines.
+
+On every QC head, and
 again right before the merge, run `git fetch origin &&
 git merge-base --is-ancestor origin/<base> <the head SHA QC ran on>`. A
 non-zero exit (a failed fetch too) means stale: the worker updates the branch (the brief's
@@ -152,12 +184,21 @@ none — `adversary: n/a — T0` plus the filled `no-ADR=<y/n>
 not-speculative=<y/n>` line. Escalate a lane, never lower it. Two consecutive
 QC failures across the chain halt new launches until the developer weighs in.
 
-**Merge gate is light (ADR 0005).** The orchestrator merges only when the
-required `gate` check is green, this QC check passed, and the gate run's
-`flagged:` line says `flagged: no` — then `gh pr merge --squash
---match-head-commit <the head SHA QC ran on> <pr>`, then `git push origin
---delete <branch>` (a branch that GitHub already deleted is fine), no further
-review rounds; a new head re-runs QC before any merge. A merge into a branch
+**Merge gate is light (ADR 0005, ADR 0007).** The merge comes when the last
+background job (the CI wait or the local run) has ended — never on the CI
+wait's exit alone. Then, in the foreground and in this order (about 1 s, no
+wait): confirm this QC check passed, and the gate run's `flagged:` line says
+`flagged: no` (the base-lane run above, never the PR's own script); confirm
+the local run exited 0; confirm `gate` itself passed on the head SHA — `gh pr
+checks <pr> --json name,bucket --jq '[.[] | select(.name == "gate")] |
+length > 0 and all(.bucket == "pass")'` prints `true` (at least one `gate`
+entry and every one `pass`, so a duplicate row from an `edited` re-run cannot
+pass a stale result; `gh pr checks` alone exits 0 when `gate` is not reported
+yet, or skipped); `gate` not reported is retried at most 3 times, then it is
+red and goes to the developer; run the stale check above; then `gh pr merge
+--squash --match-head-commit <the head SHA QC ran on> <pr>`, then `git push
+origin --delete <branch>` (a branch that GitHub already deleted is fine), no
+further review rounds; a new head re-runs QC before any merge. A merge into a branch
 other than the default does not auto-close the issue; close it with the
 proof. At `flagged: yes`, or with no
 `flagged:` line, dispatch never merges on its own: a human does (below). A
@@ -272,9 +313,14 @@ developer should never have to guess whether the loop is waiting on them.
 > operation — cite platform ADRs, never re-decide them. Test-first, shortest
 > complete diff, no speculative abstractions.
 >
-> Run and paste the ticket's acceptance commands and `bash tests/validate.sh
-> origin/<base>..HEAD` (exit 0, with its lane line). Fixes carry fail-first
-> proof. Update a stale base and rerun before you say you're done: on a
+> Run and paste `bash tests/validate.sh --fast origin/<base>..HEAD` (exit 0,
+> with its lane line), the ticket's acceptance commands, and the tests for the
+> code you touched. A fix carries the fail-first pair. Do not run the full
+> suite, and skip an acceptance command that is the `**App tests:**` command:
+> CI's `gate` on your head SHA is the proof of the suite (ADR 0007).
+> If `grep -q -- '--fast' tests/validate.sh` fails, it is the old script: run
+> it without `--fast`. A non-zero exit from a script that has `--fast` is a real
+> failure, not a fallback. Update a stale base and rerun before you say you're done: on a
 > branch that is already pushed, `git merge origin/<base>` instead of
 > rebasing (the PR squashes); rebase only a branch that was never pushed.
 >
