@@ -58,8 +58,9 @@ outside it:
    `version` range only against `<plugin-name>--v<version>` git tags
    ([plugin dependencies](https://code.claude.com/docs/en/plugins/dependencies.md)),
    and `mattpocock/skills` tags `v<version>`, so a range would fail the install.
-   A project gets whatever `claude-plugins-official` served when it installed
-   and keeps it; bring one up to date with
+   Without a version, the dependency moves to each new release the next time a
+   project updates, so projects that update at different times drift apart
+   (the same docs page); bring one up to date with
    `claude plugin update mattpocock-skills@claude-plugins-official --scope project`
    from the project folder.
 2. **Ponytail** (lean-code discipline, github.com/DietrichGebert/ponytail,
