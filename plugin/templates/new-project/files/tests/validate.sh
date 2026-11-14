@@ -198,7 +198,7 @@ witness_run() {
     local got=FAIL; wn=$((wn+1)); why=""
     "check_${3//-/_}" "${4:-$m}" && got=ok
     if [ "$got" = "$1" ]; then echo "witness ok: $3 @$2 expected $1${why:+ ($why)}"
-    else echo "witness FAIL: $3 @$2 expected $1, got $got${why:+ — $why}"; wfail=1; fi
+    else echo "witness FAIL: $3 @$2 expected $1, got $got${why:+ — $why}"; wfail=$((wfail+1)); fi
   }
   local c; fresh; for c in shape intent-layout adr-numbering app-tests; do expect ok baseline "$c"; done
   rm "$m/STATUS.md";                                               expect FAIL 'STATUS.md deleted' shape; fresh
@@ -219,11 +219,11 @@ witness_run() {
 
   # lane classifier: scratch repo main A -> ticket branch t1-x C
   local g=$base/g; git init -q "$g"; git -C "$g" symbolic-ref HEAD refs/heads/main
-  gc() { git -C "$g" -c user.name=witness -c user.email=witness@localhost -c commit.gpgsign=false -c core.hooksPath=/dev/null "$@"; }
+  gc() { git -C "$g" -c user.name=witness -c user.email=witness@localhost -c commit.gpgsign=false -c core.hooksPath=/dev/null -c core.autocrlf=false "$@"; }
   printf 'a\n' >"$g/a.md"; gc add a.md; gc commit -qm A
   gc checkout -qb t1-x; printf 'c\n' >"$g/c.md"; gc add c.md; gc commit -qm C
   is() {  # is <label> <command>: a row that passes when the command succeeds
-    wn=$((wn+1)); if eval "$2" >/dev/null 2>&1; then echo "witness ok: $1"; else echo "witness FAIL: $1"; wfail=1; fi
+    wn=$((wn+1)); if eval "$2" >/dev/null 2>&1; then echo "witness ok: $1"; else echo "witness FAIL: $1"; wfail=$((wfail+1)); fi
   }
   is 'lane @configured base not found expected PARTIAL' '(cd "$g" && LANE_TARGET=nope lane_run main..t1-x) | grep -q "PARTIAL RANGE (base branch nope not found)"'
   is 'lane @empty range expected none' 'lane_of "$g" HEAD..HEAD; [ "$lane" = none ]'
@@ -252,10 +252,13 @@ witness_run() {
   one 'plus one code file' 'printf "x\n" >"$g/src/b.js"'
   one 'deletes a file' 'rm "$g/handoffs/h.md"'
   one 'rename code into intent/' 'gc mv src/a.js intent/a.js'
-  one 'symlink under intent/' 'ln -s ../STATUS.md "$g/intent/l"'
+  # a filesystem without symlinks (Git Bash without Developer Mode) makes `ln -s` copy: say so, never count a copy as the row
+  : >"$base/t"; ln -s t "$base/l" 2>/dev/null
+  if [ -L "$base/l" ]; then one 'symlink under intent/' 'ln -s ../STATUS.md "$g/intent/l"'
+  else echo "witness skipped: app-tests @symlink under intent/ — ln -s makes no symlink on this filesystem"; fi
   local nl=$'\n'; one 'newline in a path' 'mkdir "$g/STATUS.md${nl}intent" && printf "x\n" >"$g/STATUS.md${nl}intent/x"'
   echo "$wn witnesses, $wfail unexpected"
-  exit $wfail
+  exit $((wfail > 0))
 }
 
 case ${1:-} in
