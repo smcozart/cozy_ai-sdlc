@@ -43,6 +43,7 @@ lane_of() {  # lane_of <root> <range> -> sets lane (T0|T1|T2|none), lane_why and
   local r=$1 range=$2 st files n never outside del ns lines bin untracked="" o links ver vd
   local -x LC_ALL=C   # paths are bytes: a UTF-8 locale makes tr/cut abort on an invalid byte and drop the hold (#78)
   held=""
+  [[ $range != -* ]] || { lane=none; lane_why="usage: tests/validate.sh --lane [<range>] — a range never starts with - (git diff would read it as an option)"; return 2; }
   # -z output, one record per line: NUL ends the record, a newline inside a path becomes a tab (still a control char)
   st=$(git -C "$r" diff -z --no-renames --name-status "$range" 2>/dev/null | tr '\n\0' '\t\n' | paste - -) || { lane=none; lane_why="git diff $range failed — fix the range"; return 2; }
   # the dirty tree includes untracked files; `git diff HEAD` does not list them, so a new file would otherwise vanish from the lane
@@ -500,6 +501,12 @@ witness_run() {
   # this repo's root script has no --fast or --deadline: dispatch's usage-line test must read it as old
   wn=$((wn+1)); if (set +o pipefail; cd "$m" && bash tests/validate.sh --probe-usage 2>&1 | grep -q -- '--fast'); then echo "witness FAIL: old-script @this repo's root script expected old, got new"; wfail=$((wfail+1))
   else echo "witness ok: old-script @this repo's root script expected old (no --fast in its usage line)"; fi
+  # a range is never an option: `git diff --output=<file>` would write a file (both lane_of copies refuse it)
+  wn=$((wn+1)); out=$(cd "$m" && bash tests/validate.sh --lane --output="$BASE/pwned" 2>&1)
+  if [ $? = 2 ] && grep -q 'usage:' <<<"$out" && [ ! -e "$BASE/pwned" ]; then echo "witness ok: lane @--lane --output=<file> expected usage, exit 2, no file written"
+  else echo "witness FAIL: lane @--lane --output=<file> expected usage, exit 2, no file written — $out"; wfail=$((wfail+1)); fi
+  # the template's witness copies its own file, not the cwd's tests/validate.sh: run in place from this repo, it passes
+  np_expect ok   'the template --witness run in place from this repo passes' "cd '$m' && bash plugin/templates/new-project/files/tests/validate.sh --witness | tail -1 | grep -qE '^[1-9][0-9]* witnesses, 0 unexpected$'"
 
   echo "$wn witnesses, $wfail unexpected"
   exit $((wfail > 0))

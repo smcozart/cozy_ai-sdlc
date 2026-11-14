@@ -13,7 +13,8 @@
 # Requires: bash, git, grep/sed/awk. Offline. Never mutates the working tree.
 set -uo pipefail
 unset GIT_DIR GIT_WORK_TREE  # a hook-exported GIT_DIR makes rev-parse return cwd (tests/), not the root
-SELF=$0; [[ $SELF == /* ]] || SELF=$PWD/$SELF   # this file, for the witness to copy (the cwd's tests/validate.sh may be another script)
+SELF=${BASH_SOURCE[0]:-}   # this file, for the witness to copy (the cwd's tests/validate.sh may be another script); piped: none
+if [ -f "$SELF" ]; then [[ $SELF == /* ]] || SELF=$PWD/$SELF; else SELF=""; fi
 cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)" || exit 2
 CHECKS="shape intent-layout adr-numbering app-tests pr-adr-line"
 
@@ -40,6 +41,7 @@ lane_of() {  # lane_of <root> <range> -> sets lane (T0|T1|T2|none), lane_why and
   local r=$1 range=$2 st files n never outside del ns lines bin untracked="" o links raw
   local -x LC_ALL=C   # paths are bytes: a UTF-8 locale makes tr/cut abort on an invalid byte and drop the hold
   held=""
+  [[ $range != -* ]] || { lane=none; lane_why="usage: tests/validate.sh --lane [<range>] — a range never starts with - (git diff would read it as an option)"; return 2; }
   # -z output, one record per line: NUL ends the record, a newline inside a path becomes a tab (still a control char)
   st=$(git -C "$r" diff -z --no-renames --name-status "$range" 2>/dev/null | tr '\n\0' '\t\n' | paste - -) || { lane=none; lane_why="git diff $range failed — fix the range"; return 2; }
   # the dirty tree includes untracked files; `git diff HEAD` does not list them, so a new file would otherwise vanish from the lane
@@ -166,13 +168,13 @@ app_tests_deadline() {  # its own process group (set -m, bash 3.2 too), so the k
   local r=$1 cmd=$2 rc end=$((SECONDS + deadline)) grace out=""
   at_pid=""; at_out=$(mktemp "${TMPDIR:-/tmp}/app-tests.XXXXXX") || { why="mktemp failed"; return 1; }
   # the script itself killed or interrupted mid-run: kill the group and remove the temp file on the way out
-  trap 'kill -KILL -- "-$at_pid" 2>/dev/null; rm -f "$at_out"' EXIT; trap 'exit 130' INT; trap 'exit 143' TERM
+  trap '! kill -0 -- "-$at_pid" 2>/dev/null || kill -KILL -- "-$at_pid"; rm -f "$at_out"' EXIT; trap 'exit 130' INT; trap 'exit 143' TERM
   set -m; (cd "$r" && exec bash -c "$cmd") </dev/null >"$at_out" 2>&1 & at_pid=$!; set +m   # stdin: never the caller's tty or pipe
   while kill -0 "$at_pid" 2>/dev/null && [ "$SECONDS" -lt "$end" ]; do sleep 1; done
   if kill -0 "$at_pid" 2>/dev/null; then   # the limit: TERM to the group, then KILL after a 5 s grace (a command may ignore TERM)
     kill -TERM -- "-$at_pid" 2>/dev/null; grace=$((SECONDS + 5))
     while kill -0 -- "-$at_pid" 2>/dev/null && [ "$SECONDS" -lt "$grace" ]; do sleep 1; done
-    kill -KILL -- "-$at_pid" 2>/dev/null; wait "$at_pid" 2>/dev/null; rc=deadline
+    ! kill -0 -- "-$at_pid" 2>/dev/null || kill -KILL -- "-$at_pid" 2>/dev/null; wait "$at_pid" 2>/dev/null; rc=deadline   # only a group that still exists
   else wait "$at_pid"; rc=$?; out=$(cat "$at_out"); fi
   rm -f "$at_out"; trap - EXIT INT TERM
   [ "$rc" != deadline ] || { why="deadline ${deadline}s"; return 1; }
@@ -280,7 +282,7 @@ witness_run() {
   local nl=$'\n'; one 'newline in a path' 'mkdir "$g/STATUS.md${nl}intent" && printf "x\n" >"$g/STATUS.md${nl}intent/x"'
 
   # --fast and --deadline through the CLI: a scratch repo with this script; cli <App tests command> <flags...>
-  g=$base/f; fresh; cp -R "$m" "$g"; mkdir "$g/tests"; cp "$SELF" "$g/tests/validate.sh"; git init -q "$g"
+  g=$base/f; fresh; cp -R "$m" "$g"; mkdir "$g/tests"; cp "${SELF:-tests/validate.sh}" "$g/tests/validate.sh"; git init -q "$g"
   cfg() { rm -f "$g/ran" "$g/survived"; { cat "$m/AGENTS.md"; printf '**App tests:** `%s`\n' "$1"; } >"$g/AGENTS.md"; }
   cli() { cfg "$1"; shift; (cd "$g" && bash tests/validate.sh "$@" 2>&1); }
   is '--fast @app tests that pass expected deferred, never ok: app-tests' 'out=$(cli "touch ran" --fast) && grep -qx "deferred: app-tests — CI gate is the proof" <<<"$out" && ! grep -q "^ok: app-tests" <<<"$out"'
@@ -302,6 +304,7 @@ witness_run() {
     [ ! -e "$g/survived" ] && [ -z "$(ls -A "$base/tmp")" ]'
   # under set -m the job keeps the script's stdin; the command reads /dev/null, never the caller's pipe or tty
   is '--deadline 2 @app tests that read stdin expected ok, stdin is /dev/null' 'out=$(sleep 3 | cli "cat >/dev/null" --deadline 2) && grep -qx "ok: app-tests" <<<"$out"'
+  is '--lane @a range that starts with - expected usage, exit 2, no file written' 'out=$(cd "$g" && bash tests/validate.sh --lane --output="$base/pwned" 2>&1); [ $? = 2 ] && grep -q "usage:" <<<"$out" && [ ! -e "$base/pwned" ]'
   is '--fast @a range that starts with - expected usage, exit 2' 'out=$(cd "$g" && bash tests/validate.sh --fast --cached 2>&1); [ $? = 2 ] && grep -q "^usage:" <<<"$out"'
   echo "$wn witnesses, $wfail unexpected"
   exit $((wfail > 0))
