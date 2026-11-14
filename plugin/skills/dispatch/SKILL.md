@@ -136,14 +136,19 @@ pending, timed out, "no checks reported" and inconclusive are all not proof.
 Only a run that printed `ok:` on the head SHA is, plus the one exception the
 gate decides itself, `skipped: app-tests — records-only diff`.
 
-1. **At QC start, one local full run, in the background:** `bash
-   tests/validate.sh --deadline <s> origin/<base>..HEAD`, where `<s>` is the
-   `gate` job's `timeout-minutes` in the repo's own
-   `.github/workflows/gate.yml`, read now, times 60. Record its full output,
-   exit code and lane line. A non-zero exit, the deadline included, is red:
-   send the tail of the output to the same worker. A script without
-   `--deadline` (`grep -q -- '--deadline' tests/validate.sh` fails) is the old
-   script: run it without the flag.
+1. **At QC start, one local full run.** When the repo has a
+   `.github/workflows/gate.yml` and its script is new
+   (`bash tests/validate.sh --probe-usage 2>&1 | grep -q -- '--deadline'`
+   succeeds; the usage line, never the file, tells), run it in the
+   background: `bash tests/validate.sh --deadline <s> origin/<base>..HEAD`,
+   where `<s>` is the `gate` job's `timeout-minutes` in the repo's own
+   `gate.yml`, read now, times 60. An old script, or a repo with no
+   `gate.yml`, runs `bash tests/validate.sh origin/<base>..HEAD` **in the
+   foreground, as before**: the host's own command limit bounds a hang; a
+   background run with no limit could wait forever. Record its full output
+   and exit code. Its lane line is informational only: the lane of record,
+   and the adversary sizing, is step 4's. A non-zero exit, the deadline
+   included, is red: send the tail of the output to the same worker.
 2. **The CI wait, in the background, alone:** `gh pr checks <pr> --watch
    --fail-fast`. Its exit is an event, never a merge.
 3. **The acceptance commands.** One that is the `**App tests:**` command is
@@ -160,8 +165,8 @@ gate decides itself, `skipped: app-tests — records-only diff`.
 **Hosts without background jobs** (no completion notice, for example pi by
 hand): run the CI wait and the local run in the foreground, as before. The
 proof rules are the same; only the wait is not hidden. **No CI:** a repo with
-no `.github/workflows/gate.yml` keeps the old rule: the local run (without
-`--deadline`) is the proof of the suite. A red CI run after handoff goes back
+no `.github/workflows/gate.yml` keeps the old rule: the local run (step 1,
+in the foreground) is the proof of the suite. A red CI run after handoff goes back
 to the same worker. The close pastes the `gate` check lines and run URL, the
 tail of the local run, and the base-lane lines.
 
@@ -318,8 +323,9 @@ developer should never have to guess whether the loop is waiting on them.
 > code you touched. A fix carries the fail-first pair. Do not run the full
 > suite, and skip an acceptance command that is the `**App tests:**` command:
 > CI's `gate` on your head SHA is the proof of the suite (ADR 0007).
-> If `grep -q -- '--fast' tests/validate.sh` fails, it is the old script: run
-> it without `--fast`. A non-zero exit from a script that has `--fast` is a real
+> If `bash tests/validate.sh --probe-usage 2>&1 | grep -q -- '--fast'` fails,
+> it is the old script (its usage line has no `--fast`): run it without
+> `--fast`. A non-zero exit from a script that has `--fast` is a real
 > failure, not a fallback. Update a stale base and rerun before you say you're done: on a
 > branch that is already pushed, `git merge origin/<base>` instead of
 > rebasing (the PR squashes); rebase only a branch that was never pushed.

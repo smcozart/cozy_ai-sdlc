@@ -13,6 +13,7 @@
 # Requires: bash, git, grep/sed/awk. Offline. Never mutates the working tree.
 set -uo pipefail
 unset GIT_DIR GIT_WORK_TREE  # a hook-exported GIT_DIR makes rev-parse return cwd (tests/), not the root
+SELF=$0; [[ $SELF == /* ]] || SELF=$PWD/$SELF   # this file, for the witness to copy (the cwd's tests/validate.sh may be another script)
 cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)" || exit 2
 CHECKS="shape intent-layout adr-numbering app-tests pr-adr-line"
 
@@ -162,14 +163,19 @@ check_app_tests() {  # runs the command on AGENTS.md's **App tests:** line; no l
   out=$(cd "$r" && bash -c "$cmd" 2>&1) || { why="\`$cmd\` failed: $(tail -1 <<<"$out")"; return 1; }
 }
 app_tests_deadline() {  # its own process group (set -m, bash 3.2 too), so the kill reaches every grandchild; no timeout(1), no setsid(1)
-  local r=$1 cmd=$2 o pid rc end=$((SECONDS + deadline)) out
-  o=$(mktemp "${TMPDIR:-/tmp}/app-tests.XXXXXX") || { why="mktemp failed"; return 1; }
-  set -m; (cd "$r" && exec bash -c "$cmd") >"$o" 2>&1 & pid=$!; set +m
-  while kill -0 "$pid" 2>/dev/null; do
-    [ "$SECONDS" -lt "$end" ] || { kill -TERM -- "-$pid" 2>/dev/null; wait "$pid" 2>/dev/null; rm -f "$o"; why="deadline ${deadline}s"; return 1; }
-    sleep 1
-  done
-  wait "$pid"; rc=$?; out=$(cat "$o"); rm -f "$o"
+  local r=$1 cmd=$2 rc end=$((SECONDS + deadline)) grace out=""
+  at_pid=""; at_out=$(mktemp "${TMPDIR:-/tmp}/app-tests.XXXXXX") || { why="mktemp failed"; return 1; }
+  # the script itself killed or interrupted mid-run: kill the group and remove the temp file on the way out
+  trap 'kill -KILL -- "-$at_pid" 2>/dev/null; rm -f "$at_out"' EXIT; trap 'exit 130' INT; trap 'exit 143' TERM
+  set -m; (cd "$r" && exec bash -c "$cmd") </dev/null >"$at_out" 2>&1 & at_pid=$!; set +m   # stdin: never the caller's tty or pipe
+  while kill -0 "$at_pid" 2>/dev/null && [ "$SECONDS" -lt "$end" ]; do sleep 1; done
+  if kill -0 "$at_pid" 2>/dev/null; then   # the limit: TERM to the group, then KILL after a 5 s grace (a command may ignore TERM)
+    kill -TERM -- "-$at_pid" 2>/dev/null; grace=$((SECONDS + 5))
+    while kill -0 -- "-$at_pid" 2>/dev/null && [ "$SECONDS" -lt "$grace" ]; do sleep 1; done
+    kill -KILL -- "-$at_pid" 2>/dev/null; wait "$at_pid" 2>/dev/null; rc=deadline
+  else wait "$at_pid"; rc=$?; out=$(cat "$at_out"); fi
+  rm -f "$at_out"; trap - EXIT INT TERM
+  [ "$rc" != deadline ] || { why="deadline ${deadline}s"; return 1; }
   [ "$rc" = 0 ] || { why="\`$cmd\` failed: $(tail -1 <<<"$out")"; return 1; }
 }
 
@@ -274,8 +280,9 @@ witness_run() {
   local nl=$'\n'; one 'newline in a path' 'mkdir "$g/STATUS.md${nl}intent" && printf "x\n" >"$g/STATUS.md${nl}intent/x"'
 
   # --fast and --deadline through the CLI: a scratch repo with this script; cli <App tests command> <flags...>
-  g=$base/f; fresh; cp -R "$m" "$g"; mkdir "$g/tests"; cp tests/validate.sh "$g/tests/"; git init -q "$g"
-  cli() { rm -f "$g/ran" "$g/survived"; { cat "$m/AGENTS.md"; printf '**App tests:** `%s`\n' "$1"; } >"$g/AGENTS.md"; shift; (cd "$g" && bash tests/validate.sh "$@" 2>&1); }
+  g=$base/f; fresh; cp -R "$m" "$g"; mkdir "$g/tests"; cp "$SELF" "$g/tests/validate.sh"; git init -q "$g"
+  cfg() { rm -f "$g/ran" "$g/survived"; { cat "$m/AGENTS.md"; printf '**App tests:** `%s`\n' "$1"; } >"$g/AGENTS.md"; }
+  cli() { cfg "$1"; shift; (cd "$g" && bash tests/validate.sh "$@" 2>&1); }
   is '--fast @app tests that pass expected deferred, never ok: app-tests' 'out=$(cli "touch ran" --fast) && grep -qx "deferred: app-tests — CI gate is the proof" <<<"$out" && ! grep -q "^ok: app-tests" <<<"$out"'
   is '--fast @app tests expected not run' 'cli "touch ran" --fast >/dev/null && [ ! -e "$g/ran" ]'
   is '--deadline 5 @app tests that pass expected ok' 'out=$(cli true --deadline 5) && grep -qx "ok: app-tests" <<<"$out"'
@@ -284,11 +291,23 @@ witness_run() {
   local slow="sh -c \"sh -c 'sleep 2; touch survived'; true\""
   is '--deadline 1 @a grandchild expected FAIL in 5 s, no process left' 's=$SECONDS; out=$(cli "$slow" --deadline 1 | cat); r=$?; e=$((SECONDS - s)); sleep 3
     [ $r -ne 0 ] && [ $e -le 5 ] && grep -qx "FAIL: app-tests — deadline 1s" <<<"$out" && [ ! -e "$g/survived" ]'
-  is '--deadline @no seconds expected usage, exit 2' '(cd "$g" && bash tests/validate.sh --deadline origin/main..HEAD); [ $? = 2 ]'
+  is '--deadline @no, bad or zero seconds expected its own usage line, exit 2' '(for a in "" origin/main..HEAD 0; do out=$(cd "$g" && bash tests/validate.sh --deadline $a 2>&1); [ $? = 2 ] && grep -qF -- "--deadline <seconds> [<range>" <<<"$out" || exit 1; done)'
+  # a grandchild that ignores TERM: KILL to the group after the 5 s grace; a TERM-only kill waits the 9 s and the file appears
+  local deaf='trap "" TERM; sh -c "sleep 9; touch survived"; true'
+  is '--deadline 1 @a TERM-ignoring grandchild expected FAIL within grace + 5 s, no process left' 's=$SECONDS; out=$(cli "$deaf" --deadline 1 | cat); r=$?; e=$((SECONDS - s)); [ $e -gt 10 ] || sleep $((11 - e))
+    [ $r -ne 0 ] && [ $e -le 10 ] && grep -qx "FAIL: app-tests — deadline 1s" <<<"$out" && [ ! -e "$g/survived" ]'
+  # the script itself killed mid-run (Ctrl-C, QC aborting on a new head): its trap kills the app-tests group and removes its temp file
+  cfg "sh -c \"sh -c 'sleep 4; touch survived'; true\""; mkdir -p "$base/tmp"
+  is '--deadline 30 @the script killed by TERM expected no process left, no temp file' '(cd "$g" && TMPDIR=$base/tmp exec bash tests/validate.sh --deadline 30) & p=$!; sleep 1; kill -TERM $p; wait $p; sleep 4
+    [ ! -e "$g/survived" ] && [ -z "$(ls -A "$base/tmp")" ]'
+  # under set -m the job keeps the script's stdin; the command reads /dev/null, never the caller's pipe or tty
+  is '--deadline 2 @app tests that read stdin expected ok, stdin is /dev/null' 'out=$(sleep 3 | cli "cat >/dev/null" --deadline 2) && grep -qx "ok: app-tests" <<<"$out"'
+  is '--fast @a range that starts with - expected usage, exit 2' 'out=$(cd "$g" && bash tests/validate.sh --fast --cached 2>&1); [ $? = 2 ] && grep -q "^usage:" <<<"$out"'
   echo "$wn witnesses, $wfail unexpected"
   exit $((wfail > 0))
 }
 
+usage() { echo "usage: $0 [--fast|--deadline <seconds>] [<range> [<pr-body-file>]] | --list | --witness | --lane [<range>]" >&2; exit 2; }
 fast=""; deadline=""
 case ${1:-} in
   --fast) fast=1; shift ;;
@@ -296,7 +315,8 @@ case ${1:-} in
   --list) printf '%s\n' $CHECKS; exit 0 ;;
   --witness) witness_run ;;
   --lane) lane_run "${2:-}"; exit $? ;;
-  --*) echo "usage: $0 [--fast|--deadline <seconds>] [<range> [<pr-body-file>]] | --list | --witness | --lane [<range>]" >&2; exit 2 ;;
+  --*) usage ;;
 esac
+[[ ${1:-} != -* ]] || usage   # a range is never an option: git diff would read it as one
 default_run "${1:-}" "${2:-}"
 exit $fail

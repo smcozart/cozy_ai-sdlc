@@ -464,6 +464,8 @@ witness_run() {
   np_expect ok   'scaffold into an empty dir' "bash '$m/plugin/templates/new-project/scaffold.sh' . --owner demo --name demo"
   np_expect ok   'every {{TOKEN}} substituted' "! grep -rIn --exclude-dir=.git '{{' . | grep -v '\${{ github\.'"
   np_expect ok   'scaffolded gate.yml never passes --fast (ADR 0007: CI is the proof of the suite)' '! grep -qF -- --fast .github/workflows/gate.yml'
+  # dispatch's old-script test reads the usage line, never the file (a witness label may name a flag): the scaffolded gate is new
+  np_expect ok   'scaffolded gate reads as new (usage line lists --fast and --deadline)' "(set +o pipefail; bash tests/validate.sh --probe-usage 2>&1 | grep -q -- '--fast') && (set +o pipefail; bash tests/validate.sh --probe-usage 2>&1 | grep -q -- '--deadline')"
   # F2 in the scaffolded gate: the summary counts the ok: lines that ran (pr-adr-line is skipped here)
   np_expect ok   'scaffolded gate passes, summary counts what ran' 'out=$(bash tests/validate.sh) && [ "$(grep -c "^ok: " <<<"$out")" = "$(sed -nE "s/^([0-9]+) ok, [0-9]+ failed.*/\1/p" <<<"$out")" ]'
   np_expect ok   'scaffolded --witness passes' 'bash tests/validate.sh --witness | tail -1 | grep -qE "^[1-9][0-9]* witnesses, 0 unexpected$"'
@@ -495,6 +497,9 @@ witness_run() {
   }
   hold_expect no  "the PR's own script prints its own flagged: no" 'bash tests/validate.sh --lane origin/main..HEAD'
   hold_expect yes "origin/main's script, piped, on the same branch" 'git show origin/main:tests/validate.sh | bash -s -- --lane origin/main..HEAD'
+  # this repo's root script has no --fast or --deadline: dispatch's usage-line test must read it as old
+  wn=$((wn+1)); if (set +o pipefail; cd "$m" && bash tests/validate.sh --probe-usage 2>&1 | grep -q -- '--fast'); then echo "witness FAIL: old-script @this repo's root script expected old, got new"; wfail=$((wfail+1))
+  else echo "witness ok: old-script @this repo's root script expected old (no --fast in its usage line)"; fi
 
   echo "$wn witnesses, $wfail unexpected"
   exit $((wfail > 0))
