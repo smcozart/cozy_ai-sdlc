@@ -22,7 +22,7 @@ Do not review by eye what `tests/validate.sh` enforces (the check list in
 
 ## The loop
 
-- Every diff gets the `mattpocock-skills:code-review` skill's two axes plus an `adversary`
+- Every diff gets the `mattpocock-skills:code-review` skill's two axes (`code-review` on pi) plus an `adversary`
   pass sized to the lane (`tests/validate.sh --lane <range>`): unbounded at
   T2; at T1 bounded to the diff's own claims, MED+ findings only; none at T0,
   where the gate run is the review and the close pastes `adversary: n/a — T0`.
