@@ -48,11 +48,16 @@ jobs:
         working-directory: ${{ runner.temp }}/c
         run: |
           git config --get core.autocrlf || true
-          ! git ls-files --eol | grep 'w/crlf'
+          if git ls-files --eol | grep 'w/crlf'; then exit 1; fi   # `! pipeline` is ignored by bash -e: an if fails the step
           [ "$(git ls-files -s tests/validate.sh | cut -c1-6)" = 100755 ]
       - name: gate
         working-directory: ${{ runner.temp }}/c
         run: bash tests/validate.sh
       - name: witness
         working-directory: ${{ runner.temp }}/c
-        run: bash tests/validate.sh --witness
+        run: |
+          bash tests/validate.sh --witness | tee "$RUNNER_TEMP/w"
+          # the symlink row runs where the OS has symlinks; only Windows may skip it
+          row='app-tests @symlink under intent/'
+          if [ "$RUNNER_OS" = Windows ]; then grep -qE "^witness (ok|skipped): $row" "$RUNNER_TEMP/w"
+          else grep -q "^witness ok: $row" "$RUNNER_TEMP/w"; fi
