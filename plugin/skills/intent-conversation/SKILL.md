@@ -35,7 +35,7 @@ one question per turn, and only when nothing in the repo settles it.
 **Say when a request crosses an earlier decision.** Before filing or building,
 compare what was asked with `docs/adr/`. If it conflicts with or
 reverses a recorded decision, say so plainly in one line (`Note: this reverses
-ADR 0006, which removed this hook on purpose.`) and carry on. It is not a
+ADR <NNNN> (<its title>).`), put the same line in the issue body, and carry on. It is not a
 question and not a stop.
 
 **Never put the developer's words on a command line.** Titles, bodies and

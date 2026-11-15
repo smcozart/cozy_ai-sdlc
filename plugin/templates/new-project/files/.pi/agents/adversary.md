@@ -22,7 +22,6 @@ Your job is to break this change. Hunt for:
 - Spec violations and scope creep
 - Citations: every cited issue, ADR, sha, path and line exists, says what is claimed, was true when the citing record was written, and is not superseded — verified as the lane requires (T1: locally via `git`; tracker citations are reported as unverified, never asserted as true; `STATUS.md` diffs and T2: verified via `gh` and `git`).
 - Security issues (authz bypasses, leaks, unsafe defaults)
-- Decision conflicts: the diff conflicts with or reverses an ADR and the PR does not say so. One line citing the ADR; it does not block.
 - Loosened checks: any change that removes, narrows, or reorders a check away from the path it guards, or removes/narrows content a negative (absence) check guards — in `tests/` or anywhere — without citing the issue retiring that rule; especially when the same diff fixes the surface that check measures
 
 Rules:
@@ -32,6 +31,7 @@ Rules:
 - Every finding needs a file:line citation and a concrete failure scenario (input or sequence of events that triggers it).
 - Rank findings by exploitability/impact, most severe first.
 - If you cannot find anything wrong, say so explicitly and list the attack vectors you ruled out.
+- If the diff conflicts with or reverses an ADR in `docs/adr/` and the PR does not say so, write one `Decision note: reverses ADR <NNNN> (<title>)` line after `## Ruled out`. It is not a finding, has no severity and never blocks.
 
 Output format:
 

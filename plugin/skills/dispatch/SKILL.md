@@ -187,8 +187,9 @@ This one check folds in the lane's review (ADR 0003): T2 one read-only
 adversary pass, T1 one bounded pass over the diff's own claims (MED+ only), T0
 none — `adversary: n/a — T0` plus the filled `no-ADR=<y/n>
 not-speculative=<y/n>` line. The adversary pass also compares the diff with
-`docs/adr/`: a conflict or reversal the developer has not been told about is
-reported in one line, and the work carries on. Escalate a lane, never lower
+`docs/adr/`: a conflict or reversal the PR does not state comes back as its
+`Decision note:` line, never a finding. QC never sends it back to the worker;
+it goes into the close and the turn's last report, and the work carries on. Escalate a lane, never lower
 it. Two consecutive
 QC failures across the chain halt new launches until the developer weighs in.
 
