@@ -1,6 +1,6 @@
 # Decisions are records in the same turn, and intake never waits
 
-**Issue:** #41 · **Status:** accepted (approved by the operator on #41) ·
+**Issue:** #41 · **Status:** accepted (approved by the operator on #41; amended on #171) ·
 **Intent:** arti-build issue #77 ("decisions become records"), narrowed by
 arti-build-plugin issue #82; first landed on branch `claude-harness`.
 
@@ -29,9 +29,22 @@ its own issue with a blocking edge to the one ahead of it (mechanics:
 which let an agent self-merge its own records with no merge policy behind
 them. Here, approval of the decision and merge of the record are separate.
 
+**Amended 2026-11-14 (PR #171; the developer's decision on that PR).** A settled decision is still recorded in the same turn. There is no
+per-conversation records branch or records PR, and a `system-change` intent
+rides its ticket branch like any other intent. A record for a ticket goes on
+that ticket's branch; any other record (an ADR, or a one-line ADR when nothing
+harder is at stake) goes on its own small branch and PR, because `<base>`
+refuses a direct push. The developer's checkout is never switched to write
+one. What is given up is early, separate review of a system-change intent
+before its work; two rules take its place: a ticket that needs that rule is
+filed blocked by it, and the approval comment names the intent at a commit
+SHA. Evidence: decision records cost 2.9x conventions with the records PR;
+the lean build that dropped it cost 1.36x and kept the record 5/5
+(`smcozart/cozysuite_review_evidence`, RESULTS.md).
+
 **Consequences.** The Design item "a settled decision becomes a record in the
 same turn" and the Plan item "one request, one issue" state the rule only.
-Records-worktree mechanics are out of scope until a ticket proposes them. The
+Records-worktree mechanics: `intent-conversation` Move 2b (amendment above). The
 synced trio (`docs/engineering-workflow.md`,
 `plugin/skills/engineering-workflow/SKILL.md`, `README.md`) changed together
 per the sync rule.
