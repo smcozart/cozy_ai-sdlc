@@ -11,8 +11,8 @@ description: >
   that's running", "also need"); when the app's `SYSTEM-INTENT.md` is missing
   or still has placeholder sections; when the developer approves with "go",
   "build it", "do it", "yes, go ahead"; and when they wrap up with "I'm done",
-  "done for today", "wrapping up", "let's stop here", "hand off"; and when they
-  say they reviewed what landed ("reviewed", "I looked at those").
+  "done for today", "wrapping up", "let's stop here", "hand off"; and when
+  they say they reviewed what landed ("I reviewed", "I looked at those").
 ---
 
 **Companion skill:** `dispatch` ships alongside this skill — automatic
@@ -257,9 +257,14 @@ it is written, and stop.
 
 ---
 
-## Move 5 — a review note
+## Move 5 — "I reviewed" becomes the review line
 
-Trigger: the developer says they looked at what landed, in any words. Append
-`reviewed through <sha> on <date>` to `STATUS.md` (`<sha>` as they name it, else
-`origin/<base>`), commit on this branch (on `<base>`, a new branch and a PR
-merged on green), and say so in one line. Never ask for this.
+Trigger: the developer says, in their own words, that they reviewed what
+landed. Never ask for it, and never write it on anyone else's word.
+
+Append `reviewed through <40-hex sha> on <YYYY-MM-DD>` to `STATUS.md`: the
+sha they name, else `git fetch origin && git rev-parse origin/<base>`. Never
+switch the developer's checkout: `git worktree add .factory/worktrees/review-<date>
+-b review-<date> origin/<base>`, commit only `STATUS.md` with their words in
+the message, push, open one PR, and merge it on a green `gate` (`flagged:
+no`); then retire the worktree and branch. Say so in one line.

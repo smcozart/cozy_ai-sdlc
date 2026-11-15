@@ -18,10 +18,13 @@ A diff merges through a PR into `{{BASE}}`. Every PR runs the gate
 | Change | Who merges |
 |---|---|
 | `flagged: yes` from `tests/validate.sh --lane`: a diff that touches `tests/validate.sh`, `.github/workflows/**` or `.githooks/**` — the files that check other files | A human, after a green gate and a named checkoff in the PR; the PR carries the `flagged-risk` label |
-| Everything else | Merges on green; review after the merge is optional sampling |
+| Everything else | Merges on green; a diff on a review path — skills (`skills/` at any depth), `docs/adr/`, `AGENTS.md`, `REVIEW.md` and `SYSTEM-INTENT.md` — owes a review after the merge, and it is not skipped |
 
-- A developer who sampled what landed says so in chat, and a
-  `reviewed through <sha> on <date>` line is added to `STATUS.md`.
+- The developer says in chat that they reviewed; the agent appends
+  `reviewed through <40-hex sha> on <date>` to `STATUS.md` in a commit that
+  changes only that file; a line added by any other commit acknowledges
+  nothing. It covers exactly the first-parent history of `{{BASE}}` up to
+  that sha, never what merged while the line was in review.
 - Every PR body carries an `ADR:` line (`ADR: none` when there is no
   decision); the gate's `pr-adr-line` check fails a body without it.
 - A tag is a release step, never part of a merge.

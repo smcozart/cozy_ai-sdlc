@@ -1,6 +1,7 @@
 # Auto-merge on green; only the files that check other files hold
 
-**Issue:** #39 · **Status:** accepted (approved by the operator on #39,
+**Issue:** #39 · **Status:** accepted (approved by the operator on #39; review
+list narrowed by the operator on #173, 2026-11-14;
 2026-10-02; hold list amended by the operator on #128, 2026-10-18,
 to add the consumer gate; amended on #132, 2026-10-18, to keep the
 list in one place; amended on #147, 2026-10-18, so the acknowledgement is
@@ -64,15 +65,19 @@ written in the line, never the position of the commit that adds it; a line
 added by a commit that changes anything else acknowledges nothing; and
 `STATUS.md` is the review log only. The decision is unchanged.
 
-**Amended (proposed 2026-11-08, branch `windows/lean-post-merge-review-optional`;
-takes effect only on adoption, which is the operator decision this ADR's
-prohibition requires).** Post-hoc review becomes optional sampling, not owed
-on every diff. `cmu` stops listing "review owed". A developer who sampled what
-landed says so in chat and the agent adds a `reviewed through <sha> on <date>`
-line to `STATUS.md`; the 40-hex sha, the `STATUS.md`-only commit and hand
-editing are no longer required. ADR 0003's T0 human checkoff goes with it. The
-hold list and the `ADR:` line are unchanged. What is given up: nothing now
-guarantees a human ever reads an unheld diff.
+**Amended 2026-11-14 (PR #173; the developer's decision on that PR).**
+Post-hoc review stays owed, narrowed to the files that steer later agents:
+skills (`skills/` at any depth), `docs/adr/`, `AGENTS.md`, `REVIEW.md` and `SYSTEM-INTENT.md`. `cmu` lists only those as "review owed"; every other
+unheld diff lands on green with its pasted gate evidence as the record. The
+acknowledgement gets easier: the developer says in chat that they reviewed,
+and the agent appends `reviewed through <40-hex sha> on <date>` (the sha they
+name, else `origin/<base>` at that moment) to `STATUS.md` in a commit that
+changes only that file, with their words in the commit message. The sha rule
+and the `STATUS.md`-only rule are unchanged. ADR 0003's T0 checkoff ends with
+it, since no T0 path is a review path. What is given up: no human is owed a
+read of app code that lands on green. Rejected: optional sampling of
+everything (nothing would then guarantee a human reads a change to the rules
+agents follow).
 
 **Rejected.** *Keep the checkoff on every flagged-risk surface*: it did not
 hold in practice and it fails open. *Hold the broad flagged-risk set*
