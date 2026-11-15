@@ -96,9 +96,7 @@ the app's own vocabulary).
 Then write `intent/<n>-<slug>/intent.md` from `intent/TEMPLATE.md`, filled in
 from the same words, with `**Issue:** #<n>`. The issue
 number only exists after the create, so cite the intent path in the body with
-`gh issue edit <n> --body-file <file>` once the folder is named. When unsure
-whether a request is a `system-change`, choose `system-change`: it keeps the
-early records review.
+`gh issue edit <n> --body-file <file>` once the folder is named.
 
 Also write a `**Touches:**` line — a JSON array of repo-relative paths/globs
 this work will change (`["backend/src/routes.ts", "backend/test/**"]`). Use
@@ -106,8 +104,7 @@ what the repo already tells you about the surface named; when you cannot
 bound it yet, leave it empty or omit it rather than guess — `dispatch` reads
 a missing or unbounded list as "unknown" and runs that ticket alone.
 
-**The intent's `**Type:**` picks where it lands.** `feature` or `bug`: `git
-fetch origin`, then `git worktree add .factory/worktrees/t<n>-<slug> -b
+**The intent rides its ticket branch.** `git fetch origin`, then `git worktree add .factory/worktrees/t<n>-<slug> -b
 t<n>-<slug> origin/<base>` (`<base>` as in Move 2b; never the developer's
 checkout), commit `intent/<n>-<slug>/intent.md` there, then, chained so a
 failed push deletes nothing: `git push -u origin t<n>-<slug> && git worktree
@@ -115,8 +112,6 @@ remove .factory/worktrees/t<n>-<slug> && git branch -D t<n>-<slug>`, with no
 PR. Git refuses a branch that another worktree holds, and the worker checks
 it out. The worker continues on that branch, so the intent and the code land in one PR, and its QC reviews the intent first: a
 HIGH defect in the intent is fixed first, then the code, in that same PR.
-`system-change`: the intent goes in the records PR (Move 2b), which merges
-before "go".
 
 **An issue never stands without its intent.** If anything after the create
 fails (the folder exists, the write is denied, the session is cut), comment on
@@ -129,8 +124,8 @@ disk.
 Do not name a lane: the gate computes it over the diff at close
 (`tests/validate.sh --lane`, escalate-only).
 
-Reply in **one sentence**: the issue number, the intent path and, for a
-`feature` or `bug`, its branch. For example:
+Reply in **one sentence**: the issue number, the intent path and its branch.
+For example:
 
 > Filed #47 — a fleet-utilisation column on the dashboard; intent is in
 > `intent/47-fleet-utilisation-column/intent.md` on `t47-fleet-utilisation-column`.
@@ -147,6 +142,9 @@ id of the blocker>`, the form `dispatch` Move 1 reads) **and** a `Blocked by:
 line alone is invisible to `dispatch` and would launch the blocked ticket
 early. If filing this idea requires a foundation ticket that does not exist
 yet, file it too, say so in one line, and keep taking input.
+A ticket that needs a rule a `system-change` ticket sets is filed blocked by
+that ticket, the same two ways: the rule merges with its work PR, so the edge
+is what keeps the dependent from starting first.
 
 ---
 
@@ -156,46 +154,35 @@ Trigger: the developer settles something in conversation — "let's go with
 X", "lock that in", "we decided", or a direct answer to the session's own
 question.
 
-Route it before the next question, in the same turn:
+Write the record before the next question, in the same turn:
 
 | What was settled | Where it lands |
 |---|---|
 | A hard-to-reverse or authority rule (who decides, which queues exist, who may assign) | A new ADR, this repo's frontmatter and status-history rules |
-| A requirement or design detail | The approved spec's matching section |
-| Detail that belongs to one ticket (columns, a saved view, a permitted action) | That issue's body |
+| Any other decision, with no spec or ticket to hold it | A one-line ADR: the title, an `**Issue:**` line (`none` when there is no issue), one sentence saying what was decided |
+| A requirement or design detail, when an approved spec exists | That spec's matching section |
+| Detail that belongs to a ticket that exists (columns, a saved view, a permitted action) | That issue's body |
 
 **Never switch the developer's own checkout** (`dispatch` Move 5's rule) to
-write a record. A record for one ticket that is not in flight and whose
-`origin/t<n>-<slug>` exists (Move 2) goes on that branch, the Move 2 way
-(`git worktree add .factory/worktrees/t<n>-<slug> t<n>-<slug>`, commit, then
-the same chained push and remove), with no records PR. Every other record: on
-first use this conversation: `git fetch origin`, then
-create one per-conversation records worktree: `git worktree add
-.factory/records/<YYYY-MM-DD> -b records-<YYYY-MM-DD> origin/<base>`, where
-`<base>` is the base branch named in `AGENTS.md` (`**Base branch:**`, default
-`main`) — the fetch first so the branch is never cut from a stale `<base>`.
-If that branch name already exists (a prior conversation today, or this one resuming after
-a merge), suffix `-2`, `-3`, … and open a fresh worktree there; never reuse a
-worktree or branch whose PR already merged. Write the file there — through
-files you write, never the developer's words on a command line — commit and
-push after every decision, and keep **one open PR** to `<base>` that
-accumulates this conversation's records, with a `Records for: #<n> #<m>`
-line in the commit message and PR body naming every issue a record
-references. Reply in one line once the push lands: "Recorded:
-`docs/adr/<NNNN>-priority-authority.md`; spec §Design concerns; #6 body (PR #n)" — then ask the
-next question.
+write a record. A record for a ticket whose `origin/t<n>-<slug>` exists and
+that no worker holds goes on that branch, the Move 2 way (`git worktree add
+.factory/worktrees/t<n>-<slug> t<n>-<slug>`, commit, then the same chained
+push and remove). Every other file record (no ticket branch, or a worker holds
+it) goes on its own small branch: `git fetch origin && git worktree add
+.factory/worktrees/adr-<slug> -b adr-<slug> origin/<base>` (`<base>`: the
+`**Base branch:**` line in `AGENTS.md`, default `main`; `<base>` refuses a
+direct push), commit only the record, push, and open one PR. A new ADR takes
+the next free number; if `adr-numbering` fails after the branch is updated
+from `<base>` (another ADR merged first), renumber it. Run `dispatch` Move 5
+QC on it; it merges on a green `gate` while its `flagged:` line says
+`no`, then retire the worktree and branch (`dispatch` Move 6). There is no
+per-conversation records branch. Settling approves the decision, not its
+merge (ADR 0004).
 
-Settling approves the decision, not its merge (ADR 0004). Run Move 5 QC
-(`dispatch`) on the records PR yourself. It is on ADR 0005's post-hoc review
-list: merge it on a green required `gate` check only while its `flagged:`
-line says `no`; at `flagged: yes` a human merges. It merges before labelling
-a ticket that depends on a record in it, at wrap-up (Move 4), or when asked. Its lane is the gate's: ADR
-and spec edits sit outside the light set, so T2 — one read-only adversary
-pass, folded into that QC. Once it merges, retire the worktree and branch
-(`dispatch` Move 6) rather than leaving it for reuse; the next decision opens
-a fresh one. If the record's ticket is already in flight (a worker holds it),
-also comment the record's PR link on that issue in one line, so its worker
-and QC read it without waiting on this PR to merge.
+Reply in one line once it is pushed ("Recorded:
+`docs/adr/<NNNN>-priority-authority.md` (PR #n)"), then ask the next question.
+If the record's ticket is in flight, also comment the record's PR link on that
+issue in one line, so its worker and QC read it before it merges.
 
 Never park a settled decision in chat. In particular, never say any of:
 
@@ -216,16 +203,17 @@ Before anything: the intent file is on `<base>`, or on `origin/t<n>-<slug>`
 (Move 2), and cites this issue, and the issue has
 no open blockers (`gh issue view <n>` — a `Blocked by:` line names them), and it
 is neither closed nor labelled `wontfix` — if it is, someone took it off the
-frontier deliberately; say so in one line and do not label. **No open records
-PR names this issue** (Move 2b's `Records for:` line) — that PR merges first (Move 2b),
-so the worker starts from the record, not before it. If the
+frontier deliberately; say so in one line and do not label. If the
 intent still carries an open question, ask it now — one question — and put the
 answer (or their "go anyway") in the same comment. If a precondition fails, say
 so in one line and do not label.
 
-Write the approval to a file — `Approved by <developer> at <UTC timestamp>:`
-then their words verbatim — and post it **before** the label, always in this
-order:
+Write the approval to a file — `Approved by <developer> at <UTC timestamp>:`,
+their words verbatim, then `Intent: intent/<n>-<slug>/intent.md at <sha>`
+(`git fetch origin && git rev-parse origin/t<n>-<slug>`, or `origin/<base>`
+when the intent is
+there), so the approval names the text it approved — and post it **before**
+the label, always in this order:
 
 ```bash
 gh issue comment <n> --body-file <file>
