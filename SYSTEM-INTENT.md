@@ -13,7 +13,9 @@ instigate, direct, and govern; agents take the center of the loop.**
 ## Enduring purpose
 
 1. Every unit of work starts from a written intent (the "why") that a human
-   has approved — no intent, no work.
+   has approved — no intent, no work. For a `feature` or `bug`, the
+   developer's explicit request, saved verbatim with the intent's SHA, is that
+   approval; a `system-change` takes an explicit "go" (ADR 0004).
 2. The tracker (GitHub Issues) is the system of record: issue numbers join
    humans, sessions, and machines; blocking edges and triage labels decide
    flow.

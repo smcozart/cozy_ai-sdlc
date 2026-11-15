@@ -49,9 +49,11 @@ Formalized in issue [#2](https://github.com/smcozart/cozyharness/issues/2).
    [`SYSTEM-INTENT.md`](../SYSTEM-INTENT.md); every work-item intent is checked
    against it. Conflicts either amend SYSTEM-INTENT.md deliberately or rewrite
    the intent.
-5. **Approval.** Normal work: conversational — the issue author/maintainer
-   approves scope in the issue thread (`ready-for-agent` on the ticket is the
-   recorded approval to proceed). High-risk work (security, data loss,
+5. **Approval.** Normal work (`feature`, `bug`): the developer's explicit
+   request is the approval, in any phrasing, with no separate "go" (ADR
+   0004). A `system-change` intent still needs an explicit "go". Their words
+   are saved to the issue thread automatically and `ready-for-agent` follows.
+   High-risk work (security, data loss,
    irreversible migrations, public contracts): explicit review — a designated
    human reviewer signs off in the issue before Build, and the decision gets
    an ADR.

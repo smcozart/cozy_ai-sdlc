@@ -12,7 +12,8 @@ The process itself — the six-phase loop (Plan → Design → Build → Test �
 _Avoid_: framework, platform, pipeline (the pipeline is only the phase order)
 
 **intent**:
-The written, human-approved "why" behind a unit of work. Two levels exist:
+The written, human-approved "why" behind a unit of work (for a `feature` or
+`bug`, the developer's saved request is the approval; ADR 0004). Two levels exist:
 SYSTEM-INTENT and work-item intent. No approved intent, no work.
 _Avoid_: ticket description, prompt, requirements doc
 

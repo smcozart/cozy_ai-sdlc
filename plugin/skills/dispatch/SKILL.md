@@ -19,7 +19,7 @@ description: >
 
 Turn "approved" into "built, proven, merged" without being asked twice. The
 orchestrating session runs this skill; it never implements a ticket in its own
-checkout. A plain "go" approves only the resolved intent in front of you, never
+checkout. A request or a plain "go" approves only the issue it is about, never
 the whole unapproved backlog — that gate is `intent-conversation` Move 3.
 
 **Companion skill:** `cmu` reports what landed, what is in flight, and what

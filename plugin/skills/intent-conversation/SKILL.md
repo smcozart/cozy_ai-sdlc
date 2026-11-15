@@ -9,8 +9,8 @@ description: >
   you"); when they settle a decision ("let's go with", "lock that in", "we
   decided"); when they keep filing while other work is in flight ("while
   that's running", "also need"); when the app's `SYSTEM-INTENT.md` is missing
-  or still has placeholder sections; when the developer approves with "go",
-  "build it", "do it", "yes, go ahead"; and when they wrap up with "I'm done",
+  or still has placeholder sections; when the developer asks for a change or
+  approves with "go", "build it", "do it", "yes, go ahead"; and when they wrap up with "I'm done",
   "done for today", "wrapping up", "let's stop here", "hand off".
 ---
 
@@ -38,8 +38,8 @@ comments go through files you write with the Write tool (`--body-file <file>`,
 land in the record verbatim, never in the shell.
 
 **Every turn that stops ends on one `Needs you:` line — the last line, always.**
-It names the one thing waiting on the developer and the exact words that
-unblock it (`Needs you: approve #7 — say "go"`), or says `Needs you: nothing —
+It names the one thing waiting on the developer and the answer that
+unblocks it (`Needs you: which format should the export use, CSV or Excel?`), or says `Needs you: nothing —
 <what is running and when you will report>`. A PR held for a human gets the
 fuller form in `dispatch` Move 5. Never bury the ask mid-message, never end on
 a status, never end on a question the repo could have answered.
@@ -124,7 +124,8 @@ disk.
 Do not name a lane: the gate computes it over the diff at close
 (`tests/validate.sh --lane`, escalate-only).
 
-Reply in **one sentence**: the issue number, the intent path and its branch.
+Reply in **one sentence**: the issue number, the intent path and its branch;
+a `feature` or `bug` request goes on to Move 3 in the same turn.
 For example:
 
 > Filed #47 — a fleet-utilisation column on the dashboard; intent is in
@@ -195,25 +196,39 @@ A batch update is filed only when the developer asks for one.
 
 ---
 
-## Move 3 — "go" is the approval, and the comment comes first
+## Move 3 — the request is the approval, and the comment comes first
 
-Trigger: "go", "build it", "do it", "yes, go ahead".
+Trigger: the developer asked for a `feature` or `bug` change. "Add X", "fix
+Y", "please update what's already there", any phrasing that asks for it: there
+is no separate "go". A `system-change` intent (the intent's `**Type:**` line,
+as `intent/TEMPLATE.md` defines it: how the repo is built, checked, reviewed
+or released) still needs an explicit "go" on the written intent. When unsure
+whether a request is a `system-change`, it is one. A later "go",
+"build it" or "yes, go ahead" approves an issue filed earlier.
+
+Not a request: a question, thinking aloud ("what if", "should we"), asking to
+plan or only look, or "don't build yet". Those stop at the filed issue. High
+risk (security, data loss, irreversible migration, public contract) still
+follows `docs/engineering-workflow.md` Plan §5: a named reviewer's sign-off in
+the issue and an ADR, before the label.
 
 Before anything: the intent file is on `<base>`, or on `origin/t<n>-<slug>`
 (Move 2), and cites this issue, and the issue has
 no open blockers (`gh issue view <n>` — a `Blocked by:` line names them), and it
 is neither closed nor labelled `wontfix` — if it is, someone took it off the
 frontier deliberately; say so in one line and do not label. If the
-intent still carries an open question, ask it now — one question — and put the
-answer (or their "go anyway") in the same comment. If a precondition fails, say
-so in one line and do not label.
+intent still carries an open question that changes what gets built, ask it
+now — one question — and put the answer in the same comment. If a precondition
+fails, say so in one line and do not label — except an open blocker alone:
+then post the comment and the label anyway, because `dispatch` Move 1 skips an
+issue with an open blocker, so the request is kept and waits for it.
 
-Write the approval to a file — `Approved by <developer> at <UTC timestamp>:`,
-their words verbatim, then `Intent: intent/<n>-<slug>/intent.md at <sha>`
-(`git fetch origin && git rev-parse origin/t<n>-<slug>`, or `origin/<base>`
-when the intent is
-there), so the approval names the text it approved — and post it **before**
-the label, always in this order:
+Without asking, write the approval to a file — `Approved by <developer> at <UTC
+timestamp>:`, their words verbatim (the request itself when that is the
+approval), then `Intent: intent/<n>-<slug>/intent.md at <sha>` (`git fetch
+origin && git rev-parse origin/t<n>-<slug>`, or `origin/<base>` when the
+intent is there), so the approval names the text it approved — and post it
+**before** the label, always in this order:
 
 ```bash
 gh issue comment <n> --body-file <file>
@@ -223,7 +238,7 @@ gh issue edit <n> --add-label ready-for-agent --remove-label needs-triage
 The comment is the approval record. **Never apply `ready-for-agent` without it.**
 If the comment fails, stop and say so — do not label. If the comment succeeded
 and the label command then fails, say so in one line: the approval stands on the
-issue, the label is not set, and it is applied on the next "go". Do not retry
+issue, the label is not set, and it is applied on the next turn. Do not retry
 silently, and do not report it as dispatchable.
 
 Then say in one line that it is approved and dispatchable, and load the

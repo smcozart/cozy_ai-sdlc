@@ -22,7 +22,8 @@ in hours, and **humans stay above the loop: instigating, directing, governing.**
 ```
 Plan ────► issue-first intake, then intent: the why (outcome, scope,
           non-goals) at intent/<issue-number>-<slug>/intent.md,
-          aligned with SYSTEM-INTENT.md — human-approved; intake never waits;
+          aligned with SYSTEM-INTENT.md — the request is the approval
+          (a system-change still takes "go"); intake never waits;
           the intent rides the work PR
 Design ──► spec.md beside the intent; ADRs over the bar; vertical-slice
           tickets as child issues with blocking edges; approval gate;
