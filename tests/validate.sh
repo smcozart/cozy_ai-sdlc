@@ -43,6 +43,7 @@ lane_of() {  # lane_of <root> <range> -> sets lane (T0|T1|T2|none), lane_why and
   local r=$1 range=$2 st files n never outside del ns lines bin untracked="" o links ver vd
   local -x LC_ALL=C   # paths are bytes: a UTF-8 locale makes tr/cut abort on an invalid byte and drop the hold (#78)
   held=""
+  [[ $range != -* ]] || { lane=none; lane_why="usage: tests/validate.sh --lane [<range>] — a range never starts with - (git diff would read it as an option)"; return 2; }
   # -z output, one record per line: NUL ends the record, a newline inside a path becomes a tab (still a control char)
   st=$(git -C "$r" diff -z --no-renames --name-status "$range" 2>/dev/null | tr '\n\0' '\t\n' | paste - -) || { lane=none; lane_why="git diff $range failed — fix the range"; return 2; }
   # the dirty tree includes untracked files; `git diff HEAD` does not list them, so a new file would otherwise vanish from the lane
@@ -274,9 +275,9 @@ expect() {  # expect <ok|FAIL> <label> <check> <arg>
   local want=$1 label=$2 name=$3 arg=$4; wn=$((wn+1))
   verdict "$name" "$arg"
   if [ "$v" = "$want" ]; then echo "witness ok: $name @$label expected $want${why:+ ($why)}"
-  else echo "witness FAIL: $name @$label expected $want, got $v${why:+ — $why}"; wfail=1; fi
+  else echo "witness FAIL: $name @$label expected $want, got $v${why:+ — $why}"; wfail=$((wfail+1)); fi
 }
-have_sha() { git cat-file -e "$1^{commit}" 2>/dev/null || { echo "witness FAIL: sha $1 not in history (git fetch --unshallow)"; wfail=1; return 1; }; }
+have_sha() { git cat-file -e "$1^{commit}" 2>/dev/null || { echo "witness FAIL: sha $1 not in history (git fetch --unshallow)"; wfail=$((wfail+1)); return 1; }; }
 showfile() {  # showfile <sha> <path> -> sets T (no subshell: a failed git show must abort, never a vacuous FAIL)
   T=$BASE/$1-${2##*/}
   git show "$1:$2" >"$T" 2>/dev/null || { echo "!! git show $1:$2 failed"; exit 2; }
@@ -303,7 +304,7 @@ witness_run() {
     local got=FAIL; wn=$((wn+1))
     (cd "$m" && GIT_DIR=$(git rev-parse --git-dir) bash tests/validate.sh HEAD..HEAD >/dev/null 2>&1) && got=ok
     if [ "$got" = "$1" ]; then echo "witness ok: gate @$2 expected $1"
-    else echo "witness FAIL: gate @$2 expected $1, got $got"; wfail=1; fi
+    else echo "witness FAIL: gate @$2 expected $1, got $got"; wfail=$((wfail+1)); fi
   }
   gitdir_row ok GIT_DIR-linked-worktree
   grep -v '^unset GIT_DIR GIT_WORK_TREE' "$m/tests/validate.sh" > "$m/t" && mv "$m/t" "$m/tests/validate.sh"
@@ -315,7 +316,7 @@ witness_run() {
     lines=$(grep -c '^ok: ' <<<"$out"); sum=$(grep -oE '^[0-9]+ ok, [0-9]+ failed' <<<"$out" | head -1); sum=${sum%% *}
     if { [ "$1" = ok ] && [ "$sum" = "$lines" ]; } || { [ "$1" = FAIL ] && [ "$sum" != "$lines" ]; }
     then echo "witness ok: summary @$2 expected $1 (summary=$sum, ok-lines=$lines)"
-    else echo "witness FAIL: summary @$2 expected $1, got summary=$sum vs ok-lines=$lines"; wfail=1; fi
+    else echo "witness FAIL: summary @$2 expected $1, got summary=$sum vs ok-lines=$lines"; wfail=$((wfail+1)); fi
   }
   sum_row ok 'baseline — summary counts what ran'
   sed -i.bak 's/echo "\$ran_ok ok, \$fail_count failed/echo "99 ok, \$fail_count failed/' "$m/tests/validate.sh" && rm -f "$m/tests/validate.sh.bak"
@@ -330,7 +331,7 @@ witness_run() {
   expect ok baseline skill-links "$m"
   rm "$m/.claude/skills/cmu"; git -C "$m" -c core.symlinks=false checkout -- .claude/skills/cmu
   expect FAIL 'mutation(link checked out as a text file)' skill-links "$m"; reset_wt "$m"
-  [[ $why == *'enable symlinks'* ]] || { echo "witness FAIL: skill-links @mutation(link checked out as a text file) expected the message to name the fix (enable symlinks), got: $why"; wfail=1; }
+  [[ $why == *'enable symlinks'* ]] || { echo "witness FAIL: skill-links @mutation(link checked out as a text file) expected the message to name the fix (enable symlinks), got: $why"; wfail=$((wfail+1)); }
   ln -sfn ../../plugin/skills/dispatch "$m/.claude/skills/cmu"
   expect FAIL 'mutation(link to the wrong skill)' skill-links "$m"; reset_wt "$m"
   rm -rf "$m/plugin/skills/cmu"
@@ -377,12 +378,12 @@ witness_run() {
   lane_expect() {  # lane_expect <T0|T1|T2|none> <label> <root> <range>
     wn=$((wn+1)); lane_of "$3" "$4"
     if [ "$lane" = "$1" ]; then echo "witness ok: lane @$2 expected $1 ($lane_why)"
-    else echo "witness FAIL: lane @$2 expected $1, got $lane — $lane_why"; wfail=1; fi
+    else echo "witness FAIL: lane @$2 expected $1, got $lane — $lane_why"; wfail=$((wfail+1)); fi
   }
   flag_expect() {  # flag_expect <yes|no> <label> <root> <range> — the merge hold (#39)
     local got=no; wn=$((wn+1)); lane_of "$3" "$4"; [ -z "$held" ] || got=yes
     if [ "$got" = "$1" ]; then echo "witness ok: flagged @$2 expected $1${held:+ (${held% })}"
-    else echo "witness FAIL: flagged @$2 expected $1, got $got"; wfail=1; fi
+    else echo "witness FAIL: flagged @$2 expected $1, got $got"; wfail=$((wfail+1)); fi
   }
   for s in 87123aa f66d79b 1c8067a a7f7523; do have_sha "$s" || exit 2; done
   lane_expect T1 87123aa . '87123aa~1..87123aa'   # runbook only: in the light set, floors at T1 (a human runs it)
@@ -446,7 +447,7 @@ witness_run() {
     local out got=valid; wn=$((wn+1)); out=$(cd "$g" && LANE_TARGET=$3 lane_run "$4" 2>&1)
     [[ $out == *PARTIAL* ]] && got=PARTIAL
     if [ "$got" = "$1" ]; then echo "witness ok: lane-base @$2 expected $1"
-    else echo "witness FAIL: lane-base @$2 expected $1, got $got — $out"; wfail=1; fi
+    else echo "witness FAIL: lane-base @$2 expected $1, got $got — $out"; wfail=$((wfail+1)); fi
   }
   base_expect PARTIAL 'LANE_TARGET=main, branch-on-branch range' main cozyharness_full_workflow..t1-x
   base_expect valid   'AGENTS.md base, branch-on-branch range' '' cozyharness_full_workflow..t1-x
@@ -458,11 +459,14 @@ witness_run() {
   np_expect() {  # np_expect <ok|FAIL> <label> <command run in the scaffolded dir $np>
     local got=FAIL out; wn=$((wn+1)); out=$(cd "$np" && eval "$3" 2>&1) && got=ok
     if [ "$got" = "$1" ]; then echo "witness ok: new-project @$2 expected $1"
-    else echo "witness FAIL: new-project @$2 expected $1, got $got — $(tail -3 <<<"$out" | tr '\n' ' ')"; wfail=1; fi
+    else echo "witness FAIL: new-project @$2 expected $1, got $got — $(tail -3 <<<"$out" | tr '\n' ' ')"; wfail=$((wfail+1)); fi
   }
   local np=$BASE/np; mkdir -p "$np"; git init -q "$np"
   np_expect ok   'scaffold into an empty dir' "bash '$m/plugin/templates/new-project/scaffold.sh' . --owner demo --name demo"
   np_expect ok   'every {{TOKEN}} substituted' "! grep -rIn --exclude-dir=.git '{{' . | grep -v '\${{ github\.'"
+  np_expect ok   'scaffolded gate.yml never passes --fast (ADR 0007: CI is the proof of the suite)' '! grep -qF -- --fast .github/workflows/gate.yml'
+  # dispatch's old-script test reads the usage line, never the file (a witness label may name a flag): the scaffolded gate is new
+  np_expect ok   'scaffolded gate reads as new (usage line lists --fast and --deadline)' "(set +o pipefail; bash tests/validate.sh --probe-usage 2>&1 | grep -q -- '--fast') && (set +o pipefail; bash tests/validate.sh --probe-usage 2>&1 | grep -q -- '--deadline')"
   # F2 in the scaffolded gate: the summary counts the ok: lines that ran (pr-adr-line is skipped here)
   np_expect ok   'scaffolded gate passes, summary counts what ran' 'out=$(bash tests/validate.sh) && [ "$(grep -c "^ok: " <<<"$out")" = "$(sed -nE "s/^([0-9]+) ok, [0-9]+ failed.*/\1/p" <<<"$out")" ]'
   np_expect ok   'scaffolded --witness passes' 'bash tests/validate.sh --witness | tail -1 | grep -qE "^[1-9][0-9]* witnesses, 0 unexpected$"'
@@ -482,8 +486,30 @@ witness_run() {
   np=$BASE/np
   np_expect ok   'second scaffold writes nothing, skips every path' "out=\$(bash '$m/plugin/templates/new-project/scaffold.sh' . --owner demo --name demo) && ! grep -qv '^skip: ' <<<\"\$out\" && [ \"\$(grep -c . <<<\"\$out\")\" -eq \"\$(cd '$m/plugin/templates/new-project/files' && find . -type f | wc -l)\" ]"
 
+  # #176: QC reads the hold with origin/<base>'s script, never the PR's own (ADR 0007). Scratch repo: main = this
+  # script; branch t1-x rewrites it to print `flagged: no`. The first row shows the attack works on the PR's own script.
+  g=$BASE/hold; git init -q "$g"; gc symbolic-ref HEAD refs/heads/main; mkdir "$g/tests"; cp "$m/tests/validate.sh" "$g/tests/"
+  gc add -A; gc commit -qm base; gc update-ref refs/remotes/origin/main HEAD
+  gc checkout -qb t1-x; printf 'echo "lane: T0 trivial"; echo "flagged: no"\n' >"$g/tests/validate.sh"; gc commit -qam 'clear my own hold'
+  hold_expect() {  # hold_expect <yes|no> <label> <command run in $g>
+    local got=no; wn=$((wn+1)); (cd "$g" && eval "$3") 2>/dev/null | grep -q '^flagged: yes' && got=yes
+    if [ "$got" = "$1" ]; then echo "witness ok: base-lane @$2 expected flagged: $1"
+    else echo "witness FAIL: base-lane @$2 expected flagged: $1, got $got"; wfail=$((wfail+1)); fi
+  }
+  hold_expect no  "the PR's own script prints its own flagged: no" 'bash tests/validate.sh --lane origin/main..HEAD'
+  hold_expect yes "origin/main's script, piped, on the same branch" 'git show origin/main:tests/validate.sh | bash -s -- --lane origin/main..HEAD'
+  # this repo's root script has no --fast or --deadline: dispatch's usage-line test must read it as old
+  wn=$((wn+1)); if (set +o pipefail; cd "$m" && bash tests/validate.sh --probe-usage 2>&1 | grep -q -- '--fast'); then echo "witness FAIL: old-script @this repo's root script expected old, got new"; wfail=$((wfail+1))
+  else echo "witness ok: old-script @this repo's root script expected old (no --fast in its usage line)"; fi
+  # a range is never an option: `git diff --output=<file>` would write a file (both lane_of copies refuse it)
+  wn=$((wn+1)); out=$(cd "$m" && bash tests/validate.sh --lane --output="$BASE/pwned" 2>&1)
+  if [ $? = 2 ] && grep -q 'usage:' <<<"$out" && [ ! -e "$BASE/pwned" ]; then echo "witness ok: lane @--lane --output=<file> expected usage, exit 2, no file written"
+  else echo "witness FAIL: lane @--lane --output=<file> expected usage, exit 2, no file written — $out"; wfail=$((wfail+1)); fi
+  # the template's witness copies its own file, not the cwd's tests/validate.sh: run in place from this repo, it passes
+  np_expect ok   'the template --witness run in place from this repo passes' "cd '$m' && bash plugin/templates/new-project/files/tests/validate.sh --witness | tail -1 | grep -qE '^[1-9][0-9]* witnesses, 0 unexpected$'"
+
   echo "$wn witnesses, $wfail unexpected"
-  exit $wfail
+  exit $((wfail > 0))
 }
 
 case ${1:-} in

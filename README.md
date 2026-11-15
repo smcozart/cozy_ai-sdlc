@@ -22,14 +22,14 @@ in hours, and **humans stay above the loop: instigating, directing, governing.**
 ```
 Plan ────► issue-first intake, then intent: the why (outcome, scope,
           non-goals) at intent/<issue-number>-<slug>/intent.md,
-          aligned with SYSTEM-INTENT.md — the request is the approval; intake
-          never waits;
-          a feature or bug intent rides the work PR, a system-change
-          intent merges first in a records PR
+          aligned with SYSTEM-INTENT.md — the request is the approval
+          (a system-change still takes "go"); intake never waits;
+          the intent rides the work PR
 Design ──► spec.md beside the intent; ADRs over the bar; vertical-slice
           tickets as child issues with blocking edges; approval gate;
-          a settled decision is a record in the same turn (ADR, spec
-          section, or ticket body); settling approves the decision;
+          a settled decision is a record in the same turn, on its ticket
+          branch or its own small PR (ADR, spec section, or ticket body);
+          settling approves the decision;
           settling is not a merge approval — the record merges only under
           the repo's merge policy (ADR 0005); the `intent-conversation`
           skill carries the mechanics
@@ -39,8 +39,10 @@ Build ───► one ticket per agent session; workers cite ADRs, write ADRs
           `dispatch` skill
 Test ────► tests/validate.sh exits 0 (fail-first; checks and the content
           they guard protected) — run + acceptance output (+ pair for fixes)
-          pasted at close; CI runs it on every PR (check `gate`)
-Deploy ──► review loop per REVIEW.md; merge gate pasted (review resolution,
+          pasted at close; CI runs it on every PR (check `gate`, the
+          proof of the suite; ADR 0007)
+Deploy ──► review loop per REVIEW.md (mattpocock-skills:code-review axes,
+          adversary); merge gate pasted (review resolution,
           validate.sh run, adversary verdict, preview proof for UI,
           branch-protection proof for merge path, `ADR:` line in the PR
           body); merge policy (ADR 0005): the hold list (LANE_HOLD in tests/validate.sh;

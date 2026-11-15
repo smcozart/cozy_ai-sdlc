@@ -9,7 +9,7 @@ running Claude Code or pi should follow it. Prerequisites: Matt Pocock skills in
 ```
 setup (once per repo)
   → issue-first intake → intent → /to-questionnaire → /to-spec → /to-tickets → /triage loop
-  → /implement (per ticket, test-first) → /code-review + adversarial pass
+  → /implement (per ticket, test-first) → mattpocock-skills:code-review + adversarial pass
   → ADRs + CONTEXT.md maintained continuously (domain-modeling)
   → /retro at milestones, /handoff at session end
 ```
@@ -44,15 +44,14 @@ Formalized in issue [#2](https://github.com/smcozart/cozyharness/issues/2).
    `intent/<issue-number>-<slug>/intent.md` (start from
    [`intent/TEMPLATE.md`](../intent/TEMPLATE.md)). The issue number is the join
    key: it ties the intent to the issue, later branch, run, PR, and pasted
-   proof. A `feature` or `bug` intent rides its ticket branch into the work
-   PR; a `system-change` intent merges first in a records PR
-   (`intent-conversation` Move 2).
+   proof. The intent rides its ticket branch into the work PR.
 4. **System-intent alignment.** Greenfield work starts from
    [`SYSTEM-INTENT.md`](../SYSTEM-INTENT.md); every work-item intent is checked
    against it. Conflicts either amend SYSTEM-INTENT.md deliberately or rewrite
    the intent.
-5. **Approval.** Normal work: the developer's explicit request is the
-   approval, in any phrasing, with no separate "go" (ADR 0004). Their words
+5. **Approval.** Normal work (`feature`, `bug`): the developer's explicit
+   request is the approval, in any phrasing, with no separate "go" (ADR
+   0004). A `system-change` intent still needs an explicit "go". Their words
    are saved to the issue thread automatically and `ready-for-agent` follows.
    High-risk work (security, data loss,
    irreversible migrations, public contracts): explicit review — a designated
@@ -147,14 +146,16 @@ that moves work toward `ready-for-agent`.
    next question, never held in chat for later batching: a hard-to-reverse
    or authority rule becomes a new `docs/adr/NNNN-slug.md`; a requirement or
    design detail becomes an edit to the spec's matching section; a detail
-   scoped to one ticket becomes an edit to that issue's body. Settling
+   scoped to one ticket becomes an edit to that issue's body; any other
+   decision becomes a one-line ADR. A file record goes on its ticket's
+   branch, or on its own small branch and PR; there is no per-conversation records
+   branch. Settling
    approves the decision. Settling is not a merge approval — the record
    merges only under the repo's merge policy (ADR 0005). No separate
    sign-off on the decision is owed beyond item 6's high-risk carve-out.
    Reply in one line naming the record. "Captured in this conversation
    only" and "finish mapping first, then update once" are not moves; batch
-   only when asked. The `intent-conversation` skill carries the mechanics
-   (records branch/PR, one-line reply).
+   only when asked. The `intent-conversation` skill carries the mechanics.
 
 ## Light lane — thin front end, same tail
 
@@ -225,9 +226,8 @@ surface or a multi-ticket effort, and the classifier makes that mechanical.
 **Light vs heavy, worked.** Fixing a typo in an archival
 `handoffs/design-stage-handoff.md` is **T0**: one file, docs-only, in the
 light set — `--lane` says so, a two-line `intent.md`, the gate run, land on
-green, human review after merge; no adversary pass. A `feature` or `bug`
-intent that rides its work PR lifts that PR to T2 (`intent/` is outside the
-light set): one full review, in place of a T2 records PR plus a lighter work
+green, human review after merge; no adversary pass. An intent that rides its
+work PR lifts that PR to T2 (`intent/` is outside the light set): one full
 review. Fixing a typo in
 `docs/training/onboarding-runbook.md` is **T1**: the runbook's fenced blocks
 are what a new human runs verbatim, so it floors at T1 and owes one bounded
@@ -320,7 +320,7 @@ Deploy is what a diff owes before it merges — the same checklist at either
 seam: this repo's ticket close, or a consumer's PR.
 
 1. **The review loop.** Every diff is reviewed against
-   [`REVIEW.md`](../REVIEW.md): the `code-review` skill's two axes plus an
+   [`REVIEW.md`](../REVIEW.md): the `mattpocock-skills:code-review` skill's two axes plus an
    `adversary` pass on agent-produced diffs **sized to the computed lane**
    (Light lane table; ADR 0003) — unbounded at T2, bounded to the diff's
    claims and MED+ findings at T1, none at T0 where the gate is the review.
@@ -417,7 +417,7 @@ tooling — waits on #1.
 | Implement | `/implement` | Per ticket, one ticket per session. Test-first (red-green slices). Lean: stdlib first, shortest working diff. |
 | Test discipline | `/tdd` | Default mode inside implement. Every test justifies itself — guards behavior no other test covers. |
 | Debugging | `/diagnosing-bugs` | When something is broken/slow, not during planned work. |
-| Review | `REVIEW.md`, `/code-review` | After each diff (or each batch). Two axes: standards + spec; policy per REVIEW.md. |
+| Review | `REVIEW.md`, `mattpocock-skills:code-review` | After each diff (or each batch). Two axes: standards + spec; policy per REVIEW.md. |
 | Adversarial review | `adversary` subagent (pi) | On agent-produced diffs, sized to the computed lane (ADR 0003): full at T2, bounded to the diff's claims at T1, none at T0 where the human review is the second pair of eyes. Breaks the author-boss bias loop. Claude equivalent: a second review pass with "assume this is wrong" instructions. |
 | Record decisions | `domain-modeling` | ADR bar: hard to reverse, surprising without context, or a real trade-off. One paragraph, `docs/adr/NNNN-slug.md`, **commit and push** — an unpushed ADR is invisible. Visible in code ⇒ no ADR. |
 | Shared vocabulary | `CONTEXT.md` via `domain-modeling` | Update when terminology shifts; consumers read it before issues. |
@@ -436,8 +436,7 @@ other hosts keep the same contract. Key rules (full detail in the skill):
 2. One ticket per worker session, fresh pane per ticket (`herdr tab create` →
    `herdr agent start --kind pi` → the herdr brief in the skill).
 3. Orchestrator pre-answers the 2–3 ticket ambiguities **in the worker prompt**.
-4. GitHub is the claim; the orchestrator's terminal is the proof. Run acceptance
-   criteria and the full suite yourself before blessing.
+4. GitHub is the claim; the orchestrator's terminal proves the hold and the review; CI's `gate` proves the suite (ADR 0007).
 5. Workers end with a `HANDOFF:` direct ping to the orchestrator pane before idling.
 6. Two consecutive QC failures anywhere → halt the chain, revisit the prompt/design
    with the operator.
