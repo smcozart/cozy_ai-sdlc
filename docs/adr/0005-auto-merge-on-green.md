@@ -1,10 +1,10 @@
 # Auto-merge on green; only the files that check other files hold
 
 **Issue:** #39 · **Status:** accepted (approved by the operator on #39,
-2026-10-02; review list narrowed by the operator on #173, 2026-11-14; hold list amended by the operator on #128, 2026-10-18,
+2026-10-02; hold list amended by the operator on #128, 2026-10-18,
 to add the consumer gate; amended on #132, 2026-10-18, to keep the
 list in one place; amended on #147, 2026-10-18, so the acknowledgement is
-the sha in the line) · **Intent:** the N-package, pi session 2026-09-28 (items 2, 3,
+the sha in the line; review list narrowed by the operator on #173, 2026-11-14) · **Intent:** the N-package, pi session 2026-09-28 (items 2, 3,
 5, 8, 10).
 
 Deploy §4 required a human checkoff, recorded in the thread, before any diff
