@@ -171,7 +171,7 @@ lane is visible to git — how many files, which paths, how many lines — so
 
 | Lane | Computed trigger | Review owed |
 |---|---|---|
-| **T0 trivial** | ≤2 files, all `*.md`, ≤60 lines, every file in the **light set** and none on the T1 floor | the gate run + the human review (after merge unless held; ADR 0005). No adversary pass. (On this repo only the archival `handoffs/*.md` qualify.) |
+| **T0 trivial** | ≤2 files, all `*.md`, ≤60 lines, every file in the **light set** and none on the T1 floor | the gate run; no human review is owed after merge, since no light-set path is a review path (ADR 0005). No adversary pass. (On this repo only the archival `handoffs/*.md` qualify.) |
 | **T1 light** | ≤2 files, ≤60 changed lines, every file in the light set — or any file on the **T1 floor**: the review log `STATUS.md`, `docs/training/` (a human runs it), `handoffs/pickup-handoff.md` (a session's entrance ramp) | the gate run + one **bounded** adversary pass: correctness of the diff's claims only, findings MED and above, no scope sweep |
 | **T2 heavy** | **everything else** — any file outside the light set (the light set here is `handoffs/`, `docs/training/`, `STATUS.md`, `LICENSE`; every other path, including ones the repo has not grown yet, is heavy), any instruction file wherever it sits, in any case (`CLAUDE.md`, `AGENTS.md`, `README.md`, `.mcp.json`, `.cursorrules`, `.gitmodules`), any delete, any binary, any symlink (never followed), >2 files, or >60 lines | the full review loop: `REVIEW.md` axes + the unbounded adversary pass |
 
@@ -224,7 +224,7 @@ surface or a multi-ticket effort, and the classifier makes that mechanical.
 **Light vs heavy, worked.** Fixing a typo in an archival
 `handoffs/design-stage-handoff.md` is **T0**: one file, docs-only, in the
 light set — `--lane` says so, a two-line `intent.md`, the gate run, land on
-green, human review after merge; no adversary pass. An intent that rides its
+green; no adversary pass. An intent that rides its
 work PR lifts that PR to T2 (`intent/` is outside the light set): one full
 review. Fixing a typo in
 `docs/training/onboarding-runbook.md` is **T1**: the runbook's fenced blocks
