@@ -225,8 +225,7 @@ the go-ahead. Never send the developer to a URL or another app to approve.
 
 **The developer's answer here is the checkoff — after a green gate, never
 instead of one.** Any reply that tells you to merge counts; one that does not
-is not a checkoff. On Claude Code a hook refuses the merge until that message
-is on record (ADR 0007). Only when `gate` is green and this QC check has passed: write `Checkoff by
+is not a checkoff. Only when `gate` is green and this QC check has passed: write `Checkoff by
 <developer> at <UTC timestamp>:` and their words verbatim to a file, post it on
 the PR thread (`gh pr comment <n> --body-file <file>`), then merge with
 `--match-head-commit <the head SHA QC ran on>`, then `git push origin --delete
