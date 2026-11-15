@@ -1,6 +1,6 @@
 # Decisions are records in the same turn, and intake never waits
 
-**Issue:** #41 · **Status:** accepted (approved by the operator on #41; amended on #171) ·
+**Issue:** #41 · **Status:** accepted (approved by the operator on #41; amended on #169 and #171) ·
 **Intent:** arti-build issue #77 ("decisions become records"), narrowed by
 arti-build-plugin issue #82; first landed on branch `claude-harness`.
 
@@ -24,6 +24,16 @@ waits — filing a new request is never gated by running workers, an open
 blocker, or a foundation ticket in flight; a dependent request is filed as
 its own issue with a blocking edge to the one ahead of it (mechanics:
 `docs/agents/issue-tracker.md`).
+
+**Amended 2026-11-14 (PR #169; the developer's decision on that PR).** A
+developer's explicit request for a `feature` or `bug` change, in any phrasing,
+is the approval to build it on a branch. A `system-change` intent (a change to
+the tool's own rules) still needs an explicit "go" on the written intent. The
+developer is not asked for a separate "go"; their words are saved as the
+approval record automatically. Questions, thinking aloud and "don't build
+yet" are not requests. High-risk work still gets one explicit yes. The merge
+policy (ADR 0005) is untouched. Evidence: the eval session-chain scored 0/5
+because "please update what's already there" was held for approval.
 
 **Amended from `claude-harness`.** There, settling was the record's approval,
 which let an agent self-merge its own records with no merge policy behind
