@@ -18,9 +18,9 @@ A diff merges through a PR into `{{BASE}}`. Every PR runs the gate
 | Change | Who merges |
 |---|---|
 | `flagged: yes` from `tests/validate.sh --lane`: a diff that touches `tests/validate.sh`, `.github/workflows/**` or `.githooks/**` — the files that check other files | A human, after a green gate and a named checkoff in the PR; the PR carries the `flagged-risk` label |
-| Everything else | Merges on green; the review is owed after the merge and is not skipped |
+| Everything else | Merges on green; a diff on a review path — skills (`skills/`), `docs/adr/`, `docs/engineering-workflow.md`, `AGENTS.md`, `REVIEW.md` and `SYSTEM-INTENT.md`, each at any depth — owes a review after the merge, and it is not skipped |
 
-- A human acknowledges post-hoc review by appending
+- The developer says in chat that they reviewed; the agent appends
   `reviewed through <40-hex sha> on <date>` to `STATUS.md` in a commit that
   changes only that file; a line added by any other commit acknowledges
   nothing. It covers exactly the first-parent history of `{{BASE}}` up to

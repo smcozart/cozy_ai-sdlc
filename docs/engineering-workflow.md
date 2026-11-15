@@ -173,7 +173,7 @@ lane is visible to git — how many files, which paths, how many lines — so
 
 | Lane | Computed trigger | Review owed |
 |---|---|---|
-| **T0 trivial** | ≤2 files, all `*.md`, ≤60 lines, every file in the **light set** and none on the T1 floor | the gate run + the human review (after merge unless held; ADR 0005). No adversary pass. (On this repo only the archival `handoffs/*.md` qualify.) |
+| **T0 trivial** | ≤2 files, all `*.md`, ≤60 lines, every file in the **light set** and none on the T1 floor | the gate run; no human review is owed after merge, since no light-set path is a review path (ADR 0005). No adversary pass. (On this repo only the archival `handoffs/*.md` qualify.) |
 | **T1 light** | ≤2 files, ≤60 changed lines, every file in the light set — or any file on the **T1 floor**: the review log `STATUS.md`, `docs/training/` (a human runs it), `handoffs/pickup-handoff.md` (a session's entrance ramp) | the gate run + one **bounded** adversary pass: correctness of the diff's claims only, findings MED and above, no scope sweep |
 | **T2 heavy** | **everything else** — any file outside the light set (the light set here is `handoffs/`, `docs/training/`, `STATUS.md`, `LICENSE`; every other path, including ones the repo has not grown yet, is heavy), any instruction file wherever it sits, in any case (`CLAUDE.md`, `AGENTS.md`, `README.md`, `.mcp.json`, `.cursorrules`, `.gitmodules`), any delete, any binary, any symlink (never followed), >2 files, or >60 lines | the full review loop: `REVIEW.md` axes + the unbounded adversary pass |
 
@@ -226,7 +226,7 @@ surface or a multi-ticket effort, and the classifier makes that mechanical.
 **Light vs heavy, worked.** Fixing a typo in an archival
 `handoffs/design-stage-handoff.md` is **T0**: one file, docs-only, in the
 light set — `--lane` says so, a two-line `intent.md`, the gate run, land on
-green, human review after merge; no adversary pass. An intent that rides its
+green; no adversary pass. An intent that rides its
 work PR lifts that PR to T2 (`intent/` is outside the light set): one full
 review. Fixing a typo in
 `docs/training/onboarding-runbook.md` is **T1**: the runbook's fenced blocks
@@ -361,13 +361,14 @@ seam: this repo's ticket close, or a consumer's PR.
    | Change class | Who merges |
    |---|---|
    | Hold list — `flagged: yes` from `tests/validate.sh --lane`: the files that check other files hold; the list is `LANE_HOLD` in `tests/validate.sh` | A named human checkoff, recorded in the thread, after a green gate — or a recorded operator delegation. The PR carries the `flagged-risk` label |
-   | Everything else, including AGENTS.md, the synced pair, ADRs, CONTEXT.md and the skills | Agent may land on green; the gate's pasted evidence is the record; post-hoc review follows |
+   | Everything else, including AGENTS.md, the synced pair, ADRs, CONTEXT.md and the skills | Agent may land on green; the gate's pasted evidence is the record; post-hoc review follows on review paths |
 
-   **Post-hoc review** (ADR 0005): a human reviews every diff that landed on
-   green after merge, against `REVIEW.md`. `cmu` lists it as "review owed";
-   a human acknowledges post-hoc review by appending
-   `reviewed through <40-hex sha> on <date>` to `STATUS.md` in a commit that
-   changes only that file; a line added by any other commit acknowledges
+   **Post-hoc review** (ADR 0005): a human reviews, after merge and against
+   `REVIEW.md`, every diff that landed on green on a **review path** — the
+   files that steer later agents: skills (`skills/`), `docs/adr/`, `docs/engineering-workflow.md`, `AGENTS.md`, `REVIEW.md` and `SYSTEM-INTENT.md`, each at any depth. `cmu` lists it as
+   "review owed". The developer says in chat that they reviewed; the agent
+   appends `reviewed through <40-hex sha> on <date>` to `STATUS.md` in a
+   commit that changes only that file (`intent-conversation` Move 5); a line added by any other commit acknowledges
    nothing. It covers exactly the first-parent history of the base branch up
    to that sha, never what merged while the line was in review. The behavior files in `docs/verify/` verify the agent side.
    The former flagged-risk set (suite-checked surfaces, `docs/agents/`,

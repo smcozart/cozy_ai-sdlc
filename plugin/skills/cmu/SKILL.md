@@ -87,8 +87,9 @@ comment and silently hide real work.
   Deploy section): the paths **held** for a human before merge, and any paths
   that merge on green but owe a human **review** after. Where the repo's
   `tests/validate.sh --lane` prints a `flagged:` line, that line is the hold
-  source (ADR 0005): the held paths are its hold list, and every other path
-  merges on green and owes review after. When the doc names
+  source (ADR 0005): the held paths are its hold list, every other path
+  merges on green, and the review paths the doc names owe review after
+  (every other path, when it names none). When the doc names
   only one human-gated set (a "flagged risk" set needing a human checkoff),
   that set is both: held for open PRs, and owed review for anything that
   merged on it without a checkoff. Say "review paths: none defined here" once

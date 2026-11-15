@@ -1,3 +1,3 @@
 # Review log
 
-A developer appends `reviewed through <40-hex sha> on <YYYY-MM-DD>` here to acknowledge post-merge review (ADR 0005). Agents never write this file. For where things stand, say "catch me up" (`cmu`).
+A `reviewed through <40-hex sha> on <YYYY-MM-DD>` line acknowledges post-merge review (ADR 0005). An agent adds one only when the developer says they reviewed, in a commit that changes only this file. For where things stand, say "catch me up" (`cmu`).

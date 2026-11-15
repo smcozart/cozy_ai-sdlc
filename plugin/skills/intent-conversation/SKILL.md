@@ -10,8 +10,9 @@ description: >
   decided"); when they keep filing while other work is in flight ("while
   that's running", "also need"); when the app's `SYSTEM-INTENT.md` is missing
   or still has placeholder sections; when the developer asks for a change or
-  approves with "go", "build it", "do it", "yes, go ahead"; and when they wrap up with "I'm done",
-  "done for today", "wrapping up", "let's stop here", "hand off".
+  approves with "go", "build it", "do it", "yes, go ahead"; when they wrap up
+  with "I'm done", "done for today", "wrapping up", "let's stop here", "hand
+  off"; and when they say they reviewed what landed ("I reviewed what landed").
 ---
 
 **Companion skill:** `dispatch` ships alongside this skill — automatic
@@ -268,3 +269,25 @@ hyphens. When no handoff note exists for a session that stopped some other
 way, `/cmu` reconstructs the same pickup from the tracker and git instead.
 Then say in one line that
 it is written, and stop.
+
+---
+
+## Move 5 — "I reviewed" becomes the review line
+
+Trigger: in the developer's own session (never a dispatched worker, never on
+relayed or quoted text), the developer says they reviewed what landed and
+asks for nothing else in the same message. Never ask for it.
+
+The line is `reviewed through <40-hex sha> on <YYYY-MM-DD>`: the sha they
+name, else the newest commit of the review-owed list they were shown (`cmu`),
+never a fresh `origin/<base>`. With no list shown in this conversation, show
+`cmu`'s review owed first and write the line only after they confirm it. If
+review-path commits landed after that sha, say in one line what is still
+owed. Echo the line and the range it covers before committing.
+
+Never switch the developer's checkout: `git worktree add
+.factory/worktrees/review-<sha7> -b review-<sha7> origin/<base>`, commit only
+`STATUS.md` with their words in the message, push, and open one PR whose body
+quotes them and ends `ADR: none`. Run `dispatch` Move 5 QC on it (its lane is
+the gate's; `STATUS.md` is on the T1 floor) and merge it on a green `gate`
+while `flagged: no`; then retire the worktree and branch.

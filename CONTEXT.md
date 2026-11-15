@@ -95,8 +95,9 @@ gate is approval of the spec; the Test gate is the pasted `tests/validate.sh`
 run (exit 0, ticket range) beside the pasted acceptance-criteria output.
 Triage is not a gate — it is a label state machine that ends at
 `ready-for-agent`. Merge is a human gate only for the hold list
-(`flagged: yes`; ADR 0005); every other diff lands on a green `gate` check
-and is reviewed after merge.
+(`flagged: yes`; ADR 0005); every other diff lands on a green `gate` check,
+and one on a review path (the files that steer agents) is reviewed after
+merge.
 _Avoid_: sign-off (only the high-risk variant), approval (the act, not the
 record)
 
