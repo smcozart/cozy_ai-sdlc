@@ -59,6 +59,15 @@ outside it:
    managed plugin, installed with ai-sdlc at project scope. pi gets editable copies restored by `./bootstrap.sh` from
    `skills-lock.json` (full skill dirs incl. `agents/` subdirs; provenance =
    upstream HEAD sha, printed at restore time).
+   The dependency carries no `version`: Claude Code resolves a dependency
+   `version` range only against `<plugin-name>--v<version>` git tags
+   ([plugin dependencies](https://code.claude.com/docs/en/plugins/dependencies.md)),
+   and `mattpocock/skills` tags `v<version>`, so a range would fail the install.
+   Without a version, the dependency moves to each new release its marketplace
+   publishes the next time a project updates, so projects that update at different times drift apart
+   (the same docs page); bring one up to date with
+   `claude plugin update mattpocock-skills@claude-plugins-official --scope project`
+   from the project folder.
 2. **Ponytail** (lean-code discipline, github.com/DietrichGebert/ponytail,
    MIT): forces stdlib-first, shortest-diff, no-speculative-abstraction coding.
    `docs/engineering-workflow.md` Build §2 states its core rules, but the full
