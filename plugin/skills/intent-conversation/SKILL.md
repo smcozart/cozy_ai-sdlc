@@ -9,8 +9,8 @@ description: >
   you"); when they settle a decision ("let's go with", "lock that in", "we
   decided"); when they keep filing while other work is in flight ("while
   that's running", "also need"); when the app's `SYSTEM-INTENT.md` is missing
-  or still has placeholder sections; when the developer approves with "go",
-  "build it", "do it", "yes, go ahead"; and when they wrap up with "I'm done",
+  or still has placeholder sections; when the developer asks for a change or
+  approves with "go", "build it", "do it", "yes, go ahead"; and when they wrap up with "I'm done",
   "done for today", "wrapping up", "let's stop here", "hand off".
 ---
 
@@ -200,14 +200,17 @@ A batch update is filed only when the developer asks for one.
 
 Trigger: the developer asked for a `feature` or `bug` change. "Add X", "fix
 Y", "please update what's already there", any phrasing that asks for it: there
-is no separate "go". A `system-change` intent (a change to this tool's own
-rules) still needs an explicit "go" on the written intent. A later "go",
+is no separate "go". A `system-change` intent (the intent's `**Type:**` line,
+as `intent/TEMPLATE.md` defines it: how the repo is built, checked, reviewed
+or released) still needs an explicit "go" on the written intent. When unsure
+whether a request is a `system-change`, it is one. A later "go",
 "build it" or "yes, go ahead" approves an issue filed earlier.
 
 Not a request: a question, thinking aloud ("what if", "should we"), asking to
 plan or only look, or "don't build yet". Those stop at the filed issue. High
-risk (security, data loss, irreversible migration, public contract) still gets
-one explicit yes first.
+risk (security, data loss, irreversible migration, public contract) still
+follows `docs/engineering-workflow.md` Plan §5: a named reviewer's sign-off in
+the issue and an ADR, before the label.
 
 Before anything: the intent file is on `<base>`, or on `origin/t<n>-<slug>`
 (Move 2), and cites this issue, and the issue has
@@ -216,7 +219,9 @@ is neither closed nor labelled `wontfix` — if it is, someone took it off the
 frontier deliberately; say so in one line and do not label. If the
 intent still carries an open question that changes what gets built, ask it
 now — one question — and put the answer in the same comment. If a precondition
-fails, say so in one line and do not label.
+fails, say so in one line and do not label — except an open blocker alone:
+then post the comment and the label anyway, because `dispatch` Move 1 skips an
+issue with an open blocker, so the request is kept and waits for it.
 
 Without asking, write the approval to a file — `Approved by <developer> at <UTC
 timestamp>:`, their words verbatim (the request itself when that is the

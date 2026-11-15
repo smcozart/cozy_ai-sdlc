@@ -205,7 +205,8 @@ number, a file path, a commit). Never a claim with nothing behind it.
 
 `cmu` never triggers `dispatch` — dispatch's own triggers are unchanged (fires
 at `/build` gate 1, after approvals, and on worker idle/QC completion); `cmu`
-only ever reports, and the developer's own "go" is what starts dispatch.
+only ever reports, and the developer's own request or "go" is what starts
+dispatch.
 `intent-conversation` Move 4 writes `#handoff` deliberately, at the end of a
 session; when no such note exists, `/cmu` reconstructs the same pickup from
 the tracker and git instead of leaving the developer to do it by hand.
