@@ -26,9 +26,9 @@ Plan ────► issue-first intake, then intent: the why (outcome, scope,
           the intent rides the work PR
 Design ──► spec.md beside the intent; ADRs over the bar; vertical-slice
           tickets as child issues with blocking edges; approval gate;
-          a settled decision is a record in the same turn on the working
-          branch (ADR, spec section, or ticket body); settling approves the
-          decision;
+          a settled decision is a record in the same turn, on its ticket
+          branch or its own small PR (ADR, spec section, or ticket body);
+          settling approves the decision;
           settling is not a merge approval — the record merges only under
           the repo's merge policy (ADR 0005); the `intent-conversation`
           skill carries the mechanics

@@ -145,8 +145,9 @@ that moves work toward `ready-for-agent`.
    or authority rule becomes a new `docs/adr/NNNN-slug.md`; a requirement or
    design detail becomes an edit to the spec's matching section; a detail
    scoped to one ticket becomes an edit to that issue's body; any other
-   decision becomes a one-line ADR. The record is committed on the working
-   branch, with no separate records branch or PR. Settling
+   decision becomes a one-line ADR. The record goes on its ticket's branch, or
+   on its own small branch and PR; there is no per-conversation records
+   branch. Settling
    approves the decision. Settling is not a merge approval — the record
    merges only under the repo's merge policy (ADR 0005). No separate
    sign-off on the decision is owed beyond item 6's high-risk carve-out.

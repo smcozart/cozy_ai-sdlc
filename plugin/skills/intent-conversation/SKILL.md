@@ -142,6 +142,9 @@ id of the blocker>`, the form `dispatch` Move 1 reads) **and** a `Blocked by:
 line alone is invisible to `dispatch` and would launch the blocked ticket
 early. If filing this idea requires a foundation ticket that does not exist
 yet, file it too, say so in one line, and keep taking input.
+A ticket that needs a rule a `system-change` ticket sets is filed blocked by
+that ticket, the same two ways: the rule merges with its work PR, so the edge
+is what keeps the dependent from starting first.
 
 ---
 
@@ -151,8 +154,7 @@ Trigger: the developer settles something in conversation — "let's go with
 X", "lock that in", "we decided", or a direct answer to the session's own
 question.
 
-Write the record before the next question, in the same turn, on the branch
-you are working on:
+Write the record before the next question, in the same turn:
 
 | What was settled | Where it lands |
 |---|---|
@@ -161,19 +163,24 @@ you are working on:
 | A requirement or design detail, when an approved spec exists | That spec's matching section |
 | Detail that belongs to a ticket that exists (columns, a saved view, a permitted action) | That issue's body |
 
-**The branch is the one this checkout is on.** On `<base>` (the `**Base
-branch:**` line in `AGENTS.md`, default `main`), `git switch -c <slug>` first,
-never a commit to `<base>`. Commit only the record (`git add <path>`) and `git
-push -u origin HEAD` when there is an `origin`. There is no records branch, no
-records worktree and no records PR: the record lands with the branch's own
-work. A branch holding only records lands at wrap-up (Move 4) as one PR, on a
-green `gate` and `flagged: no`. Settling approves the decision, not its merge
-(ADR 0004).
+**Never switch the developer's own checkout** (`dispatch` Move 5's rule) to
+write a record. A record for a ticket whose `origin/t<n>-<slug>` exists and
+that no worker holds goes on that branch, the Move 2 way (`git worktree add
+.factory/worktrees/t<n>-<slug> t<n>-<slug>`, commit, then the same chained
+push and remove). Every other record (no ticket branch, or a worker holds it)
+goes on its own small branch: `git fetch origin && git worktree add
+.factory/worktrees/adr-<slug> -b adr-<slug> origin/<base>` (`<base>`: the
+`**Base branch:**` line in `AGENTS.md`, default `main`; `<base>` refuses a
+direct push), commit only the record, push, and open one PR. Run `dispatch`
+Move 5 QC on it; it merges on a green `gate` while its `flagged:` line says
+`no`, then retire the worktree and branch (`dispatch` Move 6). There is no
+per-conversation records branch. Settling approves the decision, not its
+merge (ADR 0004).
 
-Reply in one line once it is committed ("Recorded:
-`docs/adr/<NNNN>-priority-authority.md`"), then ask the next question. If the
-record's ticket is in flight, also comment the record's path on that issue in
-one line.
+Reply in one line once it is pushed ("Recorded:
+`docs/adr/<NNNN>-priority-authority.md` (PR #n)"), then ask the next question.
+If the record's ticket is in flight, also comment the record's path on that
+issue in one line, so its worker and QC read it.
 
 Never park a settled decision in chat. In particular, never say any of:
 
@@ -199,9 +206,11 @@ intent still carries an open question, ask it now — one question — and put t
 answer (or their "go anyway") in the same comment. If a precondition fails, say
 so in one line and do not label.
 
-Write the approval to a file — `Approved by <developer> at <UTC timestamp>:`
-then their words verbatim — and post it **before** the label, always in this
-order:
+Write the approval to a file — `Approved by <developer> at <UTC timestamp>:`,
+their words verbatim, then `Intent: intent/<n>-<slug>/intent.md at <sha>`
+(`git rev-parse origin/t<n>-<slug>`, or `origin/<base>` when the intent is
+there), so the approval names the text it approved — and post it **before**
+the label, always in this order:
 
 ```bash
 gh issue comment <n> --body-file <file>

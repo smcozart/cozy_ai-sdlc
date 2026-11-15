@@ -29,14 +29,19 @@ its own issue with a blocking edge to the one ahead of it (mechanics:
 which let an agent self-merge its own records with no merge policy behind
 them. Here, approval of the decision and merge of the record are separate.
 
-**Amended (proposed 2026-11-08, branch `windows/lean-decisions-always-recorded`;
-takes effect on adoption).** A settled decision is always recorded in the same
-turn on the working branch: an ADR, or a one-line ADR when nothing harder is
-at stake. There is no separate records branch, worktree or records PR; the
-record lands with the branch's work, and a `system-change` intent rides its
-ticket branch like any other intent. Early review of system-change records is
-given up for this. Evidence: decision-record cost 2.9x in the eval, and
-without the plugin agents kept the decision in private memory (5/5 vs 1/5).
+**Amended 2026-11-15 (PR #171; decision by the developer, 2026-11-14, on
+that PR).** A settled decision is still recorded in the same turn. There is no
+per-conversation records branch or records PR, and a `system-change` intent
+rides its ticket branch like any other intent. A record for a ticket goes on
+that ticket's branch; any other record (an ADR, or a one-line ADR when nothing
+harder is at stake) goes on its own small branch and PR, because `<base>`
+refuses a direct push. The developer's checkout is never switched to write
+one. What is given up is early, separate review of a system-change intent
+before its work; two rules take its place: a ticket that needs that rule is
+filed blocked by it, and the approval comment names the intent at a commit
+SHA. Evidence: decision records cost 2.9x conventions with the records PR;
+the lean build that dropped it cost 1.36x and kept the record 5/5
+(`smcozart/cozysuite_review_evidence`, RESULTS.md).
 
 **Consequences.** The Design item "a settled decision becomes a record in the
 same turn" and the Plan item "one request, one issue" state the rule only.
