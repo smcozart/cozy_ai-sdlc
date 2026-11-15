@@ -49,10 +49,14 @@ A ticket with a missing spec or link goes back to Design.
   a range against it (env `LANE_TARGET` overrides it).
 - The **Worker kind:** line above is the agent kind for herdr worker panes
   (default claude when the line is absent).
-- `tests/validate.sh [<range> [<pr-body-file>]]` — the Test gate. Healthy
-  shape: one `ok: <name>` line per check below, then `N ok, 0 failed`, exit 0.
-  Pass the ticket's range at close: `origin/{{BASE}}..HEAD`. Paste the run in
-  the closing comment.
+- `tests/validate.sh [--fast|--deadline <seconds>] [<range> [<pr-body-file>]]`
+  — the Test gate. Healthy shape: one `ok: <name>` line per check below,
+  then `N ok, 0 failed`, exit 0. Pass the ticket's range at close:
+  `origin/{{BASE}}..HEAD`. Paste the run in the closing comment.
+  - `tests/validate.sh --fast` runs every check but `app-tests`, which
+    prints `deferred: app-tests — CI gate is the proof`.
+  - `tests/validate.sh --deadline <s>` fails `app-tests` at `<s>` seconds
+    and kills its whole process group. CI passes neither flag.
 - `tests/validate.sh --witness` — proves each check fails on its bad case;
   exit 0 only when every witness gives the expected result.
 - `tests/validate.sh --lane [<range>]` — classifies the diff's review lane
