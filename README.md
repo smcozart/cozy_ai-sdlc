@@ -38,7 +38,8 @@ Build ───► one ticket per agent session; workers cite ADRs, write ADRs
           `dispatch` skill
 Test ────► tests/validate.sh exits 0 (fail-first; checks and the content
           they guard protected) — run + acceptance output (+ pair for fixes)
-          pasted at close; CI runs it on every PR (check `gate`)
+          pasted at close; CI runs it on every PR (check `gate`, the
+          proof of the suite; ADR 0007)
 Deploy ──► review loop per REVIEW.md (mattpocock-skills:code-review axes,
           adversary); merge gate pasted (review resolution,
           validate.sh run, adversary verdict, preview proof for UI,

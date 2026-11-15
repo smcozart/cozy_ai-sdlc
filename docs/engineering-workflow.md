@@ -435,8 +435,7 @@ other hosts keep the same contract. Key rules (full detail in the skill):
 2. One ticket per worker session, fresh pane per ticket (`herdr tab create` →
    `herdr agent start --kind pi` → the herdr brief in the skill).
 3. Orchestrator pre-answers the 2–3 ticket ambiguities **in the worker prompt**.
-4. GitHub is the claim; the orchestrator's terminal is the proof. Run acceptance
-   criteria and the full suite yourself before blessing.
+4. GitHub is the claim; the orchestrator's terminal proves the hold and the review; CI's `gate` proves the suite (ADR 0007).
 5. Workers end with a `HANDOFF:` direct ping to the orchestrator pane before idling.
 6. Two consecutive QC failures anywhere → halt the chain, revisit the prompt/design
    with the operator.
