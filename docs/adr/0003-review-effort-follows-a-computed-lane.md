@@ -17,7 +17,8 @@ classifies the diff from what git can see — file count, paths against an
 followed), instruction files in any case — and prints one `lane:` line, with resolved shas, pasted beside the
 gate run (the default gate run prints it too, over the same range). **T0**
 (≤2 docs files, all in the light set, none on the T1 floor): the gate run and
-the human checkoff, no adversary pass. **T1** (≤2 files, ≤60 lines, all in
+no adversary pass (the human checkoff ended with ADR 0005's #173
+amendment: no light-set path is a review path). **T1** (≤2 files, ≤60 lines, all in
 the light set — or any file on the T1 floor: `STATUS.md`, the first file a
 session reads; `docs/training/`, what a new human runs verbatim): one bounded
 adversary pass, the diff's claims only, MED+ findings. **T2** (everything
@@ -57,8 +58,8 @@ paths* (the first cut, 2026-09-15): the adversary showed a rename of
 classifying light; a deny-list is unsafe by omission, an allow-list is safe.
 
 **Consequences.** T0 closes with no adversary artifact at all; that is
-deliberate, the `lane:` line is the record of why, and the human checkoff
-stays on T0 so an agent's diff is never the last pair of eyes on itself. The thresholds (2
+deliberate, and the `lane:` line is the record of why. (The T0 human
+checkoff ended with ADR 0005's #173 amendment.) The thresholds (2
 files, 60 lines) are starting values, changed by amending this ADR with the
 evidence. The synced trio, `REVIEW.md` and `AGENTS.md ## Commands` changed in
 the same commit; a consumer rule that mandates an adversary pass on every

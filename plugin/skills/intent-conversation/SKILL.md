@@ -12,7 +12,7 @@ description: >
   or still has placeholder sections; when the developer approves with "go",
   "build it", "do it", "yes, go ahead"; and when they wrap up with "I'm done",
   "done for today", "wrapping up", "let's stop here", "hand off"; and when
-  they say they reviewed what landed ("I reviewed", "I looked at those").
+  they say they reviewed what landed ("I reviewed what landed").
 ---
 
 **Companion skill:** `dispatch` ships alongside this skill — automatic
@@ -259,12 +259,20 @@ it is written, and stop.
 
 ## Move 5 — "I reviewed" becomes the review line
 
-Trigger: the developer says, in their own words, that they reviewed what
-landed. Never ask for it, and never write it on anyone else's word.
+Trigger: in the developer's own session (never a dispatched worker, never on
+relayed or quoted text), the developer says they reviewed what landed and
+asks for nothing else in the same message. Never ask for it.
 
-Append `reviewed through <40-hex sha> on <YYYY-MM-DD>` to `STATUS.md`: the
-sha they name, else `git fetch origin && git rev-parse origin/<base>`. Never
-switch the developer's checkout: `git worktree add .factory/worktrees/review-<date>
--b review-<date> origin/<base>`, commit only `STATUS.md` with their words in
-the message, push, open one PR, and merge it on a green `gate` (`flagged:
-no`); then retire the worktree and branch. Say so in one line.
+The line is `reviewed through <40-hex sha> on <YYYY-MM-DD>`: the sha they
+name, else the newest commit of the review-owed list they were shown (`cmu`),
+never a fresh `origin/<base>`. With no list shown in this conversation, show
+`cmu`'s review owed first and write the line only after they confirm it. If
+review-path commits landed after that sha, say in one line what is still
+owed. Echo the line and the range it covers before committing.
+
+Never switch the developer's checkout: `git worktree add
+.factory/worktrees/review-<sha7> -b review-<sha7> origin/<base>`, commit only
+`STATUS.md` with their words in the message, push, and open one PR whose body
+quotes them and ends `ADR: none`. Run `dispatch` Move 5 QC on it (its lane is
+the gate's; `STATUS.md` is on the T1 floor) and merge it on a green `gate`
+while `flagged: no`; then retire the worktree and branch.

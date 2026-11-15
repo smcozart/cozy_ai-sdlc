@@ -363,7 +363,7 @@ seam: this repo's ticket close, or a consumer's PR.
 
    **Post-hoc review** (ADR 0005): a human reviews, after merge and against
    `REVIEW.md`, every diff that landed on green on a **review path** — the
-   files that steer later agents: skills (`skills/` at any depth), `docs/adr/`, `AGENTS.md`, `REVIEW.md` and `SYSTEM-INTENT.md`. `cmu` lists it as
+   files that steer later agents: skills (`skills/`), `docs/adr/`, `docs/engineering-workflow.md`, `AGENTS.md`, `REVIEW.md` and `SYSTEM-INTENT.md`, each at any depth. `cmu` lists it as
    "review owed". The developer says in chat that they reviewed; the agent
    appends `reviewed through <40-hex sha> on <date>` to `STATUS.md` in a
    commit that changes only that file (`intent-conversation` Move 5); a line added by any other commit acknowledges

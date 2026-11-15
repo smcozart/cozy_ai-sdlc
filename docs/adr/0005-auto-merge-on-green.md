@@ -1,8 +1,7 @@
 # Auto-merge on green; only the files that check other files hold
 
-**Issue:** #39 · **Status:** accepted (approved by the operator on #39; review
-list narrowed by the operator on #173, 2026-11-14;
-2026-10-02; hold list amended by the operator on #128, 2026-10-18,
+**Issue:** #39 · **Status:** accepted (approved by the operator on #39,
+2026-10-02; review list narrowed by the operator on #173, 2026-11-14; hold list amended by the operator on #128, 2026-10-18,
 to add the consumer gate; amended on #132, 2026-10-18, to keep the
 list in one place; amended on #147, 2026-10-18, so the acknowledgement is
 the sha in the line) · **Intent:** the N-package, pi session 2026-09-28 (items 2, 3,
@@ -67,11 +66,12 @@ added by a commit that changes anything else acknowledges nothing; and
 
 **Amended 2026-11-14 (PR #173; the developer's decision on that PR).**
 Post-hoc review stays owed, narrowed to the files that steer later agents:
-skills (`skills/` at any depth), `docs/adr/`, `AGENTS.md`, `REVIEW.md` and `SYSTEM-INTENT.md`. `cmu` lists only those as "review owed"; every other
+skills (`skills/`), `docs/adr/`, `docs/engineering-workflow.md`, `AGENTS.md`, `REVIEW.md` and `SYSTEM-INTENT.md`, each at any depth. `cmu` lists only those as "review owed"; every other
 unheld diff lands on green with its pasted gate evidence as the record. The
 acknowledgement gets easier: the developer says in chat that they reviewed,
 and the agent appends `reviewed through <40-hex sha> on <date>` (the sha they
-name, else `origin/<base>` at that moment) to `STATUS.md` in a commit that
+name, else the newest commit of the review-owed list they were shown, never a
+fresh `origin/<base>`) to `STATUS.md` in a commit that
 changes only that file, with their words in the commit message. The sha rule
 and the `STATUS.md`-only rule are unchanged. ADR 0003's T0 checkoff ends with
 it, since no T0 path is a review path. What is given up: no human is owed a
@@ -86,7 +86,7 @@ checks those files; only the files that are the gate can disable it.
 
 **Consequences.** The broader flagged-risk set in Deploy §4 is now review
 guidance, not a merge rule. ADR 0003's T0 "human checkoff" is the post-hoc
-review for an unheld diff. One GitHub identity merges, so GitHub cannot
+review for an unheld diff (ended by the #173 amendment above). One GitHub identity merges, so GitHub cannot
 enforce the hold; the orchestrator skills state it (`factory-orchestrator`
 here, and `dispatch` once its hold fix (#42) is adopted into `main`
 (#35)). Tighter control for production systems is a later operator decision

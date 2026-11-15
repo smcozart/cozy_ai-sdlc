@@ -47,8 +47,8 @@ Deploy ──► review loop per REVIEW.md (mattpocock-skills:code-review axes,
           body); merge policy (ADR 0005): the hold list (LANE_HOLD in tests/validate.sh;
           `flagged: yes`) merges on a
           named human checkoff, everything else lands on green; a diff on
-          the files that steer agents (skills, ADRs, AGENTS.md, REVIEW.md,
-          SYSTEM-INTENT.md) owes review after merge, acknowledged in chat
+          the files that steer agents (skills, ADRs, the workflow doc,
+          AGENTS.md, REVIEW.md, SYSTEM-INTENT.md) owes review after merge, acknowledged in chat
           and written to `STATUS.md`; a 401 is not evidence of absence — authenticate first
 Maintain ─► intake: retros/incidents feed back through Plan; fixed incident classes → eval ledger (#8); a resuming session reads the delta first with /cmu
 ```
