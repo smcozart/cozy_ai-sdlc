@@ -33,7 +33,7 @@ repo is not shaped for tracking and stop — file nothing, create no labels.
 one question per turn, and only when nothing in the repo settles it.
 
 **Say when a request crosses an earlier decision.** Before filing or building,
-compare what was asked with `docs/adr/` and `intent/`. If it conflicts with or
+compare what was asked with `docs/adr/`. If it conflicts with or
 reverses a recorded decision, say so plainly in one line (`Note: this reverses
 ADR 0006, which removed this hook on purpose.`) and carry on. It is not a
 question and not a stop.
