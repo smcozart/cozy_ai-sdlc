@@ -505,6 +505,14 @@ witness_run() {
   wn=$((wn+1)); out=$(cd "$m" && bash tests/validate.sh --lane --output="$BASE/pwned" 2>&1)
   if [ $? = 2 ] && grep -q 'usage:' <<<"$out" && [ ! -e "$BASE/pwned" ]; then echo "witness ok: lane @--lane --output=<file> expected usage, exit 2, no file written"
   else echo "witness FAIL: lane @--lane --output=<file> expected usage, exit 2, no file written — $out"; wfail=$((wfail+1)); fi
+  # a range git cannot read is an error, never a silent pass (sync-rule caught it until #181)
+  wn=$((wn+1)); out=$(cd "$m" && bash tests/validate.sh nope..HEAD 2>&1)
+  if [ $? = 2 ] && grep -q '^range: git diff nope..HEAD failed' <<<"$out"; then echo "witness ok: gate @unreadable range expected exit 2"
+  else echo "witness FAIL: gate @unreadable range expected exit 2 and a range: line, got: $(tail -1 <<<"$out")"; wfail=$((wfail+1)); fi
+  # one review lane (ADR 0008): --lane prints the range: line and the flagged: line, no tier
+  wn=$((wn+1)); out=$(cd "$m" && bash tests/validate.sh --lane HEAD~1..HEAD 2>&1)
+  if [ "$(cut -d: -f1 <<<"$out" | tr '\n' ' ')" = "range flagged " ]; then echo "witness ok: lane @--lane expected range: and flagged: lines only"
+  else echo "witness FAIL: lane @--lane expected range: and flagged: lines only, got: ${out//$'\n'/ | }"; wfail=$((wfail+1)); fi
   # the template's witness copies its own file, not the cwd's tests/validate.sh: run in place from this repo, it passes
   np_expect ok   'the template --witness run in place from this repo passes' "cd '$m' && bash plugin/templates/new-project/files/tests/validate.sh --witness | tail -1 | grep -qE '^[1-9][0-9]* witnesses, 0 unexpected$'"
 

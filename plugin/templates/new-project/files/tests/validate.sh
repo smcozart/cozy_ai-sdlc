@@ -235,7 +235,7 @@ witness_run() {
   printf '**App tests:** false\n' >>"$m/AGENTS.md";               expect FAIL 'app tests line without backticks' app-tests; fresh
   printf '# x\n' >"$m/docs/adr/$(printf %04d 2)-no-issue.md";     expect FAIL 'ADR without an Issue header' adr-numbering; fresh
   mkdir -p "$m/intent/1-x"; printf '**Issue:** #1\n' >"$m/intent/1-x/intent.md"
-  printf '**Issue:** #2 · **Intent:** `intent/1-x/intent.md`\n' >"$m/intent/1-x/spec.md"; expect FAIL 'spec cites another issue' intent-layout; fresh
+  printf '**Issue:** #2 · **Intent:** `intent/1-x/intent.md`\n' >"$m/intent/1-x/spec.md"; expect ok 'spec.md is a record, never read' intent-layout; fresh
   printf 'Summary\n\nADR: none\n' >"$base/body";                  expect ok 'PR body, ADR: none' pr-adr-line "$base/body"
   printf 'Summary\n\nNo decision line.\n' >"$base/body";          expect FAIL 'PR body, no ADR: line' pr-adr-line "$base/body"
   printf 'Summary\n\n```\nADR: none\n```\n' >"$base/body";        expect FAIL 'PR body, ADR: line only fenced' pr-adr-line "$base/body"
@@ -252,6 +252,7 @@ witness_run() {
   is 'lane @empty range expected none' 'lane_of "$g" HEAD..HEAD; [ "$lane" = none ]'
   mkdir -p "$g/.github/workflows"; printf 'x\n' >"$g/.github/workflows/x.yml"
   is 'flagged @a .github/workflows/ file expected yes' 'lane_of "$g" HEAD; [ -n "$held" ]'
+  is 'lane @a range expected range: and flagged: lines only (one review lane)' '[ "$(cd "$g" && lane_run HEAD | cut -d: -f1 | tr "\n" " ")" = "range flagged " ]'
 
   # records-only skip: scratch repo whose app tests fail, so `FAIL: app-tests` means they ran; rec = origin/main + records
   g=$base/r; fresh; cp -R "$m" "$g"; mkdir -p "$g/src" "$g/handoffs"; printf 'x\n' | tee "$g/src/a.js" >"$g/handoffs/h.md"
