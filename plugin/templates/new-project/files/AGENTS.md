@@ -28,9 +28,9 @@ Two more labels: `ticket` (an issue that is one unit of Build) and
 ## Domain docs
 
 `CONTEXT.md` at the repo root is the vocabulary. Decisions are ADRs in
-`docs/adr/NNNN-slug.md`. Work-item intents and specs are in
-`intent/<issue-number>-<slug>/` (start from `intent/TEMPLATE.md` and
-`intent/TEMPLATE-spec.md`).
+`docs/adr/NNNN-slug.md`. Work-item intents are in
+`intent/<issue-number>-<slug>/intent.md` (start from `intent/TEMPLATE.md`);
+there is no `spec.md`.
 
 ## Build read order
 
@@ -59,12 +59,12 @@ A ticket with a missing spec or link goes back to Design.
     and kills its whole process group. CI passes neither flag.
 - `tests/validate.sh --witness` — proves each check fails on its bad case;
   exit 0 only when every witness gives the expected result.
-- `tests/validate.sh --lane [<range>]` — classifies the diff's review lane
-  (T0 trivial / T1 light / T2 heavy) from the files it touches, then prints
+- `tests/validate.sh --lane [<range>]` — prints the `range:` line and
   `flagged: yes|no` — yes when the range touches the merge hold list
   (`tests/validate.sh`, `.github/workflows/**`, `.githooks/**`), so a human
-  merges. Exit 0 when a lane is printed, 2 when the range is empty or invalid.
-  A PARTIAL range is not valid for a close. Escalate a lane, never lower it.
+  merges. There is one review lane: every PR gets one adversary pass. Exit 0
+  when the lines are printed, 2 when the range is empty or invalid.
+  A PARTIAL range is not valid for a close.
 - `tests/validate.sh --list` — prints the check names:
   `shape`, `intent-layout`, `adr-numbering`, `app-tests`, and `pr-adr-line`
   (fails a PR body with no `ADR:` line; CI passes the body file, a local run

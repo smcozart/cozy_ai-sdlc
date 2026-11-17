@@ -19,55 +19,7 @@ in hours, and **humans stay above the loop: instigating, directing, governing.**
 - **The packaging** — a Claude Code plugin, pi project skills, a bootstrap
   script, and config files that remove setup guesswork.
 
-```
-Plan ────► issue-first intake, then intent: the why (outcome, scope,
-          non-goals) at intent/<issue-number>-<slug>/intent.md,
-          aligned with SYSTEM-INTENT.md — the request is the approval
-          (a system-change still takes "go"); intake never waits;
-          the intent rides the work PR
-Design ──► spec.md beside the intent; ADRs over the bar; vertical-slice
-          tickets as child issues with blocking edges; approval gate;
-          a settled decision is a record in the same turn, on its ticket
-          branch or its own small PR (ADR, spec section, or ticket body);
-          settling approves the decision;
-          settling is not a merge approval — the record merges only under
-          the repo's merge policy (ADR 0005); the `intent-conversation`
-          skill carries the mechanics
-Build ───► one ticket per agent session; workers cite ADRs, write ADRs
-          (optional plan.md sequences tickets for multi-ticket builds — not
-          the agent's per-session plan-before-code); parallel builds: the
-          `dispatch` skill
-Test ────► tests/validate.sh exits 0 (fail-first; checks and the content
-          they guard protected) — run + acceptance output (+ pair for fixes)
-          pasted at close; CI runs it on every PR (check `gate`, the
-          proof of the suite; ADR 0007)
-Deploy ──► review loop per REVIEW.md (mattpocock-skills:code-review axes,
-          adversary); merge gate pasted (review resolution,
-          validate.sh run, adversary verdict, preview proof for UI,
-          branch-protection proof for merge path, `ADR:` line in the PR
-          body); merge policy (ADR 0005): the hold list (LANE_HOLD in tests/validate.sh;
-          `flagged: yes`) merges on a
-          named human checkoff, everything else lands on green; a diff on
-          the files that steer agents (skills, ADRs, the workflow doc,
-          AGENTS.md, REVIEW.md, SYSTEM-INTENT.md) owes review after merge, acknowledged in chat
-          and written to `STATUS.md`; a 401 is not evidence of absence — authenticate first
-Maintain ─► intake: retros/incidents feed back through Plan; fixed incident classes → eval ledger (#8); a resuming session reads the delta first with /cmu
-```
-
-**Light lane, computed.** `tests/validate.sh --lane <range>` classifies a
-diff from what git sees, as an allow-list — **T0** (≤2 docs files, all in the
-light set: gate run, no adversary pass), **T1** (small and in
-the light set, or the review-log / runbook floor: one bounded adversary pass),
-**T2** (anything else — unknown paths, instruction files, deletes, symlinks, >2 files
-or >60 lines: the full review loop). T0/T1 take a thinner front end — a short `intent.md`,
-**no** `spec.md`/`plan.md` — and a smaller review budget, and close through
-the *same* gate: `ready-for-agent`, pasted `tests/validate.sh`, the same
-merge policy. The agent confirms two clauses the classifier cannot see (earns no
-ADR, not speculative) and may only escalate. A defined lane, not a loophole;
-nothing about the close gate relaxes. Detail: `docs/engineering-workflow.md`,
-ADR 0003. The same run prints `flagged: yes|no` — `yes` when the range touches
-the merge hold list (the files that check other files hold; the list is
-`LANE_HOLD` in `tests/validate.sh`; ADR 0005), so a human merges.
+The six stages, their contracts and the merge policy: [`docs/engineering-workflow.md`](docs/engineering-workflow.md).
 
 ## Quick start
 
@@ -93,7 +45,7 @@ cozysuite catalog (github.com/smcozart/cozysuite, "Set up a project"; the
 | `docs/engineering-workflow.md` | The canonical process document |
 | `docs/adr/` | Architecture decision records — the system's memory |
 | `CONTEXT.md` | Shared domain vocabulary — the glossary every artifact uses |
-| `intent/` | Work-item intents (`TEMPLATE.md`) and specs (`TEMPLATE-spec.md`) |
+| `intent/` | Work-item intents (`TEMPLATE.md`) |
 | `docs/agents/` | Per-repo agent config (tracker, labels, domain docs) |
 | `plugin/` | Claude Code plugin (skills) |
 | `bootstrap.sh` | One-command setup on any machine |

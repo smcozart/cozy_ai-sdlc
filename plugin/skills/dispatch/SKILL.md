@@ -4,7 +4,7 @@ description: >
   Dispatch approved work from this conversation: start one fresh, isolated
   worker per ready-for-agent issue (a herdr pane over its own clone when
   herdr runs, else a worktree), respect blockers and
-  overlapping files, and own progress, QC, lane-sized adversary, merge gates,
+  overlapping files, and own progress, QC, one adversary pass, merge gates,
   and retirement. Dispatch is automatic — it fires whenever
   the live frontier is non-empty, immediately after any approval that leaves
   ready-for-agent work, and on every worker idle notification or QC
@@ -146,20 +146,20 @@ gate decides itself, `skipped: app-tests — records-only diff`.
    `gate.yml`, runs `bash tests/validate.sh origin/<base>..HEAD` **in the
    foreground, as before**: the host's own command limit bounds a hang; a
    background run with no limit could wait forever. Record its full output
-   and exit code. Its lane line is informational only: the lane of record,
-   and the adversary sizing, is step 4's. A non-zero exit, the deadline
+   and exit code. Its flagged line is informational only: the hold of
+   record is step 4's. A non-zero exit, the deadline
    included, is red: send the tail of the output to the same worker.
 2. **The CI wait, in the background, alone:** `gh pr checks <pr> --watch
    --fail-fast`. Its exit is an event, never a merge.
 3. **The acceptance commands.** One that is the `**App tests:**` command is
    read from CI, not run again.
-4. **The base lane:** compute `lane:` and `flagged:` with `origin/<base>`'s
+4. **The base lane:** compute the `flagged:` line with `origin/<base>`'s
    script on the fetched head, never with the PR's own script: `git show
    origin/<base>:tests/validate.sh | bash -s -- --lane origin/<base>..HEAD`
    (a copy of the script outside the work tree exits 2 at its `cd` line).
 5. **Review while CI runs.** Compare the actual diff's paths to its Touches;
    expansion pauses conflicting work for re-batching. Review against the
-   ticket's spec and this repo's review policy. A fix needs fail-first
+   ticket's intent and this repo's review policy. A fix needs fail-first
    evidence. Do not idle-wait on CI: read `gate` last, right before close.
 
 **Hosts without background jobs** (no completion notice, for example pi by
@@ -183,10 +183,8 @@ logs go in `~/.factory/<repo>/logs/` (create it before writing
 if `git -C ~/.factory/<repo>/qc status --porcelain` is empty, then
 `~/.factory/<repo>/logs`.
 
-This one check folds in the lane's review (ADR 0003): T2 one read-only
-adversary pass, T1 one bounded pass over the diff's own claims (MED+ only), T0
-none — `adversary: n/a — T0` plus the filled `no-ADR=<y/n>
-not-speculative=<y/n>` line. Escalate a lane, never lower it. Two consecutive
+This one check folds in the review (ADR 0008): one read-only adversary pass
+on every PR. Two consecutive
 QC failures across the chain halt new launches until the developer weighs in.
 
 **Merge gate is light (ADR 0005, ADR 0007).** The merge comes when the last
@@ -269,7 +267,7 @@ it `retired` on the roster until it is gone.
 
 **A worker that handed off blocked or failed does not linger either.** Send
 one concrete same-ticket correction (Move 4). If the block is the developer's
-to clear (a missing spec, a decision), say so in `Needs you:` and keep the
+to clear (a missing intent, a decision), say so in `Needs you:` and keep the
 worker on the roster as `blocked`. If the work is withdrawn, close the
 session on the developer's word only; its branch and worktree stay until
 separately authorized cleanup, and the roster says `withdrawn — branch kept`.
@@ -302,9 +300,9 @@ developer should never have to guess whether the loop is waiting on them.
 > loaded guardrail before doing anything else. If it is not denied, stop and
 > report that instead of continuing unattended.
 >
-> Read `AGENTS.md`; then `gh issue view <n> --comments`, the named spec and
-> intent, every cited ADR, `CONTEXT.md`, and only then the code. A missing
-> link, spec or ADR: stop, say what is missing on #<n> and in `HANDOFF:`,
+> Read `AGENTS.md`; then `gh issue view <n> --comments`, the named intent,
+> every cited ADR, `CONTEXT.md`, and only then the code. A missing
+> link, intent or ADR: stop, say what is missing on #<n> and in `HANDOFF:`,
 > never improvise around it.
 >
 > Pre-answered ambiguities: <2-3 decisions the orchestrator already settled>.
@@ -325,7 +323,7 @@ developer should never have to guess whether the loop is waiting on them.
 > complete diff, no speculative abstractions.
 >
 > Run and paste `bash tests/validate.sh --fast origin/<base>..HEAD` (exit 0,
-> with its lane line), the ticket's acceptance commands, and the tests for the
+> with its flagged line), the ticket's acceptance commands, and the tests for the
 > code you touched. A fix carries the fail-first pair. Do not run the full
 > suite, and skip an acceptance command that is the `**App tests:**` command:
 > CI's `gate` on your head SHA is the proof of the suite (ADR 0007).

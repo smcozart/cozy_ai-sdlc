@@ -3,7 +3,7 @@ name: intent-conversation
 description: >
   Turn what the developer says about their app into the records the loop needs —
   the app's system intent, an issue with its intent file, a
-  decision's ADR, spec section or ticket body, the approval comment, and the
+  decision's ADR, intent section or ticket body, the approval comment, and the
   wrap-up handoff. Use when the developer describes a feature, a fix or a UI
   change in plain words ("add", "fix", "change", "I want", "we need", "can
   you"); when they settle a decision ("let's go with", "lock that in", "we
@@ -122,9 +122,6 @@ as it is — `needs-info` means the reporter owes an answer, and here they do no
 (`docs/agents/triage-labels.md`). Do not say "filed" until the intent file is on
 disk.
 
-Do not name a lane: the gate computes it over the diff at close
-(`tests/validate.sh --lane`, escalate-only).
-
 Reply in **one sentence**: the issue number, the intent path and its branch;
 a `feature` or `bug` request goes on to Move 3 in the same turn.
 For example:
@@ -161,8 +158,8 @@ Write the record before the next question, in the same turn:
 | What was settled | Where it lands |
 |---|---|
 | A hard-to-reverse or authority rule (who decides, which queues exist, who may assign) | A new ADR, this repo's frontmatter and status-history rules |
-| Any other decision, with no spec or ticket to hold it | A one-line ADR: the title, an `**Issue:**` line (`none` when there is no issue), one sentence saying what was decided |
-| A requirement or design detail, when an approved spec exists | That spec's matching section |
+| Any other decision, with no intent or ticket to hold it | A one-line ADR: the title, an `**Issue:**` line (`none` when there is no issue), one sentence saying what was decided |
+| A requirement or design detail, when an approved intent exists | That intent's matching section |
 | Detail that belongs to a ticket that exists (columns, a saved view, a permitted action) | That issue's body |
 
 **Never switch the developer's own checkout** (`dispatch` Move 5's rule) to
@@ -288,6 +285,6 @@ owed. Echo the line and the range it covers before committing.
 Never switch the developer's checkout: `git worktree add
 .factory/worktrees/review-<sha7> -b review-<sha7> origin/<base>`, commit only
 `STATUS.md` with their words in the message, push, and open one PR whose body
-quotes them and ends `ADR: none`. Run `dispatch` Move 5 QC on it (its lane is
-the gate's; `STATUS.md` is on the T1 floor) and merge it on a green `gate`
+quotes them and ends `ADR: none`. Run `dispatch` Move 5 QC on it (one adversary
+pass, as on every PR) and merge it on a green `gate`
 while `flagged: no`; then retire the worktree and branch.
