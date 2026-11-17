@@ -2,7 +2,7 @@
 
 The Harness is an AI-native software development process: humans stay above the
 loop (instigating, directing, governing) while agents take the center. This
-file is the shared vocabulary; every issue, spec, and ADR uses these terms.
+file is the shared vocabulary; every issue, intent, and ADR uses these terms.
 
 ## Language
 
@@ -30,17 +30,10 @@ _Avoid_: vision doc, charter
 
 **tracker**:
 GitHub Issues — the system of record for all work. The issue number is the
-**join key** tying together intent, spec, branch, PR, run, and pasted proof.
+**join key** tying together intent, branch, PR, run, and pasted proof.
 For ticketed work: branch, PR, and proof join on the ticket (child) issue
-number; intent and spec join on the parent design issue number.
+number; the intent joins on the parent design issue number.
 _Avoid_: backlog, TODO list, board
-
-**spec.md**:
-The Design artifact for one work item, at
-`intent/<issue-number>-<slug>/spec.md` (sibling of the intent). States
-requirements, design concerns, constraints, and open questions. Linked by
-issue number, never copied into the issue body.
-_Avoid_: design doc, RFC, plan
 
 **plan.md**:
 An optional execution sequencing for Build (ticket order against blocking
@@ -56,8 +49,8 @@ trade-off; pushed immediately.
 _Avoid_: decision log entry, meeting note
 
 **Design**:
-The phase that turns an approved intent into a spec, ADRs, and ticketed
-issues. Ends at the approval gate.
+The phase that turns an approved intent into ADRs and ticketed issues (no
+`spec.md`; ADR 0008). Ends at the approval gate.
 _Avoid_: planning (Plan is the intake phase), architecture (only part of it)
 
 **Build**:
@@ -78,20 +71,17 @@ or a one-line mutation that makes it fail. `tests/validate.sh --witness`
 replays them all; a witness that stops failing means the check is broken.
 _Avoid_: fixture, snapshot, example
 
-**light lane**:
-The thinner front end for a small, low-risk change: a short `intent.md`
-(problem, one-line outcome, scope, acceptance) with no `spec.md` and no
-`plan.md`. The tail is unchanged — same `ready-for-agent` contract, same
-pasted `tests/validate.sh` proof, same merge policy (ADR 0005); the lane
-never decides who merges. A defined lane, not a
-loophole; the lane is computed, not judged — `tests/validate.sh --lane`
-prints T0 or T1 for it, T2 for the heavy lane (ADR 0003; light-lane section of
-`docs/engineering-workflow.md`).
-_Avoid_: fast track, bypass, shortcut
+**review lane**:
+The one path every PR takes (ADR 0008): a short `intent.md`, the pasted
+`tests/validate.sh` run, and one read-only adversary pass. There are no
+tiers and no lighter review budget. `tests/validate.sh --lane` prints the
+`range:` line and the merge hold (`flagged: yes|no`, ADR 0005); the lane
+never decides who merges.
+_Avoid_: light lane, tier, fast track
 
 **gate**:
 A recorded human decision that lets work cross a phase boundary. The Design
-gate is approval of the spec; the Test gate is the pasted `tests/validate.sh`
+gate is approval of the intent; the Test gate is the pasted `tests/validate.sh`
 run (exit 0, ticket range) beside the pasted acceptance-criteria output.
 Triage is not a gate — it is a label state machine that ends at
 `ready-for-agent`. Merge is a human gate only for the hold list

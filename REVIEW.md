@@ -6,23 +6,23 @@ Run all three on every diff — the ticket's diff range, stated explicitly in th
 
 - **Bugs** — logic errors, broken edge cases, regressions.
 - **Security** — injection, secrets, PII in logs.
-- **Compliance** — the change matches its spec.md / plan.md and the repo's design principles (CONTEXT.md vocabulary, ADR constraints).
+- **Compliance** — the change matches its intent.md / plan.md and the repo's design principles (CONTEXT.md vocabulary, ADR constraints).
 
 ## Severity
 
-- **Important**: would break behavior, leak data, or breach a written contract (sync rule, protection rule, `ready-for-agent` contract).
+- **Important**: would break behavior, leak data, or breach a written contract (merge hold, protection rule, `ready-for-agent` contract).
 - Style and naming are nits.
 
 ## Skip-list
 
 Do not review by eye what a check enforces mechanically:
 
-- The exact assertion each `tests/validate.sh` check makes — the canonical set is the check list in AGENTS.md's `## Commands` block (e.g. that the workflow doc and README changed together, the `intent/` layout, ADR numbering and references, skill frontmatter and skill links) — and nothing beyond it: a checked file's content is still reviewed. Future checks are auto-covered.
+- The exact assertion each `tests/validate.sh` check makes — the canonical set is the check list in AGENTS.md's `## Commands` block (e.g. the `intent/` layout, ADR numbering and references, skill frontmatter and skill links) — and nothing beyond it: a checked file's content is still reviewed. Future checks are auto-covered.
 - `.factory/` — orchestrator-local, untracked by design.
 - Generated files — none today.
 
 ## The loop
 
-- Reviewers give reviews per this policy: the `mattpocock-skills:code-review` skill's two axes (`code-review` on pi) plus an `adversary` pass on agent-produced diffs **sized to the computed lane** (the `lane:` line of the gate run's trailer, ADR 0003): unbounded at T2; at T1 bounded to the correctness of the diff's claims, MED+ findings only; none at T0, where the gate run is the review and the close pastes `adversary: n/a — T0`. These passes and the adversary produce the findings; every finding is tagged with its risk class from `## Passes`.
-- Review timing follows the merge policy (ADR 0005). A diff on the hold list — the files that check other files hold; the list is `LANE_HOLD` in `tests/validate.sh`; `flagged: yes` in the gate run's trailer — is reviewed and checked off by a named human before merge. Every other diff may land on green; one on a review path (skills (`skills/`), `docs/adr/`, `docs/engineering-workflow.md`, `AGENTS.md`, `REVIEW.md` and `SYSTEM-INTENT.md`, each at any depth) is reviewed after merge: `cmu` lists it as "review owed", the developer says in chat that they reviewed, and the agent appends `reviewed through <40-hex sha> on <date>` to `STATUS.md` in a commit that changes only that file; a line added by any other commit acknowledges nothing. It covers exactly the first-parent history of the base branch up to that sha, never what merged while the line was in review.
+- Reviewers give reviews per this policy: the `mattpocock-skills:code-review` skill's two axes (`code-review` on pi) plus one read-only `adversary` pass on every agent-produced diff (ADR 0008). These passes and the adversary produce the findings; every finding is tagged with its risk class from `## Passes`.
+- Review timing follows the merge policy (ADR 0005). A diff on the hold list — the files that check other files; the list is `LANE_HOLD` in `tests/validate.sh`; `flagged: yes` in the gate run's trailer — is reviewed and checked off by a named human before merge. Every other diff may land on green; one on a review path (skills (`skills/`), `docs/adr/`, `docs/engineering-workflow.md`, `AGENTS.md`, `REVIEW.md` and `SYSTEM-INTENT.md`, each at any depth) is reviewed after merge: `cmu` lists it as "review owed", the developer says in chat that they reviewed, and the agent appends `reviewed through <40-hex sha> on <date>` to `STATUS.md` in a commit that changes only that file; a line added by any other commit acknowledges nothing. It covers exactly the first-parent history of the base branch up to that sha, never what merged while the line was in review.
 - Authors resolve findings by a fix commit or an explicit carried-forward note — never by silence. A carried-forward note lives in the tracker with an owner other than the author, and is re-verified at the next operator checkpoint (the between-tickets report where the operator releases work).

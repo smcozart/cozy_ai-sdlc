@@ -1,6 +1,6 @@
 # Review effort follows a computed lane, and the lane is computed by the gate
 
-**Issue:** #40 · **Status:** accepted (approved on #39, the ADR 0005 package) · **Intent:** the arti-agent-platform retro `.factory/retro-scaffold-speed.md` (2026-09-15); first landed on branch `claude-harness`.
+**Issue:** #40 · **Status:** accepted (approved on #39, the ADR 0005 package); Superseded by ADR 0008 (#181, 2026-11-17: one review lane; the `flagged:` line stays) · **Intent:** the arti-agent-platform retro `.factory/retro-scaffold-speed.md` (2026-09-15); first landed on branch `claude-harness`.
 
 The adversary pass was mandatory on every agent-produced diff, and the light
 lane (#24) was a nine-clause predicate an agent evaluated by hand. Together
