@@ -75,7 +75,7 @@ human merge when `flagged: yes`. See the review-lane section of
 `docs/engineering-workflow.md`.
 
 For a large, half-planned piece it's the entrance ramp: walk research +
-drafted docs through intake, then the questionnaire → spec → grilling →
+drafted docs through intake, then the questionnaire → grilling →
 ticket-cut gates split it into tractable slices before any code.
 
 ## 4.5 Take the harness INTO your project (e.g. a RAG system)
@@ -100,7 +100,7 @@ claude   # then: tools per the cozysuite README ("Set up a project"), and /setup
 ```
 
 Then the same cycle in §4 — issue-first
-intake → spec → tickets → build — runs against YOUR repo: the harness files
+intake → intent → tickets → build — runs against YOUR repo: the harness files
 now live in YOUR project, the SAME gate (`tests/validate.sh`), the same
 seams. Your intents live in `intent/<n>-<slug>/` — keep your OWN
 `SYSTEM-INTENT.md` and `CONTEXT.md` (your RAG's purpose and vocabulary) and

@@ -35,12 +35,12 @@ there is no `spec.md`.
 ## Build read order
 
 1. `gh issue view <n> --comments` — the ticket.
-2. Its spec and intent: `intent/<n>-<slug>/` (or the parent design issue's folder).
+2. Its intent: `intent/<n>-<slug>/intent.md` (or the parent design issue's folder).
 3. Every ADR that touches the area.
 4. `CONTEXT.md`.
 5. Only then the code.
 
-A ticket with a missing spec or link goes back to Design.
+A ticket with a missing intent or link goes back to Design.
 
 ## Commands
 

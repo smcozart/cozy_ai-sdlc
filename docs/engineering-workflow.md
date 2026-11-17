@@ -168,7 +168,7 @@ PRs here and 25 of 25 in cozystudio were the full lane).
 two lines to paste beside the gate run at close: a `range:` line with the
 resolved shas, and **`flagged: yes|no`** — the one machine-readable source
 for the hold: `yes` when the range touches the hold list of ADR 0005 (the
-files that check other files hold; the list is `LANE_HOLD` in
+files that check other files; the list is `LANE_HOLD` in
 `tests/validate.sh`), so a human merges. It reads renames as delete + add,
 so moving a held file out of place is the delete it is. A range whose base
 is not the merge-base with the base branch is marked **PARTIAL** and is not
@@ -297,7 +297,7 @@ seam: this repo's ticket close, or a consumer's PR.
 
    | Change class | Who merges |
    |---|---|
-   | Hold list — `flagged: yes` from `tests/validate.sh --lane`: the files that check other files hold; the list is `LANE_HOLD` in `tests/validate.sh` | A named human checkoff, recorded in the thread, after a green gate — or a recorded operator delegation. The PR carries the `flagged-risk` label |
+   | Hold list — `flagged: yes` from `tests/validate.sh --lane`: the files that check other files; the list is `LANE_HOLD` in `tests/validate.sh` | A named human checkoff, recorded in the thread, after a green gate — or a recorded operator delegation. The PR carries the `flagged-risk` label |
    | Everything else, including AGENTS.md, README.md, ADRs, CONTEXT.md and the skills | Agent may land on green; the gate's pasted evidence is the record; post-hoc review follows on review paths |
 
    **Post-hoc review** (ADR 0005): a human reviews, after merge and against
