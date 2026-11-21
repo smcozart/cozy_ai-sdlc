@@ -1,6 +1,6 @@
 # {{NAME}}
 
-The shared vocabulary of this app. Every issue, intent, spec and ADR uses
+The shared vocabulary of this app. Every issue, intent and ADR uses
 these terms. Add a term in the same commit that first needs it.
 
 ## Language

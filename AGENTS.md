@@ -23,7 +23,7 @@ Single-context: `CONTEXT.md` at repo root (created lazily), ADRs in `docs/adr/`.
 
 Canonical rule lives in `docs/engineering-workflow.md` (stage table); this section is a pointer to it so the two can't silently diverge.
 
-Overrides to the vendored skill: `/to-spec` writes the spec to `intent/<n>-<slug>/spec.md`, NOT into the issue body — the issue body stays a brief (ADR 0001) — and does NOT apply `ready-for-agent` at spec time; the approval gate comes first.
+Overrides to the vendored skills: there is no `spec.md` and no `/to-spec` step — the work-item intent is the design record, and the issue body stays a brief that links to it (ADR 0008). `/to-tickets` does NOT apply `ready-for-agent`; the approval gate comes first.
 
 ## Engineering workflow
 
@@ -36,10 +36,9 @@ The standard process (planning → tickets → triage → implement → review �
 - The **Base branch:** line above names the branch tickets start from and PR into (default main when the line is absent). The lane PARTIAL check measures a range against it (env `LANE_TARGET` overrides it); it fails closed: a line that names no branch, a base that resolves to no ref, or a range with no common history prints PARTIAL.
 - `tests/validate.sh [<range> [<pr-body-file>]]` — the Test gate. Healthy shape: one `ok: <name>` line per check below, then `N ok, 0 failed`, exit 0. Pass the ticket's range at close (e.g. `origin/main..HEAD`). Paste the run in the closing comment.
 - `tests/validate.sh --witness` — replays every check's fail-first witness; exit 0 only if every bad sha / mutation fails and every good sha passes.
-- `tests/validate.sh --lane [<range>]` — classifies the diff's review lane (T0 trivial / T1 light / T2 heavy) as an allow-list over files, paths and line count (ADR 0003), then prints `flagged: yes|no` — yes when the range touches the merge hold list — the files that check other files hold; the list is `LANE_HOLD` in `tests/validate.sh` (ADR 0005) — so a human merges. The default gate run prints the same lines as a trailer over its range. A classifier, not a check name: exit 0 when a lane is printed, 2 when the range is empty or invalid (then there is no lane — fix the range). Paste both lines beside the gate run at close; a PARTIAL range is not valid for a close; escalate, never lower.
+- `tests/validate.sh --lane [<range>]` — prints the `range:` line (resolved shas) and `flagged: yes|no` — yes when the range touches the merge hold list — the files that check other files; the list is `LANE_HOLD` in `tests/validate.sh` (ADR 0005) — so a human merges. There is one review lane: every PR gets one adversary pass (ADR 0008). The default gate run prints the same lines as a trailer over its range. A classifier, not a check name: exit 0 when the lines are printed, 2 when the range is empty or invalid (fix the range). Paste both lines beside the gate run at close; a PARTIAL range is not valid for a close.
 - `tests/validate.sh --list` — prints the check names, which must equal this list (verified by the agents-commands check):
-  - static: `sync-rule`, `stage-parity`, `intent-layout`, `adr-numbering`, `adr-refs`, `skill-frontmatter`, `skill-links`, `template-gate-parity`, `agents-commands`
-  - `dispatch-hold`, `herdr-retire`
+  - static: `intent-layout`, `adr-numbering`, `adr-refs`, `skill-frontmatter`, `skill-links`, `template-gate-parity`, `agents-commands`
   - PR body (ADR 0005): `pr-adr-line` — fails a body with no `ADR:` line; CI passes the body file, a local run with none prints `skipped:`
 
 ## Pi configuration
