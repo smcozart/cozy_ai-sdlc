@@ -104,10 +104,10 @@ a loaded guardrail must deny. If nothing denies it, that issue runs serially in
 the supervised parent instead of unattended — do not relax this to get a
 worker running. **herdr row only:** a worker in a herdr pane counts as
 supervised, because the developer can see the pane, read it and step into it.
-It runs in its normal permission mode, never a bypass mode. The probe still
-runs; the worker reports its result as `herdr pane: supervised` and continues.
-No other host is supervised this way: on every other host, an undenied probe
-means the issue runs serially in the parent.
+It runs in its normal permission mode, never a bypass mode, and skips this
+first-turn denial check: its first message line is `herdr pane: supervised`.
+No other host is supervised this way: every other host keeps the check above
+and its serial fallback.
 
 ## Move 4 — Watch
 
@@ -173,8 +173,20 @@ tail of the local run, and the base-lane lines.
 On every QC head, and
 again right before the merge, run `git fetch origin &&
 git merge-base --is-ancestor origin/<base> <the head SHA QC ran on>`. A
-non-zero exit (a failed fetch too) means stale: the worker updates the branch (the brief's
-rebase-or-merge rule) and proof reruns before merge.
+non-zero exit (a failed fetch too) means stale. A stale head skips the update
+and the proof rerun only when all four hold, where `<mb>` is `git merge-base
+origin/<base> <head>`: (a) `git diff --name-only <mb>..origin/<base>` and the
+PR's files (`git diff --name-only <mb>..<head>`) share no path; (b1) `git show
+origin/<base>:tests/validate.sh | bash -s -- --lane <mb>..origin/<base>` prints
+`flagged: no`; (b2) the PR and that base delta do not both add a file under
+`docs/adr/`; (c) `origin/<base>`'s `.github/workflows/gate.yml` runs on `push`
+to `<base>`, so the merged tree is proven one CI run after the merge.
+Otherwise the worker updates the branch (the brief's rebase-or-merge rule) and
+proof reruns before merge. A skipped update still merges with
+`--match-head-commit <the head SHA QC ran on>`. The limit: a break between
+file-disjoint PRs (an app test, `skill-links`, `adr-refs`, `agents-commands`)
+shows only on that push-to-`<base>` gate run. The first red `gate` on `<base>`
+from a skipped update reverts this rule.
 
 On herdr, QC runs in `~/.factory/<repo>/qc` (a full clone; `gh pr checkout
 <pr>` there, then `git rev-parse HEAD` must equal the PR's `headRefOid`), and
@@ -296,7 +308,7 @@ developer should never have to guess whether the loop is waiting on them.
 > implement; your creator orchestrates. Do not load `dispatch` or start
 > another ticket from here.
 >
-> First turn: run `<harmless infra command>` and confirm it is denied by a
+> First turn (the herdr brief replaces this paragraph): run `<harmless infra command>` and confirm it is denied by a
 > loaded guardrail before doing anything else. If it is not denied, stop and
 > report that instead of continuing unattended.
 >
@@ -357,10 +369,9 @@ developer should never have to guess whether the loop is waiting on them.
   everywhere else in the brief.
 - The branch line: when `origin/t<n>-<slug>` does not exist, `git switch -c
   t<n>-<slug> <sha>`; never rename the clone's default branch.
-- The probe line reads: "If it is not denied, say so in your first message
-  and continue — your pane is supervised." The first message starts with
-  the line `herdr pane: supervised — probe <denied|not denied>: <what
-  happened>`, verbatim in that shape.
+- The first-turn paragraph reads: "Your pane is supervised: run in your
+  normal permission mode, never a bypass mode. Your first message starts
+  with the line `herdr pane: supervised`."
 - The handoff adds: after the `HANDOFF:` line, also run `herdr agent prompt
   <ORCH_PANE_ID> "<the same HANDOFF: line>"`. If `herdr` fails, the in-buffer
   line alone satisfies the handoff.
