@@ -174,19 +174,29 @@ On every QC head, and
 again right before the merge, run `git fetch origin &&
 git merge-base --is-ancestor origin/<base> <the head SHA QC ran on>`. A
 non-zero exit (a failed fetch too) means stale. A stale head skips the update
-and the proof rerun only when all four hold, where `<mb>` is `git merge-base
-origin/<base> <head>`: (a) `git diff --name-only <mb>..origin/<base>` and the
-PR's files (`git diff --name-only <mb>..<head>`) share no path; (b1) `git show
+and the proof rerun only when `git fetch origin` succeeded at this check and
+all four hold, where `<mb>` is `git merge-base origin/<base> <head>`: (a) `git
+diff --no-renames --name-only <mb>..origin/<base>` and the PR's files (`git
+diff --no-renames --name-only <mb>..<head>`) share no path; (b1) `git show
 origin/<base>:tests/validate.sh | bash -s -- --lane <mb>..origin/<base>` prints
 `flagged: no`; (b2) the PR and that base delta do not both add a file under
 `docs/adr/`; (c) `origin/<base>`'s `.github/workflows/gate.yml` runs on `push`
-to `<base>`, so the merged tree is proven one CI run after the merge.
-Otherwise the worker updates the branch (the brief's rebase-or-merge rule) and
-proof reruns before merge. A skipped update still merges with
-`--match-head-commit <the head SHA QC ran on>`. The limit: a break between
-file-disjoint PRs (an app test, `skill-links`, `adr-refs`, `agents-commands`)
-shows only on that push-to-`<base>` gate run. The first red `gate` on `<base>`
-from a skipped update reverts this rule.
+to `<base>`, so the merged tree is proven one CI run after the merge. A failed
+fetch, or any condition that does not hold, means the worker updates the
+branch (the brief's rebase-or-merge rule) and proof reruns before merge. When
+the update is skipped, the range gate (step 1), the base lane (step 4, still
+`origin/<base>`'s script) and the close's lines run over `<mb>..HEAD`, not
+`origin/<base>..HEAD`: on a stale head that range prints PARTIAL. A skipped
+update still goes through the merge gate below and merges with
+`--match-head-commit <the head SHA QC ran on>`; it never passes a `flagged:
+yes`. The limit: a break between file-disjoint PRs (an app test,
+`skill-links`, `adr-refs`, `agents-commands`) shows only on that
+push-to-`<base>` gate run. After a merge that skipped its update, read that
+run before the next skip: `gh run list --branch <base> --event push --commit
+<the merge commit> --limit 1`. Pending or not reported is not green: no next
+skip until it passes. Red means stop skipping and report it on the `Needs
+you:` line: the first red `gate` on `<base>` from a skipped update reverts
+this rule.
 
 On herdr, QC runs in `~/.factory/<repo>/qc` (a full clone; `gh pr checkout
 <pr>` there, then `git rev-parse HEAD` must equal the PR's `headRefOid`), and
@@ -308,7 +318,7 @@ developer should never have to guess whether the loop is waiting on them.
 > implement; your creator orchestrates. Do not load `dispatch` or start
 > another ticket from here.
 >
-> First turn (the herdr brief replaces this paragraph): run `<harmless infra command>` and confirm it is denied by a
+> First turn: run `<harmless infra command>` and confirm it is denied by a
 > loaded guardrail before doing anything else. If it is not denied, stop and
 > report that instead of continuing unattended.
 >
@@ -369,7 +379,8 @@ developer should never have to guess whether the loop is waiting on them.
   everywhere else in the brief.
 - The branch line: when `origin/t<n>-<slug>` does not exist, `git switch -c
   t<n>-<slug> <sha>`; never rename the clone's default branch.
-- The first-turn paragraph reads: "Your pane is supervised: run in your
+- The first-turn paragraph is replaced, so the herdr worker runs no denial
+  check. It reads: "Your pane is supervised: run in your
   normal permission mode, never a bypass mode. Your first message starts
   with the line `herdr pane: supervised`."
 - The handoff adds: after the `HANDOFF:` line, also run `herdr agent prompt
