@@ -104,10 +104,10 @@ a loaded guardrail must deny. If nothing denies it, that issue runs serially in
 the supervised parent instead of unattended — do not relax this to get a
 worker running. **herdr row only:** a worker in a herdr pane counts as
 supervised, because the developer can see the pane, read it and step into it.
-It runs in its normal permission mode, never a bypass mode. The probe still
-runs; the worker reports its result as `herdr pane: supervised` and continues.
-No other host is supervised this way: on every other host, an undenied probe
-means the issue runs serially in the parent.
+It runs in its normal permission mode, never a bypass mode, and skips this
+first-turn denial check: its first message line is `herdr pane: supervised`.
+No other host is supervised this way: every other host keeps the check above
+and its serial fallback.
 
 ## Move 4 — Watch
 
@@ -173,8 +173,30 @@ tail of the local run, and the base-lane lines.
 On every QC head, and
 again right before the merge, run `git fetch origin &&
 git merge-base --is-ancestor origin/<base> <the head SHA QC ran on>`. A
-non-zero exit (a failed fetch too) means stale: the worker updates the branch (the brief's
-rebase-or-merge rule) and proof reruns before merge.
+non-zero exit (a failed fetch too) means stale. A stale head skips the update
+and the proof rerun only when `git fetch origin` succeeded at this check and
+all four hold, where `<mb>` is `git merge-base origin/<base> <head>`: (a) `git
+diff --no-renames --name-only <mb>..origin/<base>` and the PR's files (`git
+diff --no-renames --name-only <mb>..<head>`) share no path; (b1) `git show
+origin/<base>:tests/validate.sh | bash -s -- --lane <mb>..origin/<base>` prints
+`flagged: no`; (b2) the PR and that base delta do not both add a file under
+`docs/adr/`; (c) `origin/<base>`'s `.github/workflows/gate.yml` runs on `push`
+to `<base>`, so the merged tree is proven one CI run after the merge. A failed
+fetch, or any condition that does not hold, means the worker updates the
+branch (the brief's rebase-or-merge rule) and proof reruns before merge. When
+the update is skipped, the range gate (step 1), the base lane (step 4, still
+`origin/<base>`'s script) and the close's lines run over `<mb>..HEAD`, not
+`origin/<base>..HEAD`: on a stale head that range prints PARTIAL. A skipped
+update still goes through the merge gate below and merges with
+`--match-head-commit <the head SHA QC ran on>`; it never passes a `flagged:
+yes`. The limit: a break between file-disjoint PRs (an app test,
+`skill-links`, `adr-refs`, `agents-commands`) shows only on that
+push-to-`<base>` gate run. After a merge that skipped its update, read that
+run before the next skip: `gh run list --branch <base> --event push --commit
+<the merge commit> --limit 1`. Pending or not reported is not green: no next
+skip until it passes. Red means stop skipping and report it on the `Needs
+you:` line: the first red `gate` on `<base>` from a skipped update reverts
+this rule.
 
 On herdr, QC runs in `~/.factory/<repo>/qc` (a full clone; `gh pr checkout
 <pr>` there, then `git rev-parse HEAD` must equal the PR's `headRefOid`), and
@@ -357,10 +379,10 @@ developer should never have to guess whether the loop is waiting on them.
   everywhere else in the brief.
 - The branch line: when `origin/t<n>-<slug>` does not exist, `git switch -c
   t<n>-<slug> <sha>`; never rename the clone's default branch.
-- The probe line reads: "If it is not denied, say so in your first message
-  and continue — your pane is supervised." The first message starts with
-  the line `herdr pane: supervised — probe <denied|not denied>: <what
-  happened>`, verbatim in that shape.
+- The first-turn paragraph is replaced, so the herdr worker runs no denial
+  check. It reads: "Your pane is supervised: run in your
+  normal permission mode, never a bypass mode. Your first message starts
+  with the line `herdr pane: supervised`."
 - The handoff adds: after the `HANDOFF:` line, also run `herdr agent prompt
   <ORCH_PANE_ID> "<the same HANDOFF: line>"`. If `herdr` fails, the in-buffer
   line alone satisfies the handoff.
