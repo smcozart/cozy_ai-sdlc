@@ -4,7 +4,8 @@
 2026-10-02; hold list amended by the operator on #128, 2026-10-18,
 to add the consumer gate; amended on #132, 2026-10-18, to keep the
 list in one place; amended on #147, 2026-10-18, so the acknowledgement is
-the sha in the line; review list narrowed by the operator on #173, 2026-11-14) · **Intent:** the N-package, pi session 2026-09-28 (items 2, 3,
+the sha in the line; review list narrowed by the operator on #173, 2026-11-14; the hold flag's
+command moved to ADR 0008 on #181, 2026-11-17) · **Intent:** the N-package, pi session 2026-09-28 (items 2, 3,
 5, 8, 10).
 
 Deploy §4 required a human checkoff, recorded in the thread, before any diff
@@ -20,7 +21,7 @@ pre-merge checkoff on every surface as a rubber stamp.
 - **Hold list (a human merges):** the files that check other files. The
   one list is `LANE_HOLD` in `tests/validate.sh`.
   A PR may not weaken its own gate and merge itself. The
-  `flagged:` line of `tests/validate.sh --lane <range>` (ADR 0003) reads
+  `flagged:` line of `tests/validate.sh --lane <range>` (ADR 0008) reads
   that list: `flagged: yes` means held. A held diff merges only after a
   named human checkoff recorded in the thread, or a recorded operator
   delegation. The tracker marks it with
@@ -73,8 +74,7 @@ and the agent appends `reviewed through <40-hex sha> on <date>` (the sha they
 name, else the newest commit of the review-owed list they were shown, never a
 fresh `origin/<base>`) to `STATUS.md` in a commit that
 changes only that file, with their words in the commit message. The sha rule
-and the `STATUS.md`-only rule are unchanged. ADR 0003's T0 checkoff ends with
-it, since no T0 path is a review path. What is given up: no human is owed a
+and the `STATUS.md`-only rule are unchanged. What is given up: no human is owed a
 read of app code that lands on green. Rejected: optional sampling of
 everything (nothing would then guarantee a human reads a change to the rules
 agents follow).
@@ -85,8 +85,7 @@ hold in practice and it fails open. *Hold the broad flagged-risk set*
 checks those files; only the files that are the gate can disable it.
 
 **Consequences.** The broader flagged-risk set in Deploy §4 is now review
-guidance, not a merge rule. ADR 0003's T0 "human checkoff" is the post-hoc
-review for an unheld diff (ended by the #173 amendment above). One GitHub identity merges, so GitHub cannot
+guidance, not a merge rule. One GitHub identity merges, so GitHub cannot
 enforce the hold; the orchestrator skills state it (`factory-orchestrator`
 here, and `dispatch` once its hold fix (#42) is adopted into `main`
 (#35)). Tighter control for production systems is a later operator decision

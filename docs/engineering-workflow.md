@@ -8,7 +8,7 @@ running Claude Code or pi should follow it. Prerequisites: Matt Pocock skills in
 
 ```
 setup (once per repo)
-  → issue-first intake → intent → /to-questionnaire → /to-spec → /to-tickets → /triage loop
+  → issue-first intake → intent → /to-questionnaire → /to-tickets → /triage loop
   → /implement (per ticket, test-first) → mattpocock-skills:code-review + adversarial pass
   → ADRs + CONTEXT.md maintained continuously (domain-modeling)
   → /retro at milestones, /handoff at session end
@@ -57,7 +57,7 @@ Formalized in issue [#2](https://github.com/smcozart/cozyharness/issues/2).
    irreversible migrations, public contracts): explicit review — a designated
    human reviewer signs off in the issue before Build, and the decision gets
    an ADR.
-6. **Artifact chain.** intent → spec / ADRs / tickets → plan → code + tests →
+6. **Artifact chain.** intent → ADRs / tickets → plan → code + tests →
    pasted proof. Each stage consumes the previous artifact by reference (issue
    number or path), never by copy-paste.
 7. **`plan.md` is optional Build preparation.** The Plan stage produces the
@@ -73,27 +73,26 @@ Both flows share this contract: **greenfield** seeds the intent from the brief
 or PRD against SYSTEM-INTENT.md; **brownfield** seeds it from the diagnosis,
 retro finding, or transcript, and checks it against the same system intent.
 
-## Design — spec.md, ADRs, tickets, and the approval gate
+## Design — ADRs, tickets, and the approval gate
 
-Formalized in issue [#3](https://github.com/smcozart/cozyharness/issues/3).
-Design turns an approved intent into three durable artifacts — a spec, the
-ADRs the design requires, and ticket issues — then passes the approval gate
-that moves work toward `ready-for-agent`.
+Formalized in issue [#3](https://github.com/smcozart/cozyharness/issues/3);
+`spec.md` retired by ADR 0008.
+Design turns an approved intent into the durable artifacts the work needs —
+the ADRs the design requires and ticket issues — then passes the approval
+gate that moves work toward `ready-for-agent`.
 
-1. **spec.md lives next to the intent.** The spec for issue `#n` is
-   `intent/<n>-<slug>/spec.md`, a sibling of `intent.md` (ADR 0001). The
-   issue body links to it by path; the spec header links back to the issue
-   and intent. Never copy spec content into the issue body — reference by
-   path only, so no stale duplicate can exist.
-2. **spec.md required sections** (template + worked example:
-   [`intent/TEMPLATE-spec.md`](../intent/TEMPLATE-spec.md)): Problem
-   statement · Requirements (numbered user stories) · Design concerns
-   (modules, interfaces, test seams — no file paths or code, except
-   decision-encoding prototype snippets) · Constraints (system / UX /
-   security — an empty security section is a claim; write "none: <why>") ·
-   Testing decisions · Out of scope · Open questions (each with an owner;
-   none blocking at approval time).
-3. **Vocabulary comes from CONTEXT.md.** Specs and ticket titles name
+1. **The intent is the design record** (ADR 0008). There is no `spec.md`:
+   requirements, constraints and acceptance criteria live in
+   `intent/<n>-<slug>/intent.md`; a hard-to-reverse decision lives in an
+   ADR; a detail scoped to one ticket lives in that ticket's body. The issue
+   body links to the intent by path. Never copy intent content into the
+   issue body — reference by path only, so no stale duplicate can exist.
+   The older `spec.md` files under `intent/` are records, not a contract.
+2. **Intent required sections** (template:
+   [`intent/TEMPLATE.md`](../intent/TEMPLATE.md)): Problem · Desired
+   outcome · Scope · Non-goals · Acceptance criteria · System-intent
+   alignment.
+3. **Vocabulary comes from CONTEXT.md.** Intents and ticket titles name
    concepts exactly as root [`CONTEXT.md`](../CONTEXT.md) defines them; a
    term resolved during Design is added to the glossary in the same commit.
    A missing term is a signal: you're inventing language, or you found a
@@ -101,11 +100,11 @@ that moves work toward `ready-for-agent`.
 4. **ADRs participate in Design.** A design decision that is hard to
    reverse, surprising without context, or a real trade-off gets an ADR in
    `docs/adr/NNNN-slug.md`, committed and pushed immediately. The ADR names
-   the issue it decides for; the spec header lists the ADRs it follows.
+   the issue it decides for; the intent lists the ADRs it follows.
    Existing ADRs constrain new design: a contradiction is either surfaced
-   explicitly in the spec or resolved by a new ADR that supersedes — never
+   explicitly in the intent or resolved by a new ADR that supersedes — never
    silently overridden.
-5. **Specs break into vertical-slice tickets** (ADR 0002). Each ticket is a
+5. **Intents break into vertical-slice tickets** (ADR 0002). Each ticket is a
    GitHub sub-issue of the design issue `#n` (fallback: `Part of #n` at the
    top of the child body + a task list in the parent). Each ticket is a
    tracer bullet: a narrow but complete path through every layer, demoable
@@ -114,27 +113,27 @@ that moves work toward `ready-for-agent`.
    what it delivers, its blocking edges (native `blocked_by` dependencies
    where available; mechanics in
    [`docs/agents/issue-tracker.md`](agents/issue-tracker.md)), runnable
-   acceptance criteria, and references to the spec path and governing ADRs.
+   acceptance criteria, and references to the intent path and governing ADRs.
    Triage labels apply per ticket; the parent design issue closes only when
    every child is closed. The linked-issue graph IS the design.
 6. **The approval gate.** Ordinary design is approved conversationally: the
-   spec is posted in the issue thread and the maintainer's in-thread
+   intent is posted in the issue thread and the maintainer's in-thread
    approval is the record. High-risk design (security, data loss,
    irreversible migrations, public contracts) requires an explicit human
    sign-off comment in the issue plus an ADR for the decision. The gate
-   sits before labeling: tickets are cut from a spec only after it has
+   sits before labeling: tickets are cut from an intent only after it has
    passed. A ticket then earns `ready-for-agent` on the standard two
    conditions — blockers resolved + acceptance criteria defined. No label,
    no work.
 7. **What Build reads, in order** (forward contract to the next stage): (1)
    `gh issue view <n> --comments` (the ticket, a child issue per ADR 0002),
-   (2) follow the ticket body's spec-path reference (or its parent's
-   `intent/<parent-n>-<slug>/`) to the spec; then the `intent.md` for the
-   why, (3) every ADR touching the area, (4) root
-   `CONTEXT.md`, (5) only then the code. A ticket whose spec or links are
+   (2) follow the ticket body's intent-path reference (or its parent's
+   `intent/<parent-n>-<slug>/`) to the `intent.md` for the why and the
+   acceptance criteria, (3) every ADR touching the area, (4) root
+   `CONTEXT.md`, (5) only then the code. A ticket whose intent or links are
    missing is bounced back to Design, not improvised around.
 8. **Greenfield vs brownfield — one workflow, different seeds.** Same
-   pipeline, same artifacts, same gates. Greenfield seeds the spec from the
+   pipeline, same artifacts, same gates. Greenfield seeds the intent from the
    brief or PRD against SYSTEM-INTENT.md, and its design concerns are mostly
    new seams; brownfield seeds it from the diagnosis, retro finding, or
    transcript, and its design must first read the existing code and ADRs it
@@ -145,7 +144,7 @@ that moves work toward `ready-for-agent`.
    "lock that in", "we decided" — it lands in its durable home before the
    next question, never held in chat for later batching: a hard-to-reverse
    or authority rule becomes a new `docs/adr/NNNN-slug.md`; a requirement or
-   design detail becomes an edit to the spec's matching section; a detail
+   design detail becomes an edit to the intent's matching section; a detail
    scoped to one ticket becomes an edit to that issue's body; any other
    decision becomes a one-line ADR. A file record goes on its ticket's
    branch, or on its own small branch and PR; there is no per-conversation records
@@ -157,86 +156,26 @@ that moves work toward `ready-for-agent`.
    only" and "finish mapping first, then update once" are not moves; batch
    only when asked. The `intent-conversation` skill carries the mechanics.
 
-## Light lane — thin front end, same tail
+## Review lane — one adversary pass, one merge hold
 
-Formalized in issue [#24](https://github.com/smcozart/cozyharness/issues/24).
-The full front end (issue → intent → spec → grilling → tickets) is
-proportionate for a multi-ticket, protected-surface build; it is dead weight
-for a one-file doc tweak. The light lane is a **defined** thinner front end for
-small, low-risk work — the *same* tail (proof + merge policy), a tapered head.
+Formalized in ADR 0008 (it supersedes the tiered lanes of ADR 0003). Every
+PR takes the same path: a short `intent/<n>-<slug>/intent.md`, the gate run,
+and **one read-only adversary pass** (Deploy §1). There is no lighter review
+budget and no size or path tier: the tiers decided nothing (73 of 76 merged
+PRs here and 25 of 25 in cozystudio were the full lane).
 
-**The lane is computed, then confirmed** (ADR 0003). Most of what decides a
-lane is visible to git — how many files, which paths, how many lines — so
-`tests/validate.sh --lane <range>` classifies the diff and prints one
-`lane:` line that is pasted beside the gate run at close. The lane sets the
-**review effort the diff owes** (Deploy §1):
-
-| Lane | Computed trigger | Review owed |
-|---|---|---|
-| **T0 trivial** | ≤2 files, all `*.md`, ≤60 lines, every file in the **light set** and none on the T1 floor | the gate run; no human review is owed after merge, since no light-set path is a review path (ADR 0005). No adversary pass. (On this repo only the archival `handoffs/*.md` qualify.) |
-| **T1 light** | ≤2 files, ≤60 changed lines, every file in the light set — or any file on the **T1 floor**: the review log `STATUS.md`, `docs/training/` (a human runs it), `handoffs/pickup-handoff.md` (a session's entrance ramp) | the gate run + one **bounded** adversary pass: correctness of the diff's claims only, findings MED and above, no scope sweep |
-| **T2 heavy** | **everything else** — any file outside the light set (the light set here is `handoffs/`, `docs/training/`, `STATUS.md`, `LICENSE`; every other path, including ones the repo has not grown yet, is heavy), any instruction file wherever it sits, in any case (`CLAUDE.md`, `AGENTS.md`, `README.md`, `.mcp.json`, `.cursorrules`, `.gitmodules`), any delete, any binary, any symlink (never followed), >2 files, or >60 lines | the full review loop: `REVIEW.md` axes + the unbounded adversary pass |
-
-The classifier is an **allow-list**: unknown is heavy, which is what "when in
-doubt, heavy lane" means when a script says it. It reads renames as
-delete + add, so moving a contract file out of place is the delete it is,
-and it prints the resolved shas of the range it classified; a range whose
-base is not the merge-base with `main` is marked **PARTIAL** and is not valid
-for a close — the lane is always computed over the ticket's full range. If
-`--lane` is absent in a repo, or prints no `lane:` line, **the lane is T2.**
-
-The classifier sees files, not meaning. Two clauses therefore stay with the
-agent and are filled in at close beside the `lane:` line —
-`no-ADR=<y/n> not-speculative=<y/n>` — **earns no ADR** (no hard-to-reverse,
-surprising, or real-trade-off decision) and **not speculative** (no public
-contract — schema, API, label vocabulary — and no multi-edge blocker). Any
-`n` → T2. **Escalation is the only direction:** an agent may raise a computed
-lane and never lower it. Consumers extend the light set in their own
-`validate.sh` with the paths they are prepared to review on a bounded budget
-(a journal of append-only fragments, archival handoffs) — a verbatim copy is
-safe, because everything it does not name is heavy.
-
-The same run prints **`flagged: yes|no`** — the one machine-readable source
-for the **merge hold**: `yes` when the range touches the hold list of ADR 0005
-(the files that check other files hold; the list is `LANE_HOLD` in
-`tests/validate.sh`), so a human merges. It reports the hold list only; the
-broader flagged-risk set in Deploy §4 stays review guidance.
-
-The light lane below is **T0 and T1**; the heavy lane is **T2**.
-
-**Light-lane shape (thinner head, identical tail):**
-
-1. A short `intent/<n>-<slug>/intent.md` only — problem, one-line outcome,
-   scope, acceptance criteria. **No** `spec.md`, **no** `plan.md`.
-2. The close is byte-for-byte the same obligation as every other close: the
-   ticket earns `ready-for-agent` on the same contract (blockers resolved +
-   acceptance criteria defined), and the close pastes the green
-   `tests/validate.sh [<range>]` run beside the acceptance output, then the
-   Deploy merge-gate items.
-
-**It is a lane, not a loophole.** Nothing about the close gate relaxes.
-`ready-for-agent`, pasted proof, and the merge policy are identical on both
-lanes — *only the front artifact and the review budget taper*. The lane never
-decides who merges: the merge hold does (`flagged:`; ADR 0005), and the hold
-list stays human. The only agent judgement in play is the two stated clauses,
-and it can only escalate. No rule says a change "must always" carry a
-`plan.md`. The heavy lane stays mandatory for anything touching a protected
-surface or a multi-ticket effort, and the classifier makes that mechanical.
-
-**Light vs heavy, worked.** Fixing a typo in an archival
-`handoffs/design-stage-handoff.md` is **T0**: one file, docs-only, in the
-light set — `--lane` says so, a two-line `intent.md`, the gate run, land on
-green; no adversary pass. An intent that rides its
-work PR lifts that PR to T2 (`intent/` is outside the light set): one full
-review. Fixing a typo in
-`docs/training/onboarding-runbook.md` is **T1**: the runbook's fenced blocks
-are what a new human runs verbatim, so it floors at T1 and owes one bounded
-pass even at one line; an acknowledgement in the review log `STATUS.md` is
-T1 too — its line decides what counts as reviewed. Adding the light lane itself
-(#24), or this tiering (ADR 0003), is **T2**: it edits the synced pair and
-`tests/validate.sh`, which are outside the light set, so it owes the sync
-rule (both files, one commit), the full adversary pass and merge-path
-branch-protection proof — the path, not the size, forces the lane.
+`tests/validate.sh --lane <range>` stays, for the **merge hold**. It prints
+two lines to paste beside the gate run at close: a `range:` line with the
+resolved shas, and **`flagged: yes|no`** — the one machine-readable source
+for the hold: `yes` when the range touches the hold list of ADR 0005 (the
+files that check other files; the list is `LANE_HOLD` in
+`tests/validate.sh`), so a human merges. It reads renames as delete + add,
+so moving a held file out of place is the delete it is. A range whose base
+is not the merge-base with the base branch is marked **PARTIAL** and is not
+valid for a close — the hold is always computed over the ticket's full
+range. An empty or unreadable range exits 2 (fix the range). The hold list
+is not the broader flagged-risk set in Deploy §4, which stays review
+guidance.
 
 ## Build — agents execute against the tracker
 
@@ -246,7 +185,7 @@ whatever the harness. The frontier is the tracker:
 
 1. **One ticket per agent session.** A fresh session (any harness — pi, Claude
    Code, Codex) picks one `ready-for-agent` ticket, reads it in the Design §7
-   order (ticket → spec → ADRs → `CONTEXT.md` → code), and works nothing else.
+   order (ticket → intent → ADRs → `CONTEXT.md` → code), and works nothing else.
 2. **Test-first, lean.** Red-green slices; stdlib first; shortest working diff;
    no speculative abstractions. Every test guards behavior no other test covers.
 3. **ADRs during Build.** A decision that meets the ADR bar gets
@@ -261,7 +200,7 @@ whatever the harness. The frontier is the tracker:
 5. **Proof over claim.** Closing a ticket requires running its acceptance
    criteria and pasting the commands + output into the issue. Failures reopen
    the ticket with the failing command.
-6. **Bounce, don't improvise.** A ticket whose spec, ADR, or links are missing
+6. **Bounce, don't improvise.** A ticket whose intent, ADR, or links are missing
    goes back to Design with a comment saying what's missing — never worked
    around.
 
@@ -321,9 +260,8 @@ seam: this repo's ticket close, or a consumer's PR.
 
 1. **The review loop.** Every diff is reviewed against
    [`REVIEW.md`](../REVIEW.md): the `mattpocock-skills:code-review` skill's two axes plus an
-   `adversary` pass on agent-produced diffs **sized to the computed lane**
-   (Light lane table; ADR 0003) — unbounded at T2, bounded to the diff's
-   claims and MED+ findings at T1, none at T0 where the gate is the review.
+   one read-only `adversary` pass on every agent-produced diff (Review lane;
+   ADR 0008).
    Findings are tagged by
    risk class (Bugs / Security / Compliance) regardless of which pass
    surfaced them; a finding is resolved by a fix commit or an explicit
@@ -332,9 +270,8 @@ seam: this repo's ticket close, or a consumer's PR.
    review thread (closing comment or PR) is the audit record.
 2. **The merge gate.** A close pastes, beside the Test gate's evidence:
    (a) review findings resolved or carried with an owner; (b) the pasted
-   `tests/validate.sh [<range>]` run (Test §1); (c) the `lane:` and
-   `flagged:` lines of the gate run's trailer and the adversary verdict the
-   lane owes (T0 pastes the lane line and `adversary: n/a — T0`); (d) the merge hold: at `flagged: yes`
+   `tests/validate.sh [<range>]` run (Test §1); (c) the `range:` and
+   `flagged:` lines of the gate run's trailer and the adversary verdict; (d) the merge hold: at `flagged: yes`
    a named human checkoff recorded in the thread (or a recorded operator
    delegation) before merge; at `flagged: no` the agent may land on green
    (table below; ADR 0005);
@@ -360,8 +297,8 @@ seam: this repo's ticket close, or a consumer's PR.
 
    | Change class | Who merges |
    |---|---|
-   | Hold list — `flagged: yes` from `tests/validate.sh --lane`: the files that check other files hold; the list is `LANE_HOLD` in `tests/validate.sh` | A named human checkoff, recorded in the thread, after a green gate — or a recorded operator delegation. The PR carries the `flagged-risk` label |
-   | Everything else, including AGENTS.md, the synced pair, ADRs, CONTEXT.md and the skills | Agent may land on green; the gate's pasted evidence is the record; post-hoc review follows on review paths |
+   | Hold list — `flagged: yes` from `tests/validate.sh --lane`: the files that check other files; the list is `LANE_HOLD` in `tests/validate.sh` | A named human checkoff, recorded in the thread, after a green gate — or a recorded operator delegation. The PR carries the `flagged-risk` label |
+   | Everything else, including AGENTS.md, README.md, ADRs, CONTEXT.md and the skills | Agent may land on green; the gate's pasted evidence is the record; post-hoc review follows on review paths |
 
    **Post-hoc review** (ADR 0005): a human reviews, after merge and against
    `REVIEW.md`, every diff that landed on green on a **review path** — the
@@ -411,15 +348,14 @@ tooling — waits on #1.
 |---|---|---|
 | Capture the intent | issue + `intent/<n>-<slug>/intent.md` | First, right after the issue exists (see **Plan — issue-first intake** above). |
 | Elicit requirements | `/to-questionnaire` | New feature with unknowns. Converts vague asks into answerable questions. |
-| Write the spec | `/to-spec` | After questionnaire. Spec lives at `intent/<n>-<slug>/spec.md`, referenced from the issue by path (see **Design** above). Overrides to the vendored skill: write the spec to that path, NOT into the issue body (ADR 0001), and do NOT apply `ready-for-agent` at spec time — the approval gate comes first. |
-| Break into tickets | `/to-tickets` | After spec. Tracer-bullet vertical slices; blocking edges declared per ticket (GitHub native blocking links). Never horizontal layers. |
+| Break into tickets | `/to-tickets` | After the intent is approved; never `/to-spec` — there is no `spec.md` (ADR 0008). Do NOT apply `ready-for-agent` before the approval gate. Tracer-bullet vertical slices; blocking edges declared per ticket (GitHub native blocking links). Never horizontal layers. |
 | Groom the queue | `/triage` | Continuous. State machine of triage roles → issues end as agent-ready briefs labeled `ready-for-agent`. AI-generated comments carry the AI-triage disclaimer. |
-| Stress-test thinking | `/grilling` (or `/grill-me`, `/grill-with-docs`) | Before accepting a spec, an architecture, or an agent's plan. Cheap insurance; use liberally at decision points. |
+| Stress-test thinking | `/grilling` (or `/grill-me`, `/grill-with-docs`) | Before accepting an intent, an architecture, or an agent's plan. Cheap insurance; use liberally at decision points. |
 | Implement | `/implement` | Per ticket, one ticket per session. Test-first (red-green slices). Lean: stdlib first, shortest working diff. |
 | Test discipline | `/tdd` | Default mode inside implement. Every test justifies itself — guards behavior no other test covers. |
 | Debugging | `/diagnosing-bugs` | When something is broken/slow, not during planned work. |
-| Review | `REVIEW.md`, `mattpocock-skills:code-review` | After each diff (or each batch). Two axes: standards + spec; policy per REVIEW.md. |
-| Adversarial review | `adversary` subagent (pi) | On agent-produced diffs, sized to the computed lane (ADR 0003): full at T2, bounded to the diff's claims at T1, none at T0 where the human review is the second pair of eyes. Breaks the author-boss bias loop. Claude equivalent: a second review pass with "assume this is wrong" instructions. |
+| Review | `REVIEW.md`, `mattpocock-skills:code-review` | After each diff (or each batch). Two axes: standards + intent; policy per REVIEW.md. |
+| Adversarial review | `adversary` subagent (pi) | On every agent-produced diff, one read-only pass (ADR 0008). Breaks the author-boss bias loop. Claude equivalent: a second review pass with "assume this is wrong" instructions. |
 | Record decisions | `domain-modeling` | ADR bar: hard to reverse, surprising without context, or a real trade-off. One paragraph, `docs/adr/NNNN-slug.md`, **commit and push** — an unpushed ADR is invisible. Visible in code ⇒ no ADR. |
 | Shared vocabulary | `CONTEXT.md` via `domain-modeling` | Update when terminology shifts; consumers read it before issues. |
 | Milestone retro | `/retro` | At milestones or when a failure pattern repeats. Feed findings into ADRs or process edits. |
@@ -459,14 +395,14 @@ loads it from the plugin. pi loads no project skills from `.agents/skills/`
 4. **ADRs are pushed immediately.** Decisions live in `docs/adr/`, not in session memory.
 5. **Proof over claim.** Whoever closes work runs the verification commands and pastes
    the output into the issue.
-6. **Artifacts over conversation.** Specs, ADRs, and issues are durable; chat is not.
+6. **Artifacts over conversation.** Intents, ADRs, and issues are durable; chat is not.
 
 ## Do we need a documentation skill on top of this?
 
 No. Documentation here already has three owners, and a fourth would overlap all of them:
 
 - `domain-modeling` → CONTEXT.md + ADRs (the "why" and the vocabulary)
-- `/to-spec` → specs (the "what we're building")
+- `intent.md` → the "what we're building" (ADR 0008)
 - `/handoff` → session continuity
 
 What's worth adding instead is a lightweight rule, now captured above: **user-facing docs

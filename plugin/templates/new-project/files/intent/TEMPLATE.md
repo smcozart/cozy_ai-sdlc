@@ -3,7 +3,7 @@
 **Issue:** #<issue-number> · **Type:** feature | bug | system-change
 
 - `feature`: new behavior a user of the app can see or use.
-- `bug`: the app behaves differently from what an intent, a spec or the developer expects.
+- `bug`: the app behaves differently from what an intent or the developer expects.
 - `system-change`: a change to how the repo is built, checked, reviewed or released (gate, CI, hooks, workflow, skills, ADR policy), not to the app's behavior.
 
 ## Problem

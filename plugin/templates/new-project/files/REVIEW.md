@@ -6,7 +6,7 @@ Run all three on every diff — the ticket's range, stated in the review.
 
 - **Bugs** — logic errors, broken edge cases, regressions.
 - **Security** — injection, secrets, PII in logs, permissions.
-- **Compliance** — the change matches its `spec.md` and this repo's records
+- **Compliance** — the change matches its `intent.md` and this repo's records
   (`CONTEXT.md` vocabulary, ADR constraints).
 
 ## Severity
@@ -22,10 +22,8 @@ Do not review by eye what `tests/validate.sh` enforces (the check list in
 
 ## The loop
 
-- Every diff gets the `mattpocock-skills:code-review` skill's two axes (`code-review` on pi) plus an `adversary`
-  pass sized to the lane (`tests/validate.sh --lane <range>`): unbounded at
-  T2; at T1 bounded to the diff's own claims, MED+ findings only; none at T0,
-  where the gate run is the review and the close pastes `adversary: n/a — T0`.
+- Every diff gets the `mattpocock-skills:code-review` skill's two axes (`code-review` on pi) plus one
+  read-only `adversary` pass. There is one review lane: no tiers.
 - Authors resolve each finding by a fix commit or a carried-forward note in
   the tracker with an owner other than the author — never by silence.
 - Who merges, and when: `docs/engineering-workflow.md` Deploy.

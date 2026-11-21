@@ -25,18 +25,11 @@ system.
    speculative abstractions (the vendored `ponytail` skill enforces this
    posture — work with it).
 5. **Proof over claim.** Closing an issue requires pasting the verification
-   commands and their output. PRs pass review: standards + spec, plus an
-   adversarial pass on agent-produced diffs sized to the computed lane
-   (`tests/validate.sh --lane`, ADR 0003; full at T2).
+   commands and their output. PRs pass review: standards + intent, plus one
+   adversarial pass on every agent-produced diff (ADR 0008).
 6. **ADRs.** If your change is hard to reverse, surprising without context, or
    a real trade-off, add `docs/adr/NNNN-slug.md` in the same PR — committed
    with the change, never after.
-
-## The sync rule (non-negotiable)
-
-The process lives in two places that must never drift: `docs/engineering-workflow.md`
-(canonical) and `README.md` (the pitch). A PR that changes the process updates
-both in the same commit.
 
 ## Local setup
 
