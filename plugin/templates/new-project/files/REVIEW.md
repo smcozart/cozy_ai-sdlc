@@ -22,8 +22,8 @@ Do not review by eye what `tests/validate.sh` enforces (the check list in
 
 ## The loop
 
-- Every diff gets the `mattpocock-skills:code-review` skill's two axes (`code-review` on pi) plus one
-  read-only `adversary` pass. There is one review lane: no tiers.
+- Every diff gets one read-only `adversary` pass. There is one review lane:
+  no tiers.
 - Authors resolve each finding by a fix commit or a carried-forward note in
   the tracker with an owner other than the author — never by silence.
 - Who merges, and when: `docs/engineering-workflow.md` Deploy.

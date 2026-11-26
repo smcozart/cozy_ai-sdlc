@@ -96,8 +96,7 @@ The checklist a diff owes before it merges, pasted at the seam (ticket close
 here, PR for consumers): review findings resolved or carried with an owner,
 the pasted `tests/validate.sh [<range>]` run, the adversary verdict, the
 merge hold (a named human checkoff when `flagged: yes`, ADR 0005), preview
-proof for UI tickets, branch-protection proof for merge-path tickets, and an
-`ADR:` line in the PR body.
+proof for UI tickets, and branch-protection proof for merge-path tickets.
 _Avoid_: approval (the human checkoff is one item of the gate, not the
 whole), CI gate (the `gate` check runs the suite on PRs — one item
 of the merge gate, not the whole)
