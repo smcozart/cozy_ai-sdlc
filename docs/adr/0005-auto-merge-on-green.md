@@ -5,7 +5,8 @@
 to add the consumer gate; amended on #132, 2026-10-18, to keep the
 list in one place; amended on #147, 2026-10-18, so the acknowledgement is
 the sha in the line; review list narrowed by the operator on #173, 2026-11-14; the hold flag's
-command moved to ADR 0008 on #181, 2026-11-17) · **Intent:** the N-package, pi session 2026-09-28 (items 2, 3,
+command moved to ADR 0008 on #181, 2026-11-17; the `ADR:` line rule
+withdrawn by the operator on #187, 2026-11-26) · **Intent:** the N-package, pi session 2026-09-28 (items 2, 3,
 5, 8, 10).
 
 Deploy §4 required a human checkoff, recorded in the thread, before any diff
@@ -39,7 +40,7 @@ pre-merge checkoff on every surface as a rubber stamp.
 - **ADRs stay required:** every PR body carries an `ADR:` line — the ADR
   ids the PR records or cites, or `ADR: none`. The gate check
   `pr-adr-line` fails a body without it. Presence only; review judges the
-  content.
+  content. (Withdrawn on #187; see the amendment below.)
 - **Fails closed:** auto-merge on green holds only while `gate` is a
   required status check on `main`. While it is not required, or when it is
   removed or bypassed, every merge reverts to the pre-merge human checkoff
@@ -78,6 +79,18 @@ and the `STATUS.md`-only rule are unchanged. What is given up: no human is owed 
 read of app code that lands on green. Rejected: optional sampling of
 everything (nothing would then guarantee a human reads a change to the rules
 agents follow).
+
+**Amended on #187 (2026-11-26; the operator's approval on #187).** Before,
+every PR body carried an `ADR:` line and the gate check `pr-adr-line` failed a
+body without one. In 168 CI runs it had one real FAIL: PR 102, which stayed open
+and red for 39 days, so the FAIL changed nothing. 40 of 61 lines said
+`ADR: none`. The check cost the `edited` trigger, the PR-body fetch and the
+duplicate runs they caused. Now the rule and the check are withdrawn from both
+gates. Whether a decision needs an ADR is the adversary's Compliance judgement
+(ADR 0008). A PR body may still name the ADRs it records or cites. The rest of
+the decision is unchanged, and so is the prohibition on dropping the post-hoc
+review list. The test (#121): in the next 20 PRs, count those that record a
+decision without its ADR.
 
 **Rejected.** *Keep the checkoff on every flagged-risk surface*: it did not
 hold in practice and it fails open. *Hold the broad flagged-risk set*

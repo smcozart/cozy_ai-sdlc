@@ -9,7 +9,7 @@ running Claude Code or pi should follow it. Prerequisites: Matt Pocock skills in
 ```
 setup (once per repo)
   → issue-first intake → intent → /to-questionnaire → /to-tickets → /triage loop
-  → /implement (per ticket, test-first) → mattpocock-skills:code-review + adversarial pass
+  → /implement (per ticket, test-first) → one adversary pass (ADR 0008)
   → ADRs + CONTEXT.md maintained continuously (domain-modeling)
   → /retro at milestones, /handoff at session end
 ```
@@ -245,8 +245,7 @@ command is the contract, not any harness hook.
    stdlib. Findings with no textual footprint stay in the eval ledger (#8);
    the eval harness waits on #1. CI runs the same command over the PR
    range on every PR into `main` (`.github/workflows/gate.yml`, check
-   `gate`, #33) and hands it the PR body as a file for `pr-adr-line`; run
-   locally with no body file, that check prints `skipped:`.
+   `gate`, #33), and over `HEAD~1..HEAD` on every push to `main` (#181).
 
 The check list lives in the `## Commands` block of `AGENTS.md`; the
 `agents-commands` check verifies the token set against `--list` (prose and
@@ -259,9 +258,8 @@ Deploy is what a diff owes before it merges — the same checklist at either
 seam: this repo's ticket close, or a consumer's PR.
 
 1. **The review loop.** Every diff is reviewed against
-   [`REVIEW.md`](../REVIEW.md): the `mattpocock-skills:code-review` skill's two axes plus an
-   one read-only `adversary` pass on every agent-produced diff (Review lane;
-   ADR 0008).
+   [`REVIEW.md`](../REVIEW.md) by one read-only `adversary` pass on every
+   agent-produced diff (Review lane; ADR 0008).
    Findings are tagged by
    risk class (Bugs / Security / Compliance) regardless of which pass
    surfaced them; a finding is resolved by a fix commit or an explicit
@@ -278,8 +276,7 @@ seam: this repo's ticket close, or a consumer's PR.
    (e) UI tickets only: preview proof pasted — screenshot, recording, or
    standing link (consumer obligation; this repo has no UI surface);
    (f) branch-protection proof for tickets touching the merge path, others
-   mark "n/a — not a merge-path ticket"; (g) an `ADR:` line in the PR body
-   (`ADR: none` when there is no decision), checked by `pr-adr-line` in CI.
+   mark "n/a — not a merge-path ticket".
    Merge-path = a diff at `flagged: yes` (the hold list, ADR 0005);
    everything else marks n/a.
 3. **Branch protection is verified, not assumed.** Any merge-path close runs
@@ -314,7 +311,7 @@ seam: this repo's ticket close, or a consumer's PR.
    merge takes the pre-merge checkoff (§3). Hooks/CI/release gates and
    irreversible ops are always human-authorized. Only an operator decision,
    recorded as an ADR 0005 amendment, adds a pre-merge checkoff or drops the
-   post-hoc review or the `ADR:` line.
+   post-hoc review.
 
 ## Maintain — closing the loop
 
@@ -354,7 +351,7 @@ tooling — waits on #1.
 | Implement | `/implement` | Per ticket, one ticket per session. Test-first (red-green slices). Lean: stdlib first, shortest working diff. |
 | Test discipline | `/tdd` | Default mode inside implement. Every test justifies itself — guards behavior no other test covers. |
 | Debugging | `/diagnosing-bugs` | When something is broken/slow, not during planned work. |
-| Review | `REVIEW.md`, `mattpocock-skills:code-review` | After each diff (or each batch). Two axes: standards + intent; policy per REVIEW.md. |
+| Review | `REVIEW.md` | After each diff (or each batch): the one adversary pass below (ADR 0008); policy per REVIEW.md. |
 | Adversarial review | `adversary` subagent (pi) | On every agent-produced diff, one read-only pass (ADR 0008). Breaks the author-boss bias loop. Claude equivalent: a second review pass with "assume this is wrong" instructions. |
 | Record decisions | `domain-modeling` | ADR bar: hard to reverse, surprising without context, or a real trade-off. One paragraph, `docs/adr/NNNN-slug.md`, **commit and push** — an unpushed ADR is invisible. Visible in code ⇒ no ADR. |
 | Shared vocabulary | `CONTEXT.md` via `domain-modeling` | Update when terminology shifts; consumers read it before issues. |

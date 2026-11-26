@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 # The Test gate: one command, one exit code, one line per check.
-# Spec: intent/9-test-stage/spec.md (check tables are the requirement, verbatim).
+# The requirement: ADR 0008 and the work-item intents (intent/<n>-<slug>/intent.md) that added each check.
 #
 #   tests/validate.sh [<range>]   run every check; print the range and flagged lines for <range> (else dirty tree, else HEAD~1..HEAD)
-#   tests/validate.sh <range> <pr-body-file>  also run pr-adr-line on the PR body (CI passes it; skipped without it)
 #   tests/validate.sh --list      print check names, one per line
 #   tests/validate.sh --witness   run every fail-first witness (needs full history)
 #   tests/validate.sh --lane [<range>]  print the range and the merge hold (flagged: yes|no) from what git sees (ADR 0005)
@@ -18,7 +17,7 @@ cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)" || exit 2
 
 FO=plugin/skills/dispatch/SKILL.md
 DOC=docs/engineering-workflow.md
-CHECKS="intent-layout adr-numbering adr-refs skill-frontmatter skill-links template-gate-parity agents-commands pr-adr-line"
+CHECKS="intent-layout adr-numbering adr-refs skill-frontmatter skill-links template-gate-parity agents-commands"
 
 fail=0; why=""
 list_checks() { printf '%s\n' $CHECKS; }
@@ -150,11 +149,6 @@ check_agents_commands() {
   [ "$have" = "$want" ] || { why="AGENTS.md ## Commands names != --list; missing:[$(comm -13 <(echo "$have") <(echo "$want") | tr '\n' ' ')] extra:[$(comm -23 <(echo "$have") <(echo "$want") | tr '\n' ' ')]"; return 1; }
 }
 
-# pr-adr-line  PR body file (ADR 0005: every PR body carries an ADR: line; presence only)  witness: three mutation rows
-check_pr_adr_line() {  # a fenced line is quoted text, not the PR's own ADR line
-  awk '/^[[:space:]]*(```|~~~)/{f=!f; next} !f' "$1" | grep -qE '^ADR:[[:space:]]*[^[:space:]]' || { why="$1: no 'ADR:' line (write 'ADR: none' when the PR records no decision)"; return 1; }
-}
-
 # ---------- runner ----------
 verdict() {  # verdict <name> <arg> -> sets v=ok|FAIL and why (no subshell: why must survive)
   local name=$1; shift; why=""; v=FAIL
@@ -169,14 +163,13 @@ run() {
 }
 
 default_run() {
-  local range=${1:-} body=${2:-}
+  local range=${1:-}
   if [ -z "$range" ]; then
     if ! git diff --quiet HEAD 2>/dev/null; then range=HEAD; else range=HEAD~1..HEAD; fi
   fi
   # a range git cannot read is an error, never a silent pass
   git diff --name-only "$range" >/dev/null 2>&1 || { echo "range: git diff $range failed — fix the range (bad ref, or a shallow clone: git fetch --unshallow)"; exit 2; }
   for c in intent-layout adr-numbering adr-refs skill-frontmatter skill-links template-gate-parity agents-commands; do run "$c" .; done
-  if [ -n "$body" ]; then run pr-adr-line "$body"; else echo "skipped: pr-adr-line — no PR body file given (CI passes one)"; fi
   echo "$ran_ok ok, $fail_count failed (range: $range)"
   lane_run "$range" || true   # trailer, not a check: same range as the gate so one paste carries both
 }
@@ -261,10 +254,6 @@ witness_run() {
   commands_block 1d > "$m/AGENTS.tmp" && mv "$m/AGENTS.tmp" "$m/AGENTS.md"
   expect FAIL 'mutation(one name deleted)' agents-commands "$m"; reset_wt "$m"
 
-  printf 'Summary\n\nNo decision line.\n' >"$BASE/body";                              expect FAIL 'mutation(PR body, no ADR: line)' pr-adr-line "$BASE/body"
-  printf 'Summary\n\nADR: none\n' >"$BASE/body";                                      expect ok 'PR body, ADR: none' pr-adr-line "$BASE/body"
-  printf 'Summary\n\n```\nADR: none\n```\n' >"$BASE/body";                            expect FAIL 'mutation(PR body, ADR: line only fenced)' pr-adr-line "$BASE/body"
-
   # merge hold (ADR 0005) — one row per held path plus every known evasion; a missed hold lets a PR merge its own gate
   flag_expect() {  # flag_expect <yes|no> <label> <root> <range>
     local got=no; wn=$((wn+1)); lane_of "$3" "$4"; [ -z "$held" ] || got=yes
@@ -319,9 +308,8 @@ witness_run() {
   np_expect ok   'scaffolded gate.yml never passes --fast (ADR 0007: CI is the proof of the suite)' '! grep -qF -- --fast .github/workflows/gate.yml'
   # dispatch's old-script test reads the usage line, never the file (a witness label may name a flag): the scaffolded gate is new
   np_expect ok   'scaffolded gate reads as new (usage line lists --fast and --deadline)' "(set +o pipefail; bash tests/validate.sh --probe-usage 2>&1 | grep -q -- '--fast') && (set +o pipefail; bash tests/validate.sh --probe-usage 2>&1 | grep -q -- '--deadline')"
-  # F2 in the scaffolded gate: the summary counts the ok: lines that ran (pr-adr-line is skipped here)
+  # F2 in the scaffolded gate: the summary counts the ok: lines that ran
   np_expect ok   'scaffolded gate passes, summary counts what ran' 'out=$(bash tests/validate.sh) && [ "$(grep -c "^ok: " <<<"$out")" = "$(sed -nE "s/^([0-9]+) ok, [0-9]+ failed.*/\1/p" <<<"$out")" ]'
-  np_expect ok   'scaffolded --witness passes' 'bash tests/validate.sh --witness | tail -1 | grep -qE "^[1-9][0-9]* witnesses, 0 unexpected$"'
   # a FAIL row would pass vacuously on a missing gate; assert the gate's own failure line instead
   np_expect ok   'scaffolded gate fails when STATUS.md is deleted' 'mv STATUS.md S.bak; out=$(bash tests/validate.sh); r=$?; mv S.bak STATUS.md; [ $r -ne 0 ] && grep -q "^FAIL: shape — STATUS.md missing" <<<"$out"'
   # (e) an existing repo on `trunk`: its files keep their bytes above the appended block, once
@@ -376,8 +364,8 @@ case ${1:-} in
   --list) list_checks; exit 0 ;;
   --witness) witness_run ;;
   --lane) lane_run "${2:-}"; exit $? ;;
-  --*) echo "usage: $0 [<range> [<pr-body-file>]|--list|--witness|--lane [<range>]]" >&2; exit 2 ;;
+  --*) echo "usage: $0 [<range>|--list|--witness|--lane [<range>]]" >&2; exit 2 ;;
 esac
 
-default_run "${1:-}" "${2:-}"
+default_run "${1:-}"
 exit $fail

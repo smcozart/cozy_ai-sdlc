@@ -180,8 +180,9 @@ diff --no-renames --name-only <mb>..origin/<base>` and the PR's files (`git
 diff --no-renames --name-only <mb>..<head>`) share no path; (b1) `git show
 origin/<base>:tests/validate.sh | bash -s -- --lane <mb>..origin/<base>` prints
 `flagged: no`; (b2) the PR and that base delta do not both add a file under
-`docs/adr/`; (c) `origin/<base>`'s `.github/workflows/gate.yml` runs on `push`
-to `<base>`, so the merged tree is proven one CI run after the merge. A failed
+`docs/adr/`; (c) `git show origin/<base>:.github/workflows/gate.yml | grep -qE
+'^[[:space:]]+push:'` exits 0: the gate runs on `push` to `<base>`, so the
+merged tree is proven one CI run after the merge. A failed
 fetch, or any condition that does not hold, means the worker updates the
 branch (the brief's rebase-or-merge rule) and proof reruns before merge. When
 the update is skipped, the range gate (step 1), the base lane (step 4, still
@@ -193,8 +194,9 @@ yes`. The limit: a break between file-disjoint PRs (an app test,
 `skill-links`, `adr-refs`, `agents-commands`) shows only on that
 push-to-`<base>` gate run. After a merge that skipped its update, read that
 run before the next skip: `gh run list --branch <base> --event push --commit
-<the merge commit> --limit 1`. Pending or not reported is not green: no next
-skip until it passes. Red means stop skipping and report it on the `Needs
+<the merge commit> --limit 1`. Pending or not reported is not green: while it
+is, a stale head updates as today (the worker updates the branch and proof
+reruns), and no next skip comes until it passes. Red means stop skipping and report it on the `Needs
 you:` line: the first red `gate` on `<base>` from a skipped update reverts
 this rule.
 
@@ -217,9 +219,8 @@ wait): confirm this QC check passed, and the gate run's `flagged:` line says
 the local run exited 0; confirm `gate` itself passed on the head SHA — `gh pr
 checks <pr> --json name,bucket --jq '[.[] | select(.name == "gate")] |
 length > 0 and all(.bucket == "pass")'` prints `true` (at least one `gate`
-entry and every one `pass`, so a duplicate row from an `edited` re-run cannot
-pass a stale result; `gh pr checks` alone exits 0 when `gate` is not reported
-yet, or skipped); `gate` not reported is retried at most 3 times, then it is
+entry and every one `pass`; `gh pr checks` alone exits 0 when `gate` is not
+reported yet, or skipped); `gate` not reported is retried at most 3 times, then it is
 red and goes to the developer; run the stale check above; then `gh pr merge
 --squash --match-head-commit <the head SHA QC ran on> <pr>`, then `git push
 origin --delete <branch>` (a branch that GitHub already deleted is fine), no

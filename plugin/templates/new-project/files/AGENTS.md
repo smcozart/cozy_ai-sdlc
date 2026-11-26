@@ -49,7 +49,7 @@ A ticket with a missing intent or link goes back to Design.
   a range against it (env `LANE_TARGET` overrides it).
 - The **Worker kind:** line above is the agent kind for herdr worker panes
   (default claude when the line is absent).
-- `tests/validate.sh [--fast|--deadline <seconds>] [<range> [<pr-body-file>]]`
+- `tests/validate.sh [--fast|--deadline <seconds>] [<range>]`
   — the Test gate. Healthy shape: one `ok: <name>` line per check below,
   then `N ok, 0 failed`, exit 0. Pass the ticket's range at close:
   `origin/{{BASE}}..HEAD`. Paste the run in the closing comment.
@@ -66,9 +66,7 @@ A ticket with a missing intent or link goes back to Design.
   when the lines are printed, 2 when the range is empty or invalid.
   A PARTIAL range is not valid for a close.
 - `tests/validate.sh --list` — prints the check names:
-  `shape`, `intent-layout`, `adr-numbering`, `app-tests`, and `pr-adr-line`
-  (fails a PR body with no `ADR:` line; CI passes the body file, a local run
-  with none prints `skipped:`).
+  `shape`, `intent-layout`, `adr-numbering` and `app-tests`.
 - App tests: when the stack ADR lands, add a line that starts with
   `**App tests:**` and names the command in backticks; the `app-tests` check
   runs it. The ticket range (`origin/{{BASE}}..HEAD`, from the merge-base)

@@ -3,7 +3,6 @@
 # The Test gate: one command, one exit code, one line per check.
 #
 #   tests/validate.sh [<range>]         run every check; print the range and flagged lines for <range> (else dirty tree, else HEAD~1..HEAD)
-#   tests/validate.sh <range> <pr-body-file>  also run pr-adr-line on the PR body (CI passes it; skipped without it)
 #   tests/validate.sh --fast [<range> ...]    every check but app-tests: CI's gate is the proof of the suite (ADR 0007)
 #   tests/validate.sh --deadline <s> [<range> ...]  app-tests fails at <s> seconds; its whole process group is killed
 #   tests/validate.sh --list            print check names, one per line
@@ -16,7 +15,7 @@ unset GIT_DIR GIT_WORK_TREE  # a hook-exported GIT_DIR makes rev-parse return cw
 SELF=${BASH_SOURCE[0]:-}   # this file, for the witness to copy (the cwd's tests/validate.sh may be another script); piped: none
 if [ -f "$SELF" ]; then [[ $SELF == /* ]] || SELF=$PWD/$SELF; else SELF=""; fi
 cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)" || exit 2
-CHECKS="shape intent-layout adr-numbering app-tests pr-adr-line"
+CHECKS="shape intent-layout adr-numbering app-tests"
 
 # ---------- merge hold (one review lane: every PR gets one adversary pass) ----------
 # A classifier, not a check: it prints one `range:` line and one `flagged:` line to paste beside the
@@ -83,7 +82,7 @@ records_only() {  # records_only <range>: rc 0 when app-tests may skip — every
   ! grep -qvE "$RECORDS_ONLY" <<<"$p"
 }
 
-# ---------- checks: check_<name> <root> (pr-adr-line: <file>); on failure set why and return 1 ----------
+# ---------- checks: check_<name> <root>; on failure set why and return 1 ----------
 check_shape() {
   local f; for f in AGENTS.md STATUS.md CONTEXT.md REVIEW.md intent/TEMPLATE.md; do [ -f "$1/$f" ] || { why="$f missing"; return 1; }; done
 }
@@ -138,10 +137,6 @@ app_tests_deadline() {  # its own process group (set -m, bash 3.2 too), so the k
   [ "$rc" = 0 ] || { why="\`$cmd\` failed: $(tail -1 <<<"$out")"; return 1; }
 }
 
-check_pr_adr_line() {  # every PR body carries an ADR: line (presence only); a fenced line is quoted text, not the PR's own
-  awk '/^[[:space:]]*(```|~~~)/{f=!f; next} !f' "$1" | grep -qE '^ADR:[[:space:]]*[^[:space:]]' || { why="$1: no 'ADR:' line (write 'ADR: none' when the PR records no decision)"; return 1; }
-}
-
 # ---------- runner ----------
 fail=0; fail_count=0; ran_ok=0; why=""   # ran_* counts what actually ran: the summary must not derive from --list
 run() {  # run <name> <arg>
@@ -150,7 +145,7 @@ run() {  # run <name> <arg>
   else echo "FAIL: $1 — $why"; fail=1; fail_count=$((fail_count+1)); fi
 }
 default_run() {
-  local c body=${2:-}
+  local c
   # a range git cannot read is an error, never a silent pass (an empty range is fine: range none, exit 0)
   if [ -n "${1:-}" ] && ! git diff --name-only "$1" >/dev/null 2>&1; then
     echo "range: git diff $1 failed — fix the range (bad ref, or a shallow clone: git fetch --unshallow)"; exit 2
@@ -158,7 +153,6 @@ default_run() {
   for c in shape intent-layout adr-numbering; do run "$c" .; done
   if [ -n "$fast" ]; then echo "deferred: app-tests — CI gate is the proof"
   elif [ -n "${1:-}" ] && records_only "$1"; then echo "skipped: app-tests — records-only diff"; else run app-tests .; fi
-  if [ -n "$body" ]; then run pr-adr-line "$body"; else echo "skipped: pr-adr-line — no PR body file given (CI passes one)"; fi
   echo "$ran_ok ok, $fail_count failed"
   if ! git rev-parse -q --verify HEAD >/dev/null; then echo "range: none — no commits yet"
   elif [ -z "${1:-}" ] && ! git rev-parse -q --verify HEAD~1 >/dev/null && git diff --quiet HEAD && [ -z "$(git ls-files --others --exclude-standard)" ]; then echo "range: none — first commit, nothing to compare yet"
@@ -174,9 +168,9 @@ witness_run() {
     cp -R AGENTS.md STATUS.md CONTEXT.md REVIEW.md intent "$m"/ && cp -R docs/adr "$m/docs/"
     grep -vE '^[[:space:]]*([-*+][[:space:]]+)?\*\*App tests(:\*\*|\*\*:)' AGENTS.md >"$m/AGENTS.md"
   }
-  expect() {  # expect <ok|FAIL> <label> <check> [<arg>, default the temp copy]
+  expect() {  # expect <ok|FAIL> <label> <check>, run on the temp copy
     local got=FAIL; wn=$((wn+1)); why=""
-    "check_${3//-/_}" "${4:-$m}" && got=ok
+    "check_${3//-/_}" "$m" && got=ok
     if [ "$got" = "$1" ]; then echo "witness ok: $3 @$2 expected $1${why:+ ($why)}"
     else echo "witness FAIL: $3 @$2 expected $1, got $got${why:+ — $why}"; wfail=$((wfail+1)); fi
   }
@@ -193,9 +187,6 @@ witness_run() {
   printf '# x\n' >"$m/docs/adr/$(printf %04d 2)-no-issue.md";     expect FAIL 'ADR without an Issue header' adr-numbering; fresh
   mkdir -p "$m/intent/1-x"; printf '**Issue:** #1\n' >"$m/intent/1-x/intent.md"
   printf '**Issue:** #2 · **Intent:** `intent/1-x/intent.md`\n' >"$m/intent/1-x/spec.md"; expect ok 'spec.md is a record, never read' intent-layout; fresh
-  printf 'Summary\n\nADR: none\n' >"$base/body";                  expect ok 'PR body, ADR: none' pr-adr-line "$base/body"
-  printf 'Summary\n\nNo decision line.\n' >"$base/body";          expect FAIL 'PR body, no ADR: line' pr-adr-line "$base/body"
-  printf 'Summary\n\n```\nADR: none\n```\n' >"$base/body";        expect FAIL 'PR body, ADR: line only fenced' pr-adr-line "$base/body"
 
   # lane classifier: scratch repo main A -> ticket branch t1-x C
   local g=$base/g; git init -q "$g"; git -C "$g" symbolic-ref HEAD refs/heads/main
@@ -268,16 +259,16 @@ witness_run() {
   exit $((wfail > 0))
 }
 
-usage() { echo "usage: $0 [--fast|--deadline <seconds>] [<range> [<pr-body-file>]] | --list | --witness | --lane [<range>]" >&2; exit 2; }
+usage() { echo "usage: $0 [--fast|--deadline <seconds>] [<range>] | --list | --witness | --lane [<range>]" >&2; exit 2; }
 fast=""; deadline=""
 case ${1:-} in
   --fast) fast=1; shift ;;
-  --deadline) [[ ${2:-} =~ ^[1-9][0-9]*$ ]] || { echo "usage: $0 --deadline <seconds> [<range> [<pr-body-file>]]" >&2; exit 2; }; deadline=$2; shift 2 ;;
+  --deadline) [[ ${2:-} =~ ^[1-9][0-9]*$ ]] || { echo "usage: $0 --deadline <seconds> [<range>]" >&2; exit 2; }; deadline=$2; shift 2 ;;
   --list) printf '%s\n' $CHECKS; exit 0 ;;
   --witness) witness_run ;;
   --lane) lane_run "${2:-}"; exit $? ;;
   --*) usage ;;
 esac
 [[ ${1:-} != -* ]] || usage   # a range is never an option: git diff would read it as one
-default_run "${1:-}" "${2:-}"
+default_run "${1:-}"
 exit $fail

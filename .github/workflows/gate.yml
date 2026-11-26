@@ -3,12 +3,11 @@ name: gate
 on:
   pull_request:
     branches: [main]
-    types: [opened, synchronize, reopened, edited]  # edited: a fixed PR body re-runs pr-adr-line
+    types: [opened, synchronize, reopened]
   push:
     branches: [main]  # #181: prove main after every merge
 permissions:
   contents: read
-  pull-requests: read
 concurrency:
   group: gate-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
@@ -21,14 +20,11 @@ jobs:
         with:
           fetch-depth: 0  # full history: the hold and the range check diff the range
       - name: tests/validate.sh
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           if [ "${{ github.event_name }}" = pull_request ]; then
-            gh pr view ${{ github.event.pull_request.number }} -R ${{ github.repository }} --json body -q .body > "$RUNNER_TEMP/pr-body.md"
-            bash tests/validate.sh "origin/${{ github.base_ref }}..HEAD" "$RUNNER_TEMP/pr-body.md"
+            bash tests/validate.sh "origin/${{ github.base_ref }}..HEAD"
           else
-            bash tests/validate.sh  # push to main: HEAD~1..HEAD, the merge; pr-adr-line skips (no PR body)
+            bash tests/validate.sh  # push to main: HEAD~1..HEAD, the merge
           fi
   # #159: the scaffolded project's gate on every OS. Mirrors new-project Move 3 (scaffold, add, commit) and its
   # clone check; windows-latest runs Git Bash with core.autocrlf=true and no symlinks, as a developer's machine does.

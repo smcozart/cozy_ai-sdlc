@@ -285,6 +285,6 @@ owed. Echo the line and the range it covers before committing.
 Never switch the developer's checkout: `git worktree add
 .factory/worktrees/review-<sha7> -b review-<sha7> origin/<base>`, commit only
 `STATUS.md` with their words in the message, push, and open one PR whose body
-quotes them and ends `ADR: none`. Run `dispatch` Move 5 QC on it (one adversary
+quotes them. Run `dispatch` Move 5 QC on it (one adversary
 pass, as on every PR) and merge it on a green `gate`
 while `flagged: no`; then retire the worktree and branch.
