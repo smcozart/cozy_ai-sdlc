@@ -1,7 +1,7 @@
 # The Harness
 
 An AI-native software development process, packaged to run on Claude Code and
-pi today (GitHub Copilot advisory support included). It is a concrete
+pi today. It is a concrete
 implementation of Anthropic's six-phase SDLC loop — Plan → Design → Build →
 Test → Deploy → Maintain — where Maintain feeds back into Plan, the loop turns
 in hours, and **humans stay above the loop: instigating, directing, governing.**
@@ -25,7 +25,7 @@ The six stages, their contracts and the merge policy: [`docs/engineering-workflo
 
 ```bash
 git clone <this-repo> && cd <repo-name>
-./bootstrap.sh          # restores skills (hash-tracked upstream + vendored),
+./bootstrap.sh          # restores skills (upstream copies + vendored),
                         # installs the tools .claude/settings.json names
                         # (project scope, cozysuite catalog), checks gh auth
 gh auth login           # if flagged — GitHub Issues is the tracker

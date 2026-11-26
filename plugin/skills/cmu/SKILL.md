@@ -16,8 +16,8 @@ The pickup complement of `/handoff`: `/handoff` is written deliberately, at the
 end of a session that chose to wrap up; `cmu` reads whatever the tracker and
 git already show, whether or not anyone wrote a note, and answers "what
 happened while I was away". It sits in the loop as the entrance ramp for a
-session that is resuming, not starting — before `/build`'s snapshot, before
-`dispatch` picks the frontier back up. Say "`/cmu` or 'catch me up'" once;
+session that is resuming, not starting — before `dispatch` picks the frontier
+back up. Say "`/cmu` or 'catch me up'" once;
 the literal slash is not guaranteed on every host (plugin-skill namespace on
 Claude Code, no native slash command on the Copilot CLI) — the natural-language
 triggers above work on both.
@@ -103,11 +103,11 @@ comment and silently hide real work.
   expires because the anchor moved. A first-parent commit that is not
   a PR merge is a direct push; one touching a held or review path counts as a
   merge with no review.
-- New files under `docs/adr/` and their status-history lines; new fragments
-  under `docs/journal/`.
+- New files under `docs/adr/` and their status-history lines.
 - New files under `handoffs/`.
 - Live workers, where the host shows them: `herdr agent list` if `herdr` is on
-  `PATH`; `.factory/wt/*` worktrees; local branches ahead of the default
+  `PATH`; `.factory/worktrees/*` worktrees and `~/.factory/<repo>/workers/*`
+  clones; local branches ahead of the default
   branch (post-fetch, so already-merged branches don't show as in flight).
 
 **Cross-repo references.** A line naming a PR or issue in another repository
@@ -205,7 +205,8 @@ number, a file path, a commit). Never a claim with nothing behind it.
 ## Fit in the loop
 
 `cmu` never triggers `dispatch` — dispatch's own triggers are unchanged (fires
-at `/build` gate 1, after approvals, and on worker idle/QC completion); `cmu`
+after an approval that leaves `ready-for-agent` work, and on worker idle/QC
+completion); `cmu`
 only ever reports, and the developer's own request or "go" is what starts
 dispatch.
 `intent-conversation` Move 4 writes `#handoff` deliberately, at the end of a

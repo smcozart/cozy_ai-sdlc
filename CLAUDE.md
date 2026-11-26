@@ -9,8 +9,8 @@ only setting at the end.
 - Skills: `.claude/skills/` (symlinks to `plugin/skills/`)
 - Proof gate: `tests/validate.sh [<range>]` · `--witness` for fail-first
 - Prerequisite: `./bootstrap.sh` installs the tools `.claude/settings.json`
-  names, Matt Pocock skills included (project scope, cozysuite catalog) — `/triage`, `/to-tickets` are not
-  repo files.
+  names, at project scope: the cozysuite catalog, plus the Matt Pocock skills
+  from `claude-plugins-official` — `/triage`, `/to-tickets` are not repo files.
 
 ## Claude Code only: Code Mode for the orchestrator (#184)
 

@@ -14,16 +14,10 @@ git clone <this-repo> && cd <repo-name>
                  # re-runnable
 ```
 
-Then: `gh auth login` if flagged, `herdr` only for parallel builds, branch
-protection (command below) once per repo, and `/setup-matt-pocock-skills` once
-per NEW repo only (this repo already carries `docs/agents/` config).
-
-```bash
-gh api repos/<owner>/<repo>/rulesets -X POST \
-  -H "Accept: application/vnd.github+json" -f name='protect-main' \
-  -F target='branch' -f 'conditions[ref_name][include][]=refs/heads/main' \
-  -F 'rules[][type]=deletion' -f 'enforcement=active'
-```
+Then: `gh auth login` if flagged, and `herdr` only for parallel builds. A NEW
+repo gets its branch protection from `new-project` Move 4
+(`plugin/skills/new-project/SKILL.md`): the ruleset and the required `gate`
+check that ADR 0005 needs.
 
 Fresh agent session on an existing repo: read `CLAUDE.md` or `AGENTS.md` if
 present, then `docs/engineering-workflow.md` → `gh issue list --label
@@ -82,14 +76,16 @@ outside it:
 The **repo is the source of truth**; plugins/adapters are build artifacts:
 
 1. Canonical content lives in-repo: `docs/engineering-workflow.md` (the
-   process), `docs/adr/` (decisions), `.agents/skills/` (pi skills),
-   `skills-lock.json` (third-party skill manifest).
+   process), `docs/adr/` (decisions), `skills-lock.json` (third-party skill
+   manifest).
 2. Each harness gets a thin adapter generated from that canon:
    - **Claude Code**: this plugin (skills).
-   - **GitHub Copilot**: `.github/copilot-instructions.md` (advisory pointer;
-     enforcement comes from branch protection + the tracker).
-   - **pi**: no adapter needed — `.agents/skills/`, `.pi/agents/`,
-     `.pi/prompts/` ARE its plugin format, restored by `git clone`.
+   - **pi**: no adapter needed — `.pi/agents/`, `.pi/prompts/` and
+     `.agents/skills/` are its own formats. `git clone` restores `.pi/` and
+     `.agents/skills/ponytail`; `./bootstrap.sh` restores the Matt Pocock
+     copies in `.agents/skills/` (`.gitignore` keeps them out of git). pi
+     loads `.agents/skills/` in a trusted project; it does not load the
+     `plugin/skills/` skills.
 3. Never fork the process text. Adapters point at or are generated from the
    canonical doc; when the process changes, it changes in `docs/`, and each
    adapter is regenerated.
