@@ -24,8 +24,9 @@ gh auth login   # if flagged — GitHub Issues is the tracker
 
 - Installs the Matt Pocock skills (Claude plugin, or copies them into
   `.agents/skills/` for pi).
-- Installs the tools `.claude/settings.json` names, at project scope, from the
-  cozysuite catalog, if Claude Code is present.
+- Installs the tools `.claude/settings.json` names, at project scope, if
+  Claude Code is present: the cozysuite catalog, plus the Matt Pocock skills
+  from `claude-plugins-official`.
 - Installs the **local git-seam guardrail** (`core.hooksPath .githooks` —
   pre-push runs the Test gate before a push; silent when green).
 - Checks `gh` auth.
@@ -83,7 +84,8 @@ ticket-cut gates split it into tractable slices before any code.
 ## 4.5 Take the harness INTO your project (e.g. a RAG system)
 
 Everything above stands up the harness in THIS repo. A different codebase
-(say a RAG system) does not copy files from this repo. In YOUR project repo:
+(say a RAG system) scaffolds from the plugin's template, with no manual `cp`.
+In YOUR project repo:
 
 1. Get the tools from the cozysuite catalog (github.com/smcozart/cozysuite,
    "Set up a project"; the `core` preset carries ai-sdlc).

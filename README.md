@@ -26,8 +26,10 @@ The six stages, their contracts and the merge policy: [`docs/engineering-workflo
 ```bash
 git clone <this-repo> && cd <repo-name>
 ./bootstrap.sh          # restores skills (upstream copies + vendored),
-                        # installs the tools .claude/settings.json names
-                        # (project scope, cozysuite catalog), checks gh auth
+                        # installs the tools .claude/settings.json names at
+                        # project scope (the cozysuite catalog, plus the Matt
+                        # Pocock skills from claude-plugins-official),
+                        # checks gh auth
 gh auth login           # if flagged — GitHub Issues is the tracker
 claude                  # plugin + skills are live
 ```
