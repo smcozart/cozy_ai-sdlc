@@ -2,7 +2,7 @@
 
 ## Passes
 
-Run all three on every diff — the ticket's diff range, stated explicitly in the review, the same way the Test gate requires a range ("agent-produced" means authored in an agent session). Tag each finding with the risk class it poses — Bugs, Security, or Compliance — regardless of which pass or axis surfaced it.
+Run all three on every diff — the ticket's diff range, stated explicitly in the review, the same way the Test gate requires a range ("agent-produced" means authored in an agent session). Tag each finding with the risk class it poses — Bugs, Security, or Compliance — regardless of which pass surfaced it.
 
 - **Bugs** — logic errors, broken edge cases, regressions.
 - **Security** — injection, secrets, PII in logs.

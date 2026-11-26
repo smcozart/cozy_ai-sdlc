@@ -37,7 +37,7 @@ pre-merge checkoff on every surface as a rubber stamp.
   nothing. It covers exactly the first-parent history of the base branch up
   to that sha, never what merged while the line was in review. The behavior files in
   `docs/verify/` verify the agent side of this contract.
-- **ADRs stay required:** every PR body carries an `ADR:` line — the ADR
+- **ADR line (withdrawn on #187):** every PR body carried an `ADR:` line — the ADR
   ids the PR records or cites, or `ADR: none`. The gate check
   `pr-adr-line` fails a body without it. Presence only; review judges the
   content. (Withdrawn on #187; see the amendment below.)
@@ -46,8 +46,9 @@ pre-merge checkoff on every surface as a rubber stamp.
   removed or bypassed, every merge reverts to the pre-merge human checkoff
   until the check is restored.
 - **Two prohibitions:** no agent adds a pre-merge checkoff, and no agent
-  drops the post-hoc review list or the ADR rule. Only an operator decision,
-  recorded as an amendment to this ADR, changes either.
+  drops the post-hoc review list. Only an operator decision, recorded as an
+  amendment to this ADR, changes either. (The ADR line rule was withdrawn by
+  that route; see the #187 amendment.)
 
 **Amended on #132 (2026-10-18).** Before, the paths of the hold list were
 written out here and in about ten other documents, and the script was the
