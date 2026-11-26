@@ -9,7 +9,7 @@
 
 ### Issue tracker
 
-Issues live in this repo's GitHub Issues, managed via `gh` CLI; blocking edges and the `ready-for-agent` contract are defined there. See `docs/agents/issue-tracker.md`.
+Issues live in this repo's GitHub Issues, managed via `gh` CLI; the `gh` commands and blocking edges are in `docs/agents/issue-tracker.md`. The `ready-for-agent` label is in `docs/agents/triage-labels.md`; its contract (blockers resolved + acceptance criteria defined) is in `docs/engineering-workflow.md` (Non-negotiables).
 
 ### Triage labels
 

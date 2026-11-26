@@ -24,8 +24,9 @@ gh auth login   # if flagged — GitHub Issues is the tracker
 
 - Installs the Matt Pocock skills (Claude plugin, or copies them into
   `.agents/skills/` for pi).
-- Installs the tools `.claude/settings.json` names, at project scope, from the
-  cozysuite catalog, if Claude Code is present.
+- Installs the tools `.claude/settings.json` names, at project scope, if
+  Claude Code is present: the cozysuite catalog, plus the Matt Pocock skills
+  from `claude-plugins-official`.
 - Installs the **local git-seam guardrail** (`core.hooksPath .githooks` —
   pre-push runs the Test gate before a push; silent when green).
 - Checks `gh` auth.
@@ -35,18 +36,20 @@ installed). `gh auth status` reports authenticated.
 
 ## 2. Pick a host
 
-- **pi:** launch `pi` from the repo root. It reads `AGENTS.md` at root, the
-  `.agents/skills/` copies, and `.pi/`. No extra step.
+- **pi:** launch `pi` from the repo root and trust the project folder. It
+  reads `AGENTS.md` at root, `.pi/`, and the skills in `.agents/skills/`: the
+  tracked `ponytail` and the Matt Pocock copies `./bootstrap.sh` restores. It
+  does not load the `plugin/skills/` skills.
 - **Claude Code:** launch `claude`. `CLAUDE.md` points at `AGENTS.md`; the
-  `plugin/` + `.claude/skills/` copies are live. Run `/setup-matt-pocock-skills`
-  once to scaffold this repo's tracker labels + ADR layout.
+  `plugin/` skills are live through the `.claude/skills/` symlinks.
 
 Both hosts run the same contracts; only the launch differs.
 
 ## 3. Prove the suite is green (baseline)
 
 ```bash
-tests/validate.sh            # 14× ok, then "14 ok, 0 failed", exit 0
+tests/validate.sh            # one ok: line per check, then "N ok, 0 failed",
+                             # exit 0 (the check names: tests/validate.sh --list)
 tests/validate.sh --witness  # replay fail-first witnesses; needs full history
                              # (shallow clone → `git fetch --unshallow`)
 ```
@@ -80,36 +83,18 @@ ticket-cut gates split it into tractable slices before any code.
 
 ## 4.5 Take the harness INTO your project (e.g. a RAG system)
 
-Everything above stands up the harness in THIS repo (cozyharness). When the
-work lives in a **different** codebase — say a RAG system you're planning —
-the harness travels there; it isn't cloned in wholesale:
+Everything above stands up the harness in THIS repo. A different codebase
+(say a RAG system) scaffolds from the plugin's template, with no manual `cp`.
+In YOUR project repo:
 
-```bash
-# clone once, from this repo as a portable reference
-git clone git@github.com:smcozart/cozy_ai-sdlc.git /tmp/harness-ref
-cd /your-rag-project                                  # or wherever the work lives
-cp -R /tmp/harness-ref/bootstrap.sh \                # carry the scaffolding over
-      /tmp/harness-ref/skills-lock.json \
-      /tmp/harness-ref/plugin \
-      /tmp/harness-ref/.claude-plugin \
-      /tmp/harness-ref/AGENTS.md \
-      /tmp/harness-ref/CLAUDE.md .
-./bootstrap.sh                                         # installs hooks + skills
-gh auth login                                          # track via YOUR GitHub issues
-claude   # then: tools per the cozysuite README ("Set up a project"), and /setup-matt-pocock-skills once
-```
+1. Get the tools from the cozysuite catalog (github.com/smcozart/cozysuite,
+   "Set up a project"; the `core` preset carries ai-sdlc).
+2. Say "start a new project" (ai-sdlc `new-project`). It scaffolds the
+   workflow files, the gate (`tests/validate.sh`) and the CI `gate`
+   workflow, then hands off to intake.
 
-Then the same cycle in §4 — issue-first
-intake → intent → tickets → build — runs against YOUR repo: the harness files
-now live in YOUR project, the SAME gate (`tests/validate.sh`), the same
-seams. Your intents live in `intent/<n>-<slug>/` — keep your OWN
-`SYSTEM-INTENT.md` and `CONTEXT.md` (your RAG's purpose and vocabulary) and
-start your OWN `STATUS.md` review log from its header. Don't copy cozyharness's
-`STATUS.md` — its lines acknowledge this project's reviews, not yours.
-
-> The git-seam guardrails from §1 install in your project too (`bootstrap.sh`
-> sets `core.hooksPath` locally). If the RAG lives on a different git host
-> (e.g. Azure DevOps), the git seams are the same — the gate travels.
+Then the same cycle in §4 runs against YOUR repo. Keep your OWN
+`SYSTEM-INTENT.md`, `CONTEXT.md` and `STATUS.md`; never copy this repo's.
 
 ## 5. Close with proof
 
@@ -127,9 +112,8 @@ then the Deploy merge-gate items (review, adversary, human checkoff). See
   — the required CI `gate` check on every PR into `main` (#33) is the
   backstop. A green
   `validate.sh` is necessary, not sufficient.
-- **Still paper/staged:** the eval harness (#8) and two carried findings
-  (#18) are outstanding; gates like the merge gate are pasted-evidence plus
+- **Still paper/staged:** the QC findings ledger (#8) and the carried
+  findings (#18) are open; gates like the merge gate are pasted-evidence plus
   your human judgment. The hooks check only the deterministic seams.
 - **Private repo:** the clone needs `gh` auth and repo access on the new
   machine; GitHub Issues is the system of record.
-Handoff note (gate test): the required `gate` check is live.

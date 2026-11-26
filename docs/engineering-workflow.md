@@ -27,7 +27,7 @@ records:
 
 ## Plan — issue-first intake and work-item intent
 
-Formalized in issue [#2](https://github.com/smcozart/cozyharness/issues/2).
+Formalized in issue [#2](https://github.com/smcozart/cozy_ai-sdlc/issues/2).
 
 1. **Issue-first intake.** Every request — greenfield or brownfield — becomes
    a GitHub issue before any other artifact. The issue states the problem,
@@ -75,7 +75,7 @@ retro finding, or transcript, and checks it against the same system intent.
 
 ## Design — ADRs, tickets, and the approval gate
 
-Formalized in issue [#3](https://github.com/smcozart/cozyharness/issues/3);
+Formalized in issue [#3](https://github.com/smcozart/cozy_ai-sdlc/issues/3);
 `spec.md` retired by ADR 0008.
 Design turns an approved intent into the durable artifacts the work needs —
 the ADRs the design requires and ticket issues — then passes the approval
@@ -214,7 +214,7 @@ two consecutive QC failures halt the chain. Those rules live in the
 
 ## Test — one command, fail-first, protected checks
 
-Formalized in issue [#9](https://github.com/smcozart/cozyharness/issues/9).
+Formalized in issue [#9](https://github.com/smcozart/cozy_ai-sdlc/issues/9).
 Build §5 stays; Test adds the repo's own standing rules to every close. The
 command is the contract, not any harness hook.
 
@@ -253,7 +253,7 @@ grouping around the names are not verified).
 
 ## Deploy — review loop, merge gate, autonomy boundaries
 
-Formalized in issue [#12](https://github.com/smcozart/cozyharness/issues/12).
+Formalized in issue [#12](https://github.com/smcozart/cozy_ai-sdlc/issues/12).
 Deploy is what a diff owes before it merges — the same checklist at either
 seam: this repo's ticket close, or a consumer's PR.
 
@@ -352,7 +352,7 @@ tooling — waits on #1.
 | Test discipline | `/tdd` | Default mode inside implement. Every test justifies itself — guards behavior no other test covers. |
 | Debugging | `/diagnosing-bugs` | When something is broken/slow, not during planned work. |
 | Review | `REVIEW.md` | After each diff (or each batch): the one adversary pass below (ADR 0008); policy per REVIEW.md. |
-| Adversarial review | `adversary` subagent (pi) | On every agent-produced diff, one read-only pass (ADR 0008). Breaks the author-boss bias loop. Claude equivalent: a second review pass with "assume this is wrong" instructions. |
+| Adversarial review | `adversary` subagent (pi) | On every agent-produced diff, one read-only pass (ADR 0008). Breaks the author-boss bias loop. Claude equivalent: the same one pass, read-only, with "assume this is wrong" instructions. |
 | Record decisions | `domain-modeling` | ADR bar: hard to reverse, surprising without context, or a real trade-off. One paragraph, `docs/adr/NNNN-slug.md`, **commit and push** — an unpushed ADR is invisible. Visible in code ⇒ no ADR. |
 | Shared vocabulary | `CONTEXT.md` via `domain-modeling` | Update when terminology shifts; consumers read it before issues. |
 | Milestone retro | `/retro` | At milestones or when a failure pattern repeats. Feed findings into ADRs or process edits. |
@@ -368,7 +368,8 @@ other hosts keep the same contract. Key rules (full detail in the skill):
 
 1. Orchestrator never writes code; it dispatches, watches, and runs QC itself.
 2. One ticket per worker session, fresh pane per ticket (`herdr tab create` →
-   `herdr agent start --kind pi` → the herdr brief in the skill).
+   `herdr agent start --kind <worker kind from AGENTS.md, default claude>` →
+   the herdr brief in the skill).
 3. Orchestrator pre-answers the 2–3 ticket ambiguities **in the worker prompt**.
 4. GitHub is the claim; the orchestrator's terminal proves the hold and the review; CI's `gate` proves the suite (ADR 0007).
 5. Workers end with a `HANDOFF:` direct ping to the orchestrator pane before idling.
@@ -378,8 +379,9 @@ other hosts keep the same contract. Key rules (full detail in the skill):
    commits — the tracker and the remote are the only state.
 
 The full skill text lives at `plugin/skills/dispatch/SKILL.md`; Claude Code
-loads it from the plugin. pi loads no project skills from `.agents/skills/`
-(#137), so a pi orchestrator follows `dispatch`'s herdr row by hand.
+loads it from the plugin. pi loads the skills in `.agents/skills/` (in a
+trusted project), and `dispatch` is not one of them, so a pi orchestrator
+follows `dispatch`'s herdr row by hand.
 
 ## Non-negotiables (the parts that make it work)
 
