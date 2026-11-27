@@ -12,7 +12,8 @@
       "source": {
         "source": "github",
         "repo": "smcozart/cozysuite"
-      }
+      },
+      "autoUpdate": false
     }
   }
 }
